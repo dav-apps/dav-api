@@ -5,12 +5,14 @@ import { makeExecutableSchema } from "@graphql-tools/schema"
 import express from "express"
 import http from "http"
 import cors from "cors"
+import { PrismaClient } from "@prisma/client"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 
 const port = process.env.PORT || 4000
 const app = express()
 const httpServer = http.createServer(app)
+const prisma = new PrismaClient()
 
 let schema = makeExecutableSchema({
 	typeDefs,
@@ -28,7 +30,9 @@ app.use(
 	"/",
 	cors<cors.CorsRequest>(),
 	express.json({ type: "application/json", limit: "50mb" }),
-	expressMiddleware(server)
+	expressMiddleware(server, {
+		context: async () => ({ prisma })
+	})
 )
 
 await new Promise<void>(resolve => httpServer.listen({ port }, resolve))

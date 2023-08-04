@@ -8,61 +8,74 @@ datasource db {
 }
 
 model api_endpoints {
-  id          BigInt   @id @default(autoincrement())
-  api_slot_id BigInt?
-  path        String?  @db.VarChar
-  method      String?  @db.VarChar
-  commands    String?
-  caching     Boolean? @default(false)
-  created_at  DateTime @db.Timestamp(6)
-  updated_at  DateTime @db.Timestamp(6)
+  id                     BigInt                   @id @default(autoincrement())
+  api_slot               api_slots                @relation(fields: [api_slot_id], references: [id])
+  api_slot_id            BigInt
+  path                   String?                  @db.VarChar
+  method                 String?                  @db.VarChar
+  commands               String?
+  caching                Boolean?                 @default(false)
+  created_at             DateTime                 @db.Timestamp(6)
+  updated_at             DateTime                 @db.Timestamp(6)
+  compiled_api_endpoints compiled_api_endpoints[]
 }
 
 model api_env_vars {
-  id          BigInt  @id @default(autoincrement())
-  api_slot_id BigInt?
-  name        String? @db.VarChar
-  value       String? @db.VarChar
-  class_name  String? @db.VarChar
+  id          BigInt    @id @default(autoincrement())
+  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+  api_slot_id BigInt
+  name        String?   @db.VarChar
+  value       String?   @db.VarChar
+  class_name  String?   @db.VarChar
 }
 
 model api_errors {
-  id          BigInt  @id @default(autoincrement())
-  api_slot_id BigInt?
+  id          BigInt    @id @default(autoincrement())
+  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+  api_slot_id BigInt
   code        Int?
-  message     String? @db.VarChar
+  message     String?   @db.VarChar
 }
 
 model api_functions {
-  id          BigInt   @id @default(autoincrement())
-  api_slot_id BigInt?
-  name        String?  @db.VarChar
-  params      String?  @db.VarChar
+  id          BigInt    @id @default(autoincrement())
+  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+  api_slot_id BigInt
+  name        String?   @db.VarChar
+  params      String?   @db.VarChar
   commands    String?
-  created_at  DateTime @db.Timestamp(6)
-  updated_at  DateTime @db.Timestamp(6)
+  created_at  DateTime  @db.Timestamp(6)
+  updated_at  DateTime  @db.Timestamp(6)
 }
 
 model api_slots {
-  id            BigInt   @id @default(autoincrement())
-  api_id        BigInt?
-  name          String?  @db.VarChar
-  created_at    DateTime @db.Timestamp(6)
-  updated_at    DateTime @db.Timestamp(6)
+  id            BigInt          @id @default(autoincrement())
+  api           apis            @relation(fields: [api_id], references: [id])
+  api_id        BigInt
+  name          String?         @db.VarChar
+  created_at    DateTime        @db.Timestamp(6)
+  updated_at    DateTime        @db.Timestamp(6)
   documentation String?
+  api_endpoints api_endpoints[]
+  api_functions api_functions[]
+  api_errors    api_errors[]
+  api_env_vars  api_env_vars[]
 }
 
 model apis {
-  id         BigInt   @id @default(autoincrement())
-  app_id     BigInt?
-  name       String?  @db.VarChar
-  created_at DateTime @db.Timestamp(6)
-  updated_at DateTime @db.Timestamp(6)
+  id         BigInt      @id @default(autoincrement())
+  app        apps        @relation(fields: [app_id], references: [id])
+  app_id     BigInt
+  name       String?     @db.VarChar
+  created_at DateTime    @db.Timestamp(6)
+  updated_at DateTime    @db.Timestamp(6)
+  api_slots  api_slots[]
 }
 
 model app_user_snapshots {
   id                BigInt    @id @default(autoincrement())
-  app_id            BigInt?
+  app               apps      @relation(fields: [app_id], references: [id])
+  app_id            BigInt
   time              DateTime? @db.Timestamp(6)
   daily_active      Int?      @default(0)
   monthly_active    Int?      @default(0)
@@ -77,8 +90,10 @@ model app_user_snapshots {
 
 model app_users {
   id           BigInt    @id @default(autoincrement())
-  user_id      BigInt?
-  app_id       BigInt?
+  user         users     @relation(fields: [user_id], references: [id])
+  user_id      BigInt
+  app          apps      @relation(fields: [app_id], references: [id])
+  app_id       BigInt
   used_storage BigInt?   @default(0)
   last_active  DateTime? @db.Timestamp(6)
   created_at   DateTime  @db.Timestamp(6)
@@ -86,16 +101,24 @@ model app_users {
 }
 
 model apps {
-  id                   BigInt   @id @default(autoincrement())
-  dev_id               BigInt?
-  name                 String?  @db.VarChar
-  description          String?  @db.VarChar
-  published            Boolean? @default(false)
-  web_link             String?  @db.VarChar
-  google_play_link     String?  @db.VarChar
-  microsoft_store_link String?  @db.VarChar
-  created_at           DateTime @db.Timestamp(6)
-  updated_at           DateTime @db.Timestamp(6)
+  id                    BigInt                  @id @default(autoincrement())
+  dev                   devs                    @relation(fields: [dev_id], references: [id])
+  dev_id                BigInt
+  name                  String?                 @db.VarChar
+  description           String?                 @db.VarChar
+  published             Boolean?                @default(false)
+  web_link              String?                 @db.VarChar
+  google_play_link      String?                 @db.VarChar
+  microsoft_store_link  String?                 @db.VarChar
+  created_at            DateTime                @db.Timestamp(6)
+  updated_at            DateTime                @db.Timestamp(6)
+  apis                  apis[]
+  app_users             app_users[]
+  app_user_snapshots    app_user_snapshots[]
+  tables                tables[]
+  notifications         notifications[]
+  sessions              sessions[]
+  websocket_connections websocket_connections[]
 }
 
 model ar_internal_metadata {
@@ -106,36 +129,42 @@ model ar_internal_metadata {
 }
 
 model collections {
-  id         BigInt   @id @default(autoincrement())
-  table_id   BigInt?
-  name       String?  @db.VarChar
-  created_at DateTime @db.Timestamp(6)
-  updated_at DateTime @db.Timestamp(6)
+  id                       BigInt                     @id @default(autoincrement())
+  table                    tables                     @relation(fields: [table_id], references: [id])
+  table_id                 BigInt
+  name                     String?                    @db.VarChar
+  created_at               DateTime                   @db.Timestamp(6)
+  updated_at               DateTime                   @db.Timestamp(6)
+  table_object_collections table_object_collections[]
 }
 
 model compiled_api_endpoints {
-  id              BigInt   @id @default(autoincrement())
-  api_endpoint_id BigInt?
+  id              BigInt        @id @default(autoincrement())
+  api_endpoint    api_endpoints @relation(fields: [api_endpoint_id], references: [id])
+  api_endpoint_id BigInt
   code            String?
-  created_at      DateTime @db.Timestamp(6)
-  updated_at      DateTime @db.Timestamp(6)
+  created_at      DateTime      @db.Timestamp(6)
+  updated_at      DateTime      @db.Timestamp(6)
 }
 
 model devs {
   id         BigInt   @id @default(autoincrement())
-  user_id    BigInt?
+  user       users    @relation(fields: [user_id], references: [id])
+  user_id    BigInt
   api_key    String?  @db.VarChar
   secret_key String?  @db.VarChar
   uuid       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
-  users      users?   @relation(fields: [user_id], references: [id])
+  apps       apps[]
 }
 
 model notifications {
   id         BigInt    @id @default(autoincrement())
-  user_id    BigInt?
-  app_id     BigInt?
+  user       users     @relation(fields: [user_id], references: [id])
+  user_id    BigInt
+  app        apps      @relation(fields: [app_id], references: [id])
+  app_id     BigInt
   uuid       String?   @unique(map: "index_notifications_on_uuid") @db.VarChar
   time       DateTime? @db.Timestamp(6)
   interval   Int?
@@ -147,26 +176,29 @@ model notifications {
 
 model providers {
   id                BigInt   @id @default(autoincrement())
-  user_id           BigInt?
+  user              users    @relation(fields: [user_id], references: [id])
+  user_id           BigInt
   stripe_account_id String?  @db.VarChar
   created_at        DateTime @db.Timestamp(6)
   updated_at        DateTime @db.Timestamp(6)
 }
 
 model purchases {
-  id                BigInt   @id @default(autoincrement())
-  user_id           BigInt?
-  payment_intent_id String?  @db.VarChar
-  provider_name     String?  @db.VarChar
-  provider_image    String?  @db.VarChar
-  product_name      String?  @db.VarChar
-  product_image     String?  @db.VarChar
-  price             Int?
-  currency          String?  @db.VarChar
-  completed         Boolean? @default(false)
-  created_at        DateTime @db.Timestamp(6)
-  updated_at        DateTime @db.Timestamp(6)
-  uuid              String?  @unique(map: "index_purchases_on_uuid") @db.VarChar
+  id                     BigInt                   @id @default(autoincrement())
+  user                   users                    @relation(fields: [user_id], references: [id])
+  user_id                BigInt
+  payment_intent_id      String?                  @db.VarChar
+  provider_name          String?                  @db.VarChar
+  provider_image         String?                  @db.VarChar
+  product_name           String?                  @db.VarChar
+  product_image          String?                  @db.VarChar
+  price                  Int?
+  currency               String?                  @db.VarChar
+  completed              Boolean?                 @default(false)
+  created_at             DateTime                 @db.Timestamp(6)
+  updated_at             DateTime                 @db.Timestamp(6)
+  uuid                   String?                  @unique(map: "index_purchases_on_uuid") @db.VarChar
+  table_object_purchases table_object_purchases[]
 }
 
 model redis_table_object_operations {
@@ -182,92 +214,121 @@ model schema_migrations {
 }
 
 model sessions {
-  id          BigInt   @id @default(autoincrement())
-  user_id     BigInt?
-  app_id      BigInt?
-  token       String?  @unique(map: "index_sessions_on_token") @db.VarChar
-  old_token   String?  @unique(map: "index_sessions_on_old_token") @db.VarChar
-  device_name String?  @db.VarChar
-  device_os   String?  @db.VarChar
-  created_at  DateTime @db.Timestamp(6)
-  updated_at  DateTime @db.Timestamp(6)
+  id                     BigInt                   @id @default(autoincrement())
+  user                   users                    @relation(fields: [user_id], references: [id])
+  user_id                BigInt
+  app                    apps                     @relation(fields: [app_id], references: [id])
+  app_id                 BigInt
+  token                  String?                  @unique(map: "index_sessions_on_token") @db.VarChar
+  old_token              String?                  @unique(map: "index_sessions_on_old_token") @db.VarChar
+  device_name            String?                  @db.VarChar
+  device_os              String?                  @db.VarChar
+  created_at             DateTime                 @db.Timestamp(6)
+  updated_at             DateTime                 @db.Timestamp(6)
+  web_push_subscriptions web_push_subscriptions[]
 }
 
 model table_etags {
   id         BigInt   @id @default(autoincrement())
-  user_id    BigInt?
-  table_id   BigInt?
+  user       users    @relation(fields: [user_id], references: [id])
+  user_id    BigInt
+  table      tables   @relation(fields: [table_id], references: [id])
+  table_id   BigInt
   etag       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
 }
 
 model table_object_collections {
-  id              BigInt   @id @default(autoincrement())
-  table_object_id BigInt?
-  collection_id   BigInt?
-  created_at      DateTime @db.Timestamp(6)
+  id              BigInt        @id @default(autoincrement())
+  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object_id BigInt
+  collection      collections   @relation(fields: [collection_id], references: [id])
+  collection_id   BigInt
+  created_at      DateTime      @db.Timestamp(6)
 }
 
 model table_object_prices {
-  id              BigInt  @id @default(autoincrement())
-  table_object_id BigInt?
-  price           Int?    @default(0)
-  currency        String? @default("eur") @db.VarChar
+  id              BigInt        @id @default(autoincrement())
+  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object_id BigInt
+  price           Int?          @default(0)
+  currency        String?       @default("eur") @db.VarChar
 }
 
 model table_object_properties {
-  id              BigInt  @id @default(autoincrement())
-  table_object_id BigInt?
-  name            String? @db.VarChar
+  id              BigInt        @id @default(autoincrement())
+  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object_id BigInt
+  name            String?       @db.VarChar
   value           String?
 }
 
 model table_object_purchases {
-  id              BigInt   @id @default(autoincrement())
-  table_object_id BigInt?
-  purchase_id     BigInt?
-  created_at      DateTime @db.Timestamp(6)
+  id              BigInt        @id @default(autoincrement())
+  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object_id BigInt
+  purchase        purchases     @relation(fields: [purchase_id], references: [id])
+  purchase_id     BigInt
+  created_at      DateTime      @db.Timestamp(6)
 }
 
 model table_object_user_accesses {
-  id              BigInt   @id @default(autoincrement())
-  user_id         BigInt?
-  table_object_id BigInt?
+  id              BigInt        @id @default(autoincrement())
+  user            users         @relation(fields: [user_id], references: [id])
+  user_id         BigInt
+  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object_id BigInt
+  table           tables?       @relation(fields: [table_alias], references: [id])
   table_alias     BigInt?
-  created_at      DateTime @db.Timestamp(6)
+  created_at      DateTime      @db.Timestamp(6)
 }
 
 model table_objects {
-  id         BigInt   @id @default(autoincrement())
-  user_id    BigInt?
-  table_id   BigInt?
-  uuid       String?  @unique(map: "index_table_objects_on_uuid") @db.VarChar
-  file       Boolean? @default(false)
-  etag       String?  @db.VarChar
-  created_at DateTime @db.Timestamp(6)
-  updated_at DateTime @db.Timestamp(6)
+  id                         BigInt                       @id @default(autoincrement())
+  user                       users                        @relation(fields: [user_id], references: [id])
+  user_id                    BigInt
+  table                      tables                       @relation(fields: [table_id], references: [id])
+  table_id                   BigInt
+  uuid                       String?                      @unique(map: "index_table_objects_on_uuid") @db.VarChar
+  file                       Boolean?                     @default(false)
+  etag                       String?                      @db.VarChar
+  created_at                 DateTime                     @db.Timestamp(6)
+  updated_at                 DateTime                     @db.Timestamp(6)
+  table_object_collections   table_object_collections[]
+  table_object_prices        table_object_prices[]
+  table_object_properties    table_object_properties[]
+  table_object_purchases     table_object_purchases[]
+  table_object_user_accesses table_object_user_accesses[]
 }
 
 model table_property_types {
   id        BigInt  @id @default(autoincrement())
-  table_id  BigInt?
+  table     tables  @relation(fields: [table_id], references: [id])
+  table_id  BigInt
   name      String? @db.VarChar
   data_type Int?    @default(0)
 }
 
 model tables {
-  id         BigInt   @id @default(autoincrement())
-  app_id     BigInt?
-  name       String?  @db.VarChar
-  created_at DateTime @db.Timestamp(6)
-  updated_at DateTime @db.Timestamp(6)
-  cdn        Boolean? @default(false)
+  id                         BigInt                       @id @default(autoincrement())
+  app                        apps                         @relation(fields: [app_id], references: [id])
+  app_id                     BigInt
+  name                       String?                      @db.VarChar
+  created_at                 DateTime                     @db.Timestamp(6)
+  updated_at                 DateTime                     @db.Timestamp(6)
+  cdn                        Boolean?                     @default(false)
+  collections                collections[]
+  table_etags                table_etags[]
+  table_object_user_accesses table_object_user_accesses[]
+  table_objects              table_objects[]
+  table_property_types       table_property_types[]
 }
 
 model user_profile_images {
   id         BigInt   @id @default(autoincrement())
-  user_id    BigInt?
+  user       users    @relation(fields: [user_id], references: [id])
+  user_id    BigInt
   ext        String?  @db.VarChar
   mime_type  String?  @db.VarChar
   etag       String?  @db.VarChar
@@ -290,30 +351,41 @@ model user_snapshots {
 }
 
 model users {
-  id                          BigInt    @id @default(autoincrement())
-  email                       String?   @db.VarChar
-  first_name                  String?   @db.VarChar
-  password_digest             String?   @db.VarChar
-  confirmed                   Boolean?  @default(false)
-  email_confirmation_token    String?   @db.VarChar
-  password_confirmation_token String?   @db.VarChar
-  old_email                   String?   @db.VarChar
-  new_email                   String?   @db.VarChar
-  new_password                String?   @db.VarChar
-  used_storage                BigInt?   @default(0)
-  last_active                 DateTime? @db.Timestamp(6)
-  stripe_customer_id          String?   @db.VarChar
-  plan                        Int?      @default(0)
-  subscription_status         Int?      @default(0)
-  period_end                  DateTime? @db.Timestamp(6)
-  created_at                  DateTime  @db.Timestamp(6)
-  updated_at                  DateTime  @db.Timestamp(6)
+  id                          BigInt                       @id @default(autoincrement())
+  email                       String?                      @db.VarChar
+  first_name                  String?                      @db.VarChar
+  password_digest             String?                      @db.VarChar
+  confirmed                   Boolean?                     @default(false)
+  email_confirmation_token    String?                      @db.VarChar
+  password_confirmation_token String?                      @db.VarChar
+  old_email                   String?                      @db.VarChar
+  new_email                   String?                      @db.VarChar
+  new_password                String?                      @db.VarChar
+  used_storage                BigInt?                      @default(0)
+  last_active                 DateTime?                    @db.Timestamp(6)
+  stripe_customer_id          String?                      @db.VarChar
+  plan                        Int?                         @default(0)
+  subscription_status         Int?                         @default(0)
+  period_end                  DateTime?                    @db.Timestamp(6)
+  created_at                  DateTime                     @db.Timestamp(6)
+  updated_at                  DateTime                     @db.Timestamp(6)
+  app_users                   app_users[]
   devs                        devs[]
+  notifications               notifications[]
+  providers                   providers[]
+  purchases                   purchases[]
+  sessions                    sessions[]
+  table_etags                 table_etags[]
+  table_object_user_accesses  table_object_user_accesses[]
+  table_objects               table_objects[]
+  user_profile_images         user_profile_images[]
+  websocket_connections       websocket_connections[]
 }
 
 model web_push_subscriptions {
   id         BigInt   @id @default(autoincrement())
-  session_id BigInt?
+  session    sessions @relation(fields: [session_id], references: [id])
+  session_id BigInt
   uuid       String?  @unique(map: "index_web_push_subscriptions_on_uuid") @db.VarChar
   endpoint   String?
   p256dh     String?  @db.VarChar
@@ -323,8 +395,10 @@ model web_push_subscriptions {
 
 model websocket_connections {
   id         BigInt   @id @default(autoincrement())
-  user_id    BigInt?
-  app_id     BigInt?
+  user       users    @relation(fields: [user_id], references: [id])
+  user_id    BigInt
+  app        apps     @relation(fields: [app_id], references: [id])
+  app_id     BigInt
   token      String   @db.VarChar
   created_at DateTime @db.Timestamp(6)
 }

@@ -7,74 +7,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model api_endpoints {
-  id                     BigInt                   @id @default(autoincrement())
-  api_slot               api_slots                @relation(fields: [api_slot_id], references: [id])
+model ApiEndpoint {
+  id                     BigInt                @id @default(autoincrement())
+  api_slot               ApiSlot               @relation(fields: [api_slot_id], references: [id])
   api_slot_id            BigInt
-  path                   String?                  @db.VarChar
-  method                 String?                  @db.VarChar
+  path                   String?               @db.VarChar
+  method                 String?               @db.VarChar
   commands               String?
-  caching                Boolean?                 @default(false)
-  created_at             DateTime                 @db.Timestamp(6)
-  updated_at             DateTime                 @db.Timestamp(6)
-  compiled_api_endpoints compiled_api_endpoints[]
+  caching                Boolean?              @default(false)
+  created_at             DateTime              @db.Timestamp(6)
+  updated_at             DateTime              @db.Timestamp(6)
+  compiled_api_endpoints CompiledApiEndpoint[]
+
+  @@map("api_endpoints")
 }
 
-model api_env_vars {
-  id          BigInt    @id @default(autoincrement())
-  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+model ApiEnvVar {
+  id          BigInt  @id @default(autoincrement())
+  api_slot    ApiSlot @relation(fields: [api_slot_id], references: [id])
   api_slot_id BigInt
-  name        String?   @db.VarChar
-  value       String?   @db.VarChar
-  class_name  String?   @db.VarChar
+  name        String? @db.VarChar
+  value       String? @db.VarChar
+  class_name  String? @db.VarChar
+
+  @@map("api_env_vars")
 }
 
-model api_errors {
-  id          BigInt    @id @default(autoincrement())
-  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+model ApiError {
+  id          BigInt  @id @default(autoincrement())
+  api_slot    ApiSlot @relation(fields: [api_slot_id], references: [id])
   api_slot_id BigInt
   code        Int?
-  message     String?   @db.VarChar
+  message     String? @db.VarChar
+
+  @@map("api_errors")
 }
 
-model api_functions {
-  id          BigInt    @id @default(autoincrement())
-  api_slot    api_slots @relation(fields: [api_slot_id], references: [id])
+model ApiFunction {
+  id          BigInt   @id @default(autoincrement())
+  api_slot    ApiSlot  @relation(fields: [api_slot_id], references: [id])
   api_slot_id BigInt
-  name        String?   @db.VarChar
-  params      String?   @db.VarChar
+  name        String?  @db.VarChar
+  params      String?  @db.VarChar
   commands    String?
-  created_at  DateTime  @db.Timestamp(6)
-  updated_at  DateTime  @db.Timestamp(6)
+  created_at  DateTime @db.Timestamp(6)
+  updated_at  DateTime @db.Timestamp(6)
+
+  @@map("api_functions")
 }
 
-model api_slots {
-  id            BigInt          @id @default(autoincrement())
-  api           apis            @relation(fields: [api_id], references: [id])
+model ApiSlot {
+  id            BigInt        @id @default(autoincrement())
+  api           Api           @relation(fields: [api_id], references: [id])
   api_id        BigInt
-  name          String?         @db.VarChar
-  created_at    DateTime        @db.Timestamp(6)
-  updated_at    DateTime        @db.Timestamp(6)
+  name          String?       @db.VarChar
+  created_at    DateTime      @db.Timestamp(6)
+  updated_at    DateTime      @db.Timestamp(6)
   documentation String?
-  api_endpoints api_endpoints[]
-  api_functions api_functions[]
-  api_errors    api_errors[]
-  api_env_vars  api_env_vars[]
+  api_endpoints ApiEndpoint[]
+  api_functions ApiFunction[]
+  api_errors    ApiError[]
+  api_env_vars  ApiEnvVar[]
+
+  @@map("api_slots")
 }
 
-model apis {
-  id         BigInt      @id @default(autoincrement())
-  app        apps        @relation(fields: [app_id], references: [id])
+model Api {
+  id         BigInt    @id @default(autoincrement())
+  app        App       @relation(fields: [app_id], references: [id])
   app_id     BigInt
-  name       String?     @db.VarChar
-  created_at DateTime    @db.Timestamp(6)
-  updated_at DateTime    @db.Timestamp(6)
-  api_slots  api_slots[]
+  name       String?   @db.VarChar
+  created_at DateTime  @db.Timestamp(6)
+  updated_at DateTime  @db.Timestamp(6)
+  api_slots  ApiSlot[]
+
+  @@map("apis")
 }
 
-model app_user_snapshots {
+model AppUserSnapshot {
   id                BigInt    @id @default(autoincrement())
-  app               apps      @relation(fields: [app_id], references: [id])
+  app               App       @relation(fields: [app_id], references: [id])
   app_id            BigInt
   time              DateTime? @db.Timestamp(6)
   daily_active      Int?      @default(0)
@@ -86,39 +98,45 @@ model app_user_snapshots {
   pro_plan          Int?      @default(0)
   email_confirmed   Int?      @default(0)
   email_unconfirmed Int?      @default(0)
+
+  @@map("app_user_snapshots")
 }
 
-model app_users {
+model AppUser {
   id           BigInt    @id @default(autoincrement())
-  user         users     @relation(fields: [user_id], references: [id])
+  user         User      @relation(fields: [user_id], references: [id])
   user_id      BigInt
-  app          apps      @relation(fields: [app_id], references: [id])
+  app          App       @relation(fields: [app_id], references: [id])
   app_id       BigInt
   used_storage BigInt?   @default(0)
   last_active  DateTime? @db.Timestamp(6)
   created_at   DateTime  @db.Timestamp(6)
   updated_at   DateTime  @db.Timestamp(6)
+
+  @@map("app_users")
 }
 
-model apps {
-  id                    BigInt                  @id @default(autoincrement())
-  dev                   devs                    @relation(fields: [dev_id], references: [id])
+model App {
+  id                    BigInt                @id @default(autoincrement())
+  dev                   Dev                   @relation(fields: [dev_id], references: [id])
   dev_id                BigInt
-  name                  String?                 @db.VarChar
-  description           String?                 @db.VarChar
-  published             Boolean?                @default(false)
-  web_link              String?                 @db.VarChar
-  google_play_link      String?                 @db.VarChar
-  microsoft_store_link  String?                 @db.VarChar
-  created_at            DateTime                @db.Timestamp(6)
-  updated_at            DateTime                @db.Timestamp(6)
-  apis                  apis[]
-  app_users             app_users[]
-  app_user_snapshots    app_user_snapshots[]
-  tables                tables[]
-  notifications         notifications[]
-  sessions              sessions[]
-  websocket_connections websocket_connections[]
+  name                  String?               @db.VarChar
+  description           String?               @db.VarChar
+  published             Boolean?              @default(false)
+  web_link              String?               @db.VarChar
+  google_play_link      String?               @db.VarChar
+  microsoft_store_link  String?               @db.VarChar
+  created_at            DateTime              @db.Timestamp(6)
+  updated_at            DateTime              @db.Timestamp(6)
+  apis                  Api[]
+  app_users             AppUser[]
+  app_user_snapshots    AppUserSnapshot[]
+  tables                Table[]
+  notifications         Notification[]
+  sessions              Session[]
+  websocket_connections WebsocketConnection[]
+
+  @@map("apps")
 }
 
 model ar_internal_metadata {
@@ -126,44 +144,52 @@ model ar_internal_metadata {
   value      String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
+
+  @@ignore
 }
 
-model collections {
-  id                       BigInt                     @id @default(autoincrement())
-  table                    tables                     @relation(fields: [table_id], references: [id])
+model Collection {
+  id                       BigInt                  @id @default(autoincrement())
+  table                    Table                   @relation(fields: [table_id], references: [id])
   table_id                 BigInt
-  name                     String?                    @db.VarChar
-  created_at               DateTime                   @db.Timestamp(6)
-  updated_at               DateTime                   @db.Timestamp(6)
-  table_object_collections table_object_collections[]
+  name                     String?                 @db.VarChar
+  created_at               DateTime                @db.Timestamp(6)
+  updated_at               DateTime                @db.Timestamp(6)
+  table_object_collections TableObjectCollection[]
+
+  @@map("collections")
 }
 
-model compiled_api_endpoints {
-  id              BigInt        @id @default(autoincrement())
-  api_endpoint    api_endpoints @relation(fields: [api_endpoint_id], references: [id])
+model CompiledApiEndpoint {
+  id              BigInt      @id @default(autoincrement())
+  api_endpoint    ApiEndpoint @relation(fields: [api_endpoint_id], references: [id])
   api_endpoint_id BigInt
   code            String?
-  created_at      DateTime      @db.Timestamp(6)
-  updated_at      DateTime      @db.Timestamp(6)
+  created_at      DateTime    @db.Timestamp(6)
+  updated_at      DateTime    @db.Timestamp(6)
+
+  @@map("compiled_api_endpoints")
 }
 
-model devs {
+model Dev {
   id         BigInt   @id @default(autoincrement())
-  user       users    @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
   user_id    BigInt
   api_key    String?  @db.VarChar
   secret_key String?  @db.VarChar
   uuid       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
-  apps       apps[]
+  apps       App[]
+
+  @@map("devs")
 }
 
-model notifications {
+model Notification {
   id         BigInt    @id @default(autoincrement())
-  user       users     @relation(fields: [user_id], references: [id])
+  user       User      @relation(fields: [user_id], references: [id])
   user_id    BigInt
-  app        apps      @relation(fields: [app_id], references: [id])
+  app        App       @relation(fields: [app_id], references: [id])
   app_id     BigInt
   uuid       String?   @unique(map: "index_notifications_on_uuid") @db.VarChar
   time       DateTime? @db.Timestamp(6)
@@ -172,171 +198,203 @@ model notifications {
   body       String?   @db.VarChar
   created_at DateTime  @db.Timestamp(6)
   updated_at DateTime  @db.Timestamp(6)
+
+  @@map("notifications")
 }
 
-model providers {
+model Provider {
   id                BigInt   @id @default(autoincrement())
-  user              users    @relation(fields: [user_id], references: [id])
+  user              User     @relation(fields: [user_id], references: [id])
   user_id           BigInt
   stripe_account_id String?  @db.VarChar
   created_at        DateTime @db.Timestamp(6)
   updated_at        DateTime @db.Timestamp(6)
+
+  @@map("providers")
 }
 
-model purchases {
-  id                     BigInt                   @id @default(autoincrement())
-  user                   users                    @relation(fields: [user_id], references: [id])
+model Purchase {
+  id                     BigInt                @id @default(autoincrement())
+  user                   User                  @relation(fields: [user_id], references: [id])
   user_id                BigInt
-  payment_intent_id      String?                  @db.VarChar
-  provider_name          String?                  @db.VarChar
-  provider_image         String?                  @db.VarChar
-  product_name           String?                  @db.VarChar
-  product_image          String?                  @db.VarChar
+  payment_intent_id      String?               @db.VarChar
+  provider_name          String?               @db.VarChar
+  provider_image         String?               @db.VarChar
+  product_name           String?               @db.VarChar
+  product_image          String?               @db.VarChar
   price                  Int?
-  currency               String?                  @db.VarChar
-  completed              Boolean?                 @default(false)
-  created_at             DateTime                 @db.Timestamp(6)
-  updated_at             DateTime                 @db.Timestamp(6)
-  uuid                   String?                  @unique(map: "index_purchases_on_uuid") @db.VarChar
-  table_object_purchases table_object_purchases[]
+  currency               String?               @db.VarChar
+  completed              Boolean?              @default(false)
+  created_at             DateTime              @db.Timestamp(6)
+  updated_at             DateTime              @db.Timestamp(6)
+  uuid                   String?               @unique(map: "index_purchases_on_uuid") @db.VarChar
+  table_object_purchases TableObjectPurchase[]
+
+  @@map("purchases")
 }
 
-model redis_table_object_operations {
+model RedisTableObjectOperation {
   id                BigInt   @id @default(autoincrement())
   table_object_uuid String?  @db.VarChar
   operation         String?  @db.VarChar
   created_at        DateTime @db.Timestamp(6)
   updated_at        DateTime @db.Timestamp(6)
+
+  @@map("redis_table_object_operations")
 }
 
 model schema_migrations {
   version String @id @db.VarChar
+
+  @@ignore
 }
 
-model sessions {
-  id                     BigInt                   @id @default(autoincrement())
-  user                   users                    @relation(fields: [user_id], references: [id])
+model Session {
+  id                     BigInt                @id @default(autoincrement())
+  user                   User                  @relation(fields: [user_id], references: [id])
   user_id                BigInt
-  app                    apps                     @relation(fields: [app_id], references: [id])
+  app                    App                   @relation(fields: [app_id], references: [id])
   app_id                 BigInt
-  token                  String?                  @unique(map: "index_sessions_on_token") @db.VarChar
-  old_token              String?                  @unique(map: "index_sessions_on_old_token") @db.VarChar
-  device_name            String?                  @db.VarChar
-  device_os              String?                  @db.VarChar
-  created_at             DateTime                 @db.Timestamp(6)
-  updated_at             DateTime                 @db.Timestamp(6)
-  web_push_subscriptions web_push_subscriptions[]
+  token                  String?               @unique(map: "index_sessions_on_token") @db.VarChar
+  old_token              String?               @unique(map: "index_sessions_on_old_token") @db.VarChar
+  device_name            String?               @db.VarChar
+  device_os              String?               @db.VarChar
+  created_at             DateTime              @db.Timestamp(6)
+  updated_at             DateTime              @db.Timestamp(6)
+  web_push_subscriptions WebPushSubscription[]
+
+  @@map("sessions")
 }
 
-model table_etags {
+model TableEtag {
   id         BigInt   @id @default(autoincrement())
-  user       users    @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
   user_id    BigInt
-  table      tables   @relation(fields: [table_id], references: [id])
+  table      Table    @relation(fields: [table_id], references: [id])
   table_id   BigInt
   etag       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
+
+  @@map("table_etags")
 }
 
-model table_object_collections {
-  id              BigInt        @id @default(autoincrement())
-  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+model TableObjectCollection {
+  id              BigInt      @id @default(autoincrement())
+  table_object    TableObject @relation(fields: [table_object_id], references: [id])
   table_object_id BigInt
-  collection      collections   @relation(fields: [collection_id], references: [id])
+  collection      Collection  @relation(fields: [collection_id], references: [id])
   collection_id   BigInt
-  created_at      DateTime      @db.Timestamp(6)
+  created_at      DateTime    @db.Timestamp(6)
+
+  @@map("table_object_collections")
 }
 
-model table_object_prices {
-  id              BigInt        @id @default(autoincrement())
-  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+model TableObjectPrice {
+  id              BigInt      @id @default(autoincrement())
+  table_object    TableObject @relation(fields: [table_object_id], references: [id])
   table_object_id BigInt
-  price           Int?          @default(0)
-  currency        String?       @default("eur") @db.VarChar
+  price           Int?        @default(0)
+  currency        String?     @default("eur") @db.VarChar
+
+  @@map("table_object_prices")
 }
 
-model table_object_properties {
-  id              BigInt        @id @default(autoincrement())
-  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+model TableObjectProperty {
+  id              BigInt      @id @default(autoincrement())
+  table_object    TableObject @relation(fields: [table_object_id], references: [id])
   table_object_id BigInt
-  name            String?       @db.VarChar
+  name            String?     @db.VarChar
   value           String?
+
+  @@map("table_object_properties")
 }
 
-model table_object_purchases {
-  id              BigInt        @id @default(autoincrement())
-  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+model TableObjectPurchase {
+  id              BigInt      @id @default(autoincrement())
+  table_object    TableObject @relation(fields: [table_object_id], references: [id])
   table_object_id BigInt
-  purchase        purchases     @relation(fields: [purchase_id], references: [id])
+  purchase        Purchase    @relation(fields: [purchase_id], references: [id])
   purchase_id     BigInt
-  created_at      DateTime      @db.Timestamp(6)
+  created_at      DateTime    @db.Timestamp(6)
+
+  @@map("table_object_purchases")
 }
 
-model table_object_user_accesses {
-  id              BigInt        @id @default(autoincrement())
-  user            users         @relation(fields: [user_id], references: [id])
+model TableObjectUserAccess {
+  id              BigInt      @id @default(autoincrement())
+  user            User        @relation(fields: [user_id], references: [id])
   user_id         BigInt
-  table_object    table_objects @relation(fields: [table_object_id], references: [id])
+  table_object    TableObject @relation(fields: [table_object_id], references: [id])
   table_object_id BigInt
-  table           tables?       @relation(fields: [table_alias], references: [id])
+  table           Table?      @relation(fields: [table_alias], references: [id])
   table_alias     BigInt?
-  created_at      DateTime      @db.Timestamp(6)
+  created_at      DateTime    @db.Timestamp(6)
+
+  @@map("table_object_user_accesses")
 }
 
-model table_objects {
-  id                         BigInt                       @id @default(autoincrement())
-  user                       users                        @relation(fields: [user_id], references: [id])
+model TableObject {
+  id                         BigInt                  @id @default(autoincrement())
+  user                       User                    @relation(fields: [user_id], references: [id])
   user_id                    BigInt
-  table                      tables                       @relation(fields: [table_id], references: [id])
+  table                      Table                   @relation(fields: [table_id], references: [id])
   table_id                   BigInt
-  uuid                       String?                      @unique(map: "index_table_objects_on_uuid") @db.VarChar
-  file                       Boolean?                     @default(false)
-  etag                       String?                      @db.VarChar
-  created_at                 DateTime                     @db.Timestamp(6)
-  updated_at                 DateTime                     @db.Timestamp(6)
-  table_object_collections   table_object_collections[]
-  table_object_prices        table_object_prices[]
-  table_object_properties    table_object_properties[]
-  table_object_purchases     table_object_purchases[]
-  table_object_user_accesses table_object_user_accesses[]
+  uuid                       String?                 @unique(map: "index_table_objects_on_uuid") @db.VarChar
+  file                       Boolean?                @default(false)
+  etag                       String?                 @db.VarChar
+  created_at                 DateTime                @db.Timestamp(6)
+  updated_at                 DateTime                @db.Timestamp(6)
+  table_object_collections   TableObjectCollection[]
+  table_object_prices        TableObjectPrice[]
+  table_object_properties    TableObjectProperty[]
+  table_object_purchases     TableObjectPurchase[]
+  table_object_user_accesses TableObjectUserAccess[]
+
+  @@map("table_objects")
 }
 
-model table_property_types {
+model TablePropertyType {
   id        BigInt  @id @default(autoincrement())
-  table     tables  @relation(fields: [table_id], references: [id])
+  table     Table   @relation(fields: [table_id], references: [id])
   table_id  BigInt
   name      String? @db.VarChar
   data_type Int?    @default(0)
+
+  @@map("table_property_types")
 }
 
-model tables {
-  id                         BigInt                       @id @default(autoincrement())
-  app                        apps                         @relation(fields: [app_id], references: [id])
+model Table {
+  id                         BigInt                  @id @default(autoincrement())
+  app                        App                     @relation(fields: [app_id], references: [id])
   app_id                     BigInt
-  name                       String?                      @db.VarChar
-  created_at                 DateTime                     @db.Timestamp(6)
-  updated_at                 DateTime                     @db.Timestamp(6)
-  cdn                        Boolean?                     @default(false)
-  collections                collections[]
-  table_etags                table_etags[]
-  table_object_user_accesses table_object_user_accesses[]
-  table_objects              table_objects[]
-  table_property_types       table_property_types[]
+  name                       String?                 @db.VarChar
+  created_at                 DateTime                @db.Timestamp(6)
+  updated_at                 DateTime                @db.Timestamp(6)
+  cdn                        Boolean?                @default(false)
+  collections                Collection[]
+  table_etags                TableEtag[]
+  table_object_user_accesses TableObjectUserAccess[]
+  table_objects              TableObject[]
+  table_property_types       TablePropertyType[]
+
+  @@map("tables")
 }
 
-model user_profile_images {
+model UserProfileImage {
   id         BigInt   @id @default(autoincrement())
-  user       users    @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
   user_id    BigInt
   ext        String?  @db.VarChar
   mime_type  String?  @db.VarChar
   etag       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
   updated_at DateTime @db.Timestamp(6)
+
+  @@map("user_profile_images")
 }
 
-model user_snapshots {
+model UserSnapshot {
   id                BigInt    @id @default(autoincrement())
   time              DateTime? @db.Timestamp(6)
   daily_active      Int?      @default(0)
@@ -348,57 +406,65 @@ model user_snapshots {
   pro_plan          Int?      @default(0)
   email_confirmed   Int?      @default(0)
   email_unconfirmed Int?      @default(0)
+
+  @@map("user_snapshots")
 }
 
-model users {
-  id                          BigInt                       @id @default(autoincrement())
-  email                       String?                      @db.VarChar
-  first_name                  String?                      @db.VarChar
-  password_digest             String?                      @db.VarChar
-  confirmed                   Boolean?                     @default(false)
-  email_confirmation_token    String?                      @db.VarChar
-  password_confirmation_token String?                      @db.VarChar
-  old_email                   String?                      @db.VarChar
-  new_email                   String?                      @db.VarChar
-  new_password                String?                      @db.VarChar
-  used_storage                BigInt?                      @default(0)
-  last_active                 DateTime?                    @db.Timestamp(6)
-  stripe_customer_id          String?                      @db.VarChar
-  plan                        Int?                         @default(0)
-  subscription_status         Int?                         @default(0)
-  period_end                  DateTime?                    @db.Timestamp(6)
-  created_at                  DateTime                     @db.Timestamp(6)
-  updated_at                  DateTime                     @db.Timestamp(6)
-  app_users                   app_users[]
-  devs                        devs[]
-  notifications               notifications[]
-  providers                   providers[]
-  purchases                   purchases[]
-  sessions                    sessions[]
-  table_etags                 table_etags[]
-  table_object_user_accesses  table_object_user_accesses[]
-  table_objects               table_objects[]
-  user_profile_images         user_profile_images[]
-  websocket_connections       websocket_connections[]
+model User {
+  id                          BigInt                  @id @default(autoincrement())
+  email                       String?                 @db.VarChar
+  first_name                  String?                 @db.VarChar
+  password_digest             String?                 @db.VarChar
+  confirmed                   Boolean?                @default(false)
+  email_confirmation_token    String?                 @db.VarChar
+  password_confirmation_token String?                 @db.VarChar
+  old_email                   String?                 @db.VarChar
+  new_email                   String?                 @db.VarChar
+  new_password                String?                 @db.VarChar
+  used_storage                BigInt?                 @default(0)
+  last_active                 DateTime?               @db.Timestamp(6)
+  stripe_customer_id          String?                 @db.VarChar
+  plan                        Int?                    @default(0)
+  subscription_status         Int?                    @default(0)
+  period_end                  DateTime?               @db.Timestamp(6)
+  created_at                  DateTime                @db.Timestamp(6)
+  updated_at                  DateTime                @db.Timestamp(6)
+  app_users                   AppUser[]
+  devs                        Dev[]
+  notifications               Notification[]
+  providers                   Provider[]
+  purchases                   Purchase[]
+  sessions                    Session[]
+  table_etags                 TableEtag[]
+  table_object_user_accesses  TableObjectUserAccess[]
+  table_objects               TableObject[]
+  user_profile_images         UserProfileImage[]
+  websocket_connections       WebsocketConnection[]
+
+  @@map("users")
 }
 
-model web_push_subscriptions {
+model WebPushSubscription {
   id         BigInt   @id @default(autoincrement())
-  session    sessions @relation(fields: [session_id], references: [id])
+  session    Session  @relation(fields: [session_id], references: [id])
   session_id BigInt
   uuid       String?  @unique(map: "index_web_push_subscriptions_on_uuid") @db.VarChar
   endpoint   String?
   p256dh     String?  @db.VarChar
   auth       String?  @db.VarChar
   created_at DateTime @db.Timestamp(6)
+
+  @@map("web_push_subscriptions")
 }
 
-model websocket_connections {
+model WebsocketConnection {
   id         BigInt   @id @default(autoincrement())
-  user       users    @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
   user_id    BigInt
-  app        apps     @relation(fields: [app_id], references: [id])
+  app        App      @relation(fields: [app_id], references: [id])
   app_id     BigInt
   token      String   @db.VarChar
   created_at DateTime @db.Timestamp(6)
+
+  @@map("websocket_connections")
 }

@@ -9,5 +9,11 @@ export const typeDefs = `#graphql
 
 	type TableObject {
 		uuid: String!
+		tableObjectProperties: [TableObjectProperty!]!
+	}
+
+	type TableObjectProperty {
+		name: String!
+		value: String
 	}
 `

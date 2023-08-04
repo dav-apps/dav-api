@@ -1,5 +1,13 @@
 export const typeDefs = `#graphql
 	type Query {
-		hello: String!
+		tableObjectsByCollection(
+			collectionName: String!
+			limit: Int
+			offset: Int
+		): [TableObject!]!
+	}
+
+	type TableObject {
+		uuid: String!
 	}
 `

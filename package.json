@@ -1,11 +1,26 @@
 {
-  "name": "dav-api",
-  "version": "0.1.0",
-  "main": "dist/server.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "license": "MIT"
+	"name": "dav-api",
+	"version": "0.1.0",
+	"main": "dist/server.js",
+	"type": "module",
+	"scripts": {
+		"dev": "concurrently \"npm:*:watch\"",
+		"compile:watch": "tsc -w",
+		"serve:watch": "nodemon dist/server.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"@apollo/server": "^4.9.0",
+		"@graphql-tools/schema": "^10.0.0",
+		"@graphql-tools/utils": "^10.0.4",
+		"cors": "^2.8.5",
+		"express": "^4.18.2",
+		"graphql": "^16.7.1"
+	},
+	"devDependencies": {
+		"concurrently": "^8.2.0",
+		"nodemon": "^3.0.1",
+		"typescript": "^5.1.6"
+	}
 }
-  

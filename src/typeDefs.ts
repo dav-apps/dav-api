@@ -4,16 +4,26 @@ export const typeDefs = `#graphql
 			collectionName: String!
 			limit: Int
 			offset: Int
-		): [TableObject!]!
+		): TableObjectList!
 	}
 
 	type TableObject {
 		uuid: String!
-		tableObjectProperties: [TableObjectProperty!]!
+		tableObjectProperties(limit: Int, offset: Int): TableObjectPropertyList!
+	}
+
+	type TableObjectList {
+		total: Int!
+		items: [TableObject!]!
 	}
 
 	type TableObjectProperty {
 		name: String!
 		value: String
+	}
+
+	type TableObjectPropertyList {
+		total: Int!
+		items: [TableObjectProperty!]!
 	}
 `

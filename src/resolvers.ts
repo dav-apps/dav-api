@@ -6,6 +6,7 @@ export const resolvers = {
 		tableObjectsByCollection: tableObjectResolvers.tableObjectsByCollection
 	},
 	TableObject: {
+		properties: tableObjectResolvers.properties
 	},
 	JSON: GraphQLJSON,
 	JSONObject: GraphQLJSONObject

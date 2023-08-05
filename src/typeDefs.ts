@@ -12,21 +12,11 @@ export const typeDefs = `#graphql
 
 	type TableObject {
 		uuid: String!
-		tableObjectProperties(limit: Int, offset: Int): TableObjectPropertyList!
+		properties: JSON
 	}
 
 	type TableObjectList {
 		total: Int!
 		items: [TableObject!]!
-	}
-
-	type TableObjectProperty {
-		name: String!
-		value: String
-	}
-
-	type TableObjectPropertyList {
-		total: Int!
-		items: [TableObjectProperty!]!
 	}
 `

@@ -1,4 +1,4 @@
-import { TableObject, TableObjectProperty } from "@prisma/client"
+import { TableObject } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 
 export async function tableObjectsByCollection(
@@ -40,37 +40,22 @@ export async function tableObjectsByCollection(
 	}
 }
 
-export async function tableObjectProperties(
+export async function properties(
 	tableObject: TableObject,
-	args: { limit?: number; offset?: number },
+	args: any,
 	context: ResolverContext
-): Promise<List<TableObjectProperty>> {
-	let limit = args.limit || 10
-	let offset = args.offset || 0
-
+): Promise<{ [key: string]: string | number | boolean }> {
 	let properties = await context.prisma.tableObjectProperty.findMany({
 		where: {
 			table_object_id: tableObject.id
 		}
 	})
 
-	const where = {
-		table_object_id: tableObject.id
+	let result = {}
+
+	for (let property of properties) {
+		result[property.name] = property.value
 	}
 
-	const [count, data] = await Promise.all([
-		context.prisma.tableObjectProperty.count({
-			where
-		}),
-		context.prisma.tableObjectProperty.findMany({
-			take: limit,
-			skip: offset,
-			where
-		})
-	])
-
-	return {
-		total: count,
-		items: data
-	}
+	return result
 }

@@ -1,4 +1,7 @@
 export const typeDefs = `#graphql
+	scalar JSON
+	scalar JSONObject
+
 	type Query {
 		tableObjectsByCollection(
 			collectionName: String!

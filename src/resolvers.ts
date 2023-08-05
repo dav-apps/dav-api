@@ -1,3 +1,4 @@
+import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 
 export const resolvers = {
@@ -5,6 +6,7 @@ export const resolvers = {
 		tableObjectsByCollection: tableObjectResolvers.tableObjectsByCollection
 	},
 	TableObject: {
-		tableObjectProperties: tableObjectResolvers.tableObjectProperties
-	}
+	},
+	JSON: GraphQLJSON,
+	JSONObject: GraphQLJSONObject
 }

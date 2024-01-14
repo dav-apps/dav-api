@@ -12,6 +12,7 @@ import { resolvers } from "./src/resolvers.js"
 const port = process.env.PORT || 4000
 const app = express()
 const httpServer = http.createServer(app)
+
 const prisma = new PrismaClient()
 
 let schema = makeExecutableSchema({
@@ -31,7 +32,10 @@ app.use(
 	cors<cors.CorsRequest>(),
 	express.json({ type: "application/json", limit: "50mb" }),
 	expressMiddleware(server, {
-		context: async () => ({ prisma })
+		context: async ({ req }) => ({
+			prisma,
+			authorization: req.headers.authorization
+		})
 	})
 )
 

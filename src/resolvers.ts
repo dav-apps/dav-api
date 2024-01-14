@@ -3,7 +3,7 @@ import * as tableObjectResolvers from "./resolvers/tableObject.js"
 
 export const resolvers = {
 	Query: {
-		tableObjectsByCollection: tableObjectResolvers.tableObjectsByCollection
+		retrieveTableObject: tableObjectResolvers.retrieveTableObject
 	},
 	TableObject: {
 		properties: tableObjectResolvers.properties

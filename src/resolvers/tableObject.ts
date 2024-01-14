@@ -1,43 +1,57 @@
 import { TableObject } from "@prisma/client"
-import { ResolverContext, List } from "../types.js"
+import { ResolverContext } from "../types.js"
+import { apiErrors } from "../errors.js"
+import { throwApiError } from "../utils.js"
 
-export async function tableObjectsByCollection(
+export async function retrieveTableObject(
 	parent: any,
-	args: { collectionName: string; limit?: number; offset?: number },
+	args: { uuid: string },
 	context: ResolverContext
-): Promise<List<TableObject>> {
-	let limit = args.limit || 10
-	let offset = args.offset || 0
+): Promise<TableObject> {
+	const accessToken = context.authorization
 
-	let collection = await context.prisma.collection.findFirst({
-		where: { name: args.collectionName },
-		select: {
-			id: true,
-			table_object_collections: {
-				take: limit,
-				skip: offset,
-				select: {
-					table_object: true
-				}
-			}
-		}
-	})
-
-	if (collection == null) {
-		return {
-			total: 0,
-			items: []
-		}
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
 	}
 
-	let count = await context.prisma.tableObjectCollection.count({
-		where: { collection_id: collection.id }
+	// Get the session
+	const session = await context.prisma.session.findFirst({
+		where: { token: accessToken }
 	})
 
-	return {
-		total: count,
-		items: collection.table_object_collections.map(toc => toc.table_object)
+	// Get the table object
+	const tableObject = await context.prisma.tableObject.findFirst({
+		where: { uuid: args.uuid },
+		include: { table: true }
+	})
+
+	if (tableObject == null) {
+		throwApiError(apiErrors.tableObjectDoesNotExist)
 	}
+
+	// Check if the user can access the table object
+	const userAccess = await context.prisma.tableObjectUserAccess.findFirst({
+		where: { userId: session.userId, tableObjectId: tableObject.id }
+	})
+	let tableId = tableObject.tableId
+
+	if (userAccess == null) {
+		// Make sure the table object belongs to the user and app
+		if (
+			tableObject.userId != session.userId ||
+			tableObject.table.appId != session.appId
+		) {
+			throwApiError(apiErrors.actionNotAllowed)
+		}
+	} else {
+		if (userAccess.tableAlias != null) {
+			tableId = userAccess.tableAlias
+		}
+
+		tableObject.tableId = tableId
+	}
+
+	return tableObject
 }
 
 export async function properties(
@@ -47,7 +61,7 @@ export async function properties(
 ): Promise<{ [key: string]: string | number | boolean }> {
 	let properties = await context.prisma.tableObjectProperty.findMany({
 		where: {
-			table_object_id: tableObject.id
+			tableObjectId: tableObject.id
 		}
 	})
 

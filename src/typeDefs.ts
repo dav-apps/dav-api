@@ -3,11 +3,7 @@ export const typeDefs = `#graphql
 	scalar JSONObject
 
 	type Query {
-		tableObjectsByCollection(
-			collectionName: String!
-			limit: Int
-			offset: Int
-		): TableObjectList!
+		retrieveTableObject(uuid: String!): TableObject
 	}
 
 	type TableObject {

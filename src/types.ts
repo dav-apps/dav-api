@@ -9,3 +9,9 @@ export interface List<T> {
 	total: number
 	items: T[]
 }
+
+export interface ApiError {
+	code: string
+	message: string
+	status?: number
+}

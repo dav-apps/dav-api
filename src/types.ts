@@ -17,3 +17,9 @@ export interface ApiError {
 	message: string
 	status?: number
 }
+
+//#region Models
+export interface CheckoutSession {
+	url: string
+}
+//#endregion

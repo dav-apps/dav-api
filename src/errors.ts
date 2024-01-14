@@ -28,9 +28,22 @@ export const apiErrors = {
 		message: "Session has ended and must be renewed",
 		status: 403
 	},
+	tableObjectHasNoPrice: {
+		code: "TABLE_OBJECT_HAS_NO_PRICE",
+		message: "TableObject needs a price to be purchased or ordered",
+		status: 400
+	},
 	tableObjectDoesNotExist: {
 		code: "TABLE_OBJECT_NOT_EXISTS",
 		message: "TableObject does not exist",
 		status: 404
 	}
+}
+
+export const validationErrors = {
+	productNameTooShort: "PRODUCT_NAME_TOO_SHORT",
+	productNameTooLong: "PRODUCT_NAME_TOO_LONG",
+	productImageInvalid: "PRODUCT_IMAGE_INVALID",
+	successUrlInvalid: "SUCCESS_URL_INVALID",
+	cancelUrlInvalid: "CANCEL_URL_INVALID"
 }

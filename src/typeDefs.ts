@@ -6,6 +6,16 @@ export const typeDefs = `#graphql
 		retrieveTableObject(uuid: String!): TableObject
 	}
 
+	type Mutation {
+		createCheckoutSession(
+			tableObjectUuid: String!
+			productName: String!
+			productImage: String!
+			successUrl: String!
+			cancelUrl: String!
+		): CheckoutSession
+	}
+
 	type TableObject {
 		uuid: String!
 		properties: JSON
@@ -14,5 +24,9 @@ export const typeDefs = `#graphql
 	type TableObjectList {
 		total: Int!
 		items: [TableObject!]!
+	}
+
+	type CheckoutSession {
+		url: String!
 	}
 `

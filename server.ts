@@ -6,14 +6,15 @@ import express from "express"
 import http from "http"
 import cors from "cors"
 import { PrismaClient } from "@prisma/client"
+import Stripe from "stripe"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 
 const port = process.env.PORT || 4000
 const app = express()
 const httpServer = http.createServer(app)
-
 const prisma = new PrismaClient()
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 let schema = makeExecutableSchema({
 	typeDefs,
@@ -33,8 +34,9 @@ app.use(
 	express.json({ type: "application/json", limit: "50mb" }),
 	expressMiddleware(server, {
 		context: async ({ req }) => ({
+			authorization: req.headers.authorization,
 			prisma,
-			authorization: req.headers.authorization
+			stripe
 		})
 	})
 )

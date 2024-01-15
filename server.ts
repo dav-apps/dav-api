@@ -9,12 +9,14 @@ import { PrismaClient } from "@prisma/client"
 import Stripe from "stripe"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
+import { setup as stripeWebhookSetup } from "./src/endpoints/stripeWebhook.js"
 
 const port = process.env.PORT || 4000
 const app = express()
 const httpServer = http.createServer(app)
-const prisma = new PrismaClient()
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+export const prisma = new PrismaClient()
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 let schema = makeExecutableSchema({
 	typeDefs,
@@ -27,6 +29,9 @@ const server = new ApolloServer({
 })
 
 await server.start()
+
+// Call setup function of each endpoint file
+stripeWebhookSetup(app)
 
 app.use(
 	"/",

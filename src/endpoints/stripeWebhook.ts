@@ -1,7 +1,7 @@
 import { Express, Request, Response, raw } from "express"
 import cors from "cors"
 import Stripe from "stripe"
-import { stripe } from "../../server.js"
+import { prisma, stripe } from "../../server.js"
 
 const endpointSecret = process.env.STRIPE_WEBHOOKS_SECRET
 
@@ -27,6 +27,65 @@ async function stripeWebhook(req: Request, res: Response) {
 	// Handle the event
 	if (event.type == "payment_intent.succeeded") {
 		const paymentIntent = event.data.object as Stripe.PaymentIntent
+
+		// Get the order id from the payment intent
+		const orderId = paymentIntent.metadata.orderId
+
+		if (orderId != null) {
+			// Find the order & update it
+			const order = await prisma.order.findFirst({
+				where: { id: BigInt(orderId) }
+			})
+
+			if (order.shippingAddressId == null) {
+				// Try to find an existing shipping address with these values
+				let shippingAddress = await prisma.shippingAddress.findFirst({
+					where: {
+						userId: order.userId,
+						name: paymentIntent.shipping.name,
+						city: paymentIntent.shipping.address.city,
+						country: paymentIntent.shipping.address.country,
+						line1: paymentIntent.shipping.address.line1,
+						line2: paymentIntent.shipping.address.line2,
+						postalCode: paymentIntent.shipping.address.postal_code,
+						state: paymentIntent.shipping.address.state
+					}
+				})
+
+				if (shippingAddress == null) {
+					// Create a new shipping address
+					shippingAddress = await prisma.shippingAddress.create({
+						data: {
+							user: { connect: { id: order.userId } },
+							name: paymentIntent.shipping.name,
+							city: paymentIntent.shipping.address.city,
+							country: paymentIntent.shipping.address.country,
+							line1: paymentIntent.shipping.address.line1,
+							line2: paymentIntent.shipping.address.line2,
+							postalCode: paymentIntent.shipping.address.postal_code,
+							state: paymentIntent.shipping.address.state
+						}
+					})
+				}
+
+				// Update the order with the shipping address
+				await prisma.order.update({
+					where: { id: order.id },
+					data: {
+						shippingAddress: { connect: { id: shippingAddress.id } }
+					}
+				})
+			}
+
+			// Update the order with the payment_intent_id
+			await prisma.order.update({
+				where: { id: order.id },
+				data: {
+					paymentIntentId: paymentIntent.id,
+					completed: true
+				}
+			})
+		}
 	}
 
 	res.send()

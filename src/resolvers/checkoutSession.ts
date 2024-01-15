@@ -34,7 +34,7 @@ export async function createCheckoutSession(
 	// Get the table object
 	const tableObject = await context.prisma.tableObject.findFirst({
 		where: { uuid: args.tableObjectUuid },
-		include: { table_object_prices: { where: { currency: "eur" } } }
+		include: { tableObjectPrices: { where: { currency: "eur" } } }
 	})
 
 	if (tableObject == null) {
@@ -42,7 +42,7 @@ export async function createCheckoutSession(
 	}
 
 	// Check if the table object has a price in the given currency
-	if (tableObject.table_object_prices.length == 0) {
+	if (tableObject.tableObjectPrices.length == 0) {
 		throwApiError(apiErrors.tableObjectHasNoPrice)
 	}
 
@@ -54,7 +54,17 @@ export async function createCheckoutSession(
 		validateCancelUrl(args.cancelUrl)
 	)
 
-	let price = tableObject.table_object_prices[0].price
+	let price = tableObject.tableObjectPrices[0].price
+
+	// Create order
+	const order = await context.prisma.order.create({
+		data: {
+			user: { connect: { id: session.user.id } },
+			tableObject: { connect: { id: tableObject.id } },
+			currency: "eur",
+			price
+		}
+	})
 
 	if (session.user.stripeCustomerId == null) {
 		// Create a stripe customer for the user
@@ -89,6 +99,11 @@ export async function createCheckoutSession(
 				}
 			}
 		],
+		payment_intent_data: {
+			metadata: {
+				orderId: Number(order.id)
+			}
+		},
 		success_url: args.successUrl,
 		cancel_url: args.cancelUrl
 	})

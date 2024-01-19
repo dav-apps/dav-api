@@ -1,4 +1,8 @@
-import { ResolverContext, CheckoutSession } from "../types.js"
+import {
+	ResolverContext,
+	CheckoutSession,
+	TableObjectPriceType
+} from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
 import {
@@ -12,6 +16,7 @@ export async function createCheckoutSession(
 	parent: any,
 	args: {
 		tableObjectUuid: string
+		type: TableObjectPriceType
 		productName: string
 		productImage: string
 		successUrl: string
@@ -34,7 +39,9 @@ export async function createCheckoutSession(
 	// Get the table object
 	const tableObject = await context.prisma.tableObject.findFirst({
 		where: { uuid: args.tableObjectUuid },
-		include: { tableObjectPrices: { where: { currency: "eur" } } }
+		include: {
+			tableObjectPrices: { where: { currency: "eur", type: args.type } }
+		}
 	})
 
 	if (tableObject == null) {

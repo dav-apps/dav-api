@@ -8,6 +8,11 @@ export const apiErrors = {
 		message: "You are not authenticated",
 		status: 401
 	},
+	authenticationFailed: {
+		code: "AUTHENTICATION_FAILED",
+		message: "The authentication token is invalid",
+		status: 401
+	},
 	actionNotAllowed: {
 		code: "ACTION_NOT_ALLOWED",
 		message: "Action not allowed",
@@ -33,6 +38,11 @@ export const apiErrors = {
 		message: "TableObject needs a price to be purchased or ordered",
 		status: 400
 	},
+	devDoesNotExist: {
+		code: "DEV_DOES_NOT_EXIST",
+		message: "Dev does not exist",
+		status: 404
+	},
 	tableObjectDoesNotExist: {
 		code: "TABLE_OBJECT_NOT_EXISTS",
 		message: "TableObject does not exist",
@@ -45,5 +55,7 @@ export const validationErrors = {
 	productNameTooLong: "PRODUCT_NAME_TOO_LONG",
 	productImageInvalid: "PRODUCT_IMAGE_INVALID",
 	successUrlInvalid: "SUCCESS_URL_INVALID",
-	cancelUrlInvalid: "CANCEL_URL_INVALID"
+	cancelUrlInvalid: "CANCEL_URL_INVALID",
+	priceInvalid: "PRICE_INVALID",
+	currencyInvalid: "CURRENCY_INVALID"
 }

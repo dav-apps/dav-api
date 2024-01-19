@@ -18,6 +18,9 @@ export interface ApiError {
 	status?: number
 }
 
+export type Currency = "EUR"
+export type TableObjectPriceType = "PURCHASE" | "ORDER"
+
 //#region Models
 export interface CheckoutSession {
 	url: string

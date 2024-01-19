@@ -7,6 +7,12 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
+		setTableObjectPrice(
+			tableObjectUuid: String!
+			price: Int!
+			currency: Currency!
+			type: TableObjectPriceType!
+		): TableObjectPrice
 		createCheckoutSession(
 			tableObjectUuid: String!
 			productName: String!
@@ -26,7 +32,23 @@ export const typeDefs = `#graphql
 		items: [TableObject!]!
 	}
 
+	type TableObjectPrice {
+		tableObject: TableObject!
+		price: Int!
+		currency: Currency!
+		type: TableObjectPriceType!
+	}
+
 	type CheckoutSession {
 		url: String!
+	}
+
+	enum Currency {
+		EUR
+	}
+
+	enum TableObjectPriceType {
+		PURCHASE
+		ORDER
 	}
 `

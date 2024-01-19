@@ -27,4 +27,10 @@ export function validateCancelUrl(cancelUrl: string) {
 		return validationErrors.cancelUrlInvalid
 	}
 }
+
+export function validatePrice(price: number) {
+	if (price < 0 || price > 100000) {
+		return validationErrors.priceInvalid
+	}
+}
 //#endregion

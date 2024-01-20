@@ -34,7 +34,6 @@ export const typeDefs = `#graphql
 	}
 
 	type TableObjectPrice {
-		id
 		tableObject: TableObject!
 		price: Int!
 		currency: Currency!

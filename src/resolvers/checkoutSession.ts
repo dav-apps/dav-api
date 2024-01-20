@@ -25,6 +25,7 @@ export async function createCheckoutSession(
 	context: ResolverContext
 ): Promise<CheckoutSession> {
 	const accessToken = context.authorization
+	const type = args.type.toLowerCase()
 
 	if (accessToken == null) {
 		throwApiError(apiErrors.notAuthenticated)
@@ -40,7 +41,9 @@ export async function createCheckoutSession(
 	const tableObject = await context.prisma.tableObject.findFirst({
 		where: { uuid: args.tableObjectUuid },
 		include: {
-			tableObjectPrices: { where: { currency: "eur", type: args.type } }
+			tableObjectPrices: {
+				where: { currency: "eur", type }
+			}
 		}
 	})
 

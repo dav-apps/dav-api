@@ -29,12 +29,12 @@ async function stripeWebhook(req: Request, res: Response) {
 		const paymentIntent = event.data.object as Stripe.PaymentIntent
 
 		// Get the order id from the payment intent
-		const orderId = paymentIntent.metadata.orderId
+		const orderUuid = paymentIntent.metadata.order
 
-		if (orderId != null) {
+		if (orderUuid != null) {
 			// Find the order & update it
 			const order = await prisma.order.findFirst({
-				where: { id: BigInt(orderId) }
+				where: { uuid: orderUuid }
 			})
 
 			if (order.shippingAddressId == null) {

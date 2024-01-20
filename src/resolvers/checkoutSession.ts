@@ -111,7 +111,7 @@ export async function createCheckoutSession(
 		],
 		payment_intent_data: {
 			metadata: {
-				orderId: Number(order.id)
+				order: order.uuid
 			}
 		},
 		success_url: args.successUrl,

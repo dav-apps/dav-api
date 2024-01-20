@@ -477,6 +477,7 @@ model WebsocketConnection {
 
 model Order {
   id                BigInt           @id @default(autoincrement())
+  uuid              String           @unique @default(uuid()) @db.VarChar
   userId            BigInt           @map("user_id")
   tableObjectId     BigInt           @map("table_object_id")
   shippingAddressId BigInt?          @map("shipping_address_id")
@@ -495,6 +496,7 @@ model Order {
 
 model ShippingAddress {
   id         BigInt   @id @default(autoincrement())
+  uuid       String   @unique @default(uuid()) @db.VarChar
   userId     BigInt   @map("user_id")
   name       String?  @db.VarChar
   city       String?  @db.VarChar

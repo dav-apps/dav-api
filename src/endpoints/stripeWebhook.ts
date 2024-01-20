@@ -1,5 +1,6 @@
 import { Express, Request, Response, raw } from "express"
 import cors from "cors"
+import axios from "axios"
 import Stripe from "stripe"
 import { prisma, stripe } from "../../server.js"
 
@@ -33,7 +34,7 @@ async function stripeWebhook(req: Request, res: Response) {
 
 		if (orderUuid != null) {
 			// Find the order & update it
-			const order = await prisma.order.findFirst({
+			let order = await prisma.order.findFirst({
 				where: { uuid: orderUuid }
 			})
 
@@ -78,13 +79,40 @@ async function stripeWebhook(req: Request, res: Response) {
 			}
 
 			// Update the order with the payment_intent_id
-			await prisma.order.update({
+			order = await prisma.order.update({
 				where: { id: order.id },
 				data: {
 					paymentIntentId: paymentIntent.id,
 					completed: true
 				}
 			})
+
+			// Notify the client
+			let tableObject = await prisma.tableObject.findFirst({
+				where: { id: order.tableObjectId },
+				include: { table: { include: { app: true } } }
+			})
+
+			const webhookUrl = tableObject?.table?.app?.webhookUrl
+
+			if (webhookUrl != null) {
+				try {
+					await axios({
+						method: "post",
+						url: webhookUrl,
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: process.env.WEBHOOK_KEY
+						},
+						data: {
+							type: "order.updated",
+							uuid: order.uuid
+						}
+					})
+				} catch (error) {
+					console.error(error)
+				}
+			}
 		}
 	}
 

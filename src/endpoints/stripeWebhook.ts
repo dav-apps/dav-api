@@ -105,7 +105,7 @@ async function stripeWebhook(req: Request, res: Response) {
 							Authorization: process.env.WEBHOOK_KEY
 						},
 						data: {
-							type: "order.updated",
+							type: "order.completed",
 							uuid: order.uuid
 						}
 					})

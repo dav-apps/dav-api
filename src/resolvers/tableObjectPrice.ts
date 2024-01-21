@@ -19,8 +19,6 @@ export async function setTableObjectPrice(
 	context: ResolverContext
 ): Promise<TableObjectPrice> {
 	const authToken = context.authorization
-	const currency = args.currency.toLowerCase()
-	const type = args.type.toLowerCase()
 
 	if (authToken == null) {
 		throwApiError(apiErrors.notAuthenticated)
@@ -49,8 +47,8 @@ export async function setTableObjectPrice(
 	let tableObjectPrice = await context.prisma.tableObjectPrice.findFirst({
 		where: {
 			tableObjectId: tableObject.id,
-			currency,
-			type
+			currency: args.currency,
+			type: args.type
 		}
 	})
 
@@ -60,8 +58,8 @@ export async function setTableObjectPrice(
 			data: {
 				tableObjectId: tableObject.id,
 				price: args.price,
-				currency,
-				type
+				currency: args.currency,
+				type: args.type
 			}
 		})
 	} else {

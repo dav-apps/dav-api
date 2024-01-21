@@ -25,7 +25,6 @@ export async function createCheckoutSession(
 	context: ResolverContext
 ): Promise<CheckoutSession> {
 	const accessToken = context.authorization
-	const type = args.type.toLowerCase()
 
 	if (accessToken == null) {
 		throwApiError(apiErrors.notAuthenticated)
@@ -42,7 +41,7 @@ export async function createCheckoutSession(
 		where: { uuid: args.tableObjectUuid },
 		include: {
 			tableObjectPrices: {
-				where: { currency: "eur", type }
+				where: { currency: "EUR", type: args.type }
 			}
 		}
 	})
@@ -71,7 +70,7 @@ export async function createCheckoutSession(
 		data: {
 			user: { connect: { id: session.user.id } },
 			tableObject: { connect: { id: tableObject.id } },
-			currency: "eur",
+			currency: "EUR",
 			price
 		}
 	})

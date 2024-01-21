@@ -44,10 +44,22 @@ export const typeDefs = `#graphql
 	type Order {
 		uuid: String!
 		tableObject: TableObject!
+		shippingAddress: ShippingAddress
 		paymentIntentId: String
 		price: Int
 		currency: Currency
 		completed: Boolean
+	}
+
+	type ShippingAddress {
+		uuid: String!
+		name: String
+		city: String
+		country: String
+		line1: String
+		line2: String
+		postalCode: String
+		state: String
 	}
 
 	type CheckoutSession {

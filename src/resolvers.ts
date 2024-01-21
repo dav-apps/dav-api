@@ -16,6 +16,9 @@ export const resolvers = {
 	TableObject: {
 		properties: tableObjectResolvers.properties
 	},
+	Order: {
+		shippingAddress: orderResolvers.shippingAddress
+	},
 	JSON: GraphQLJSON,
 	JSONObject: GraphQLJSONObject
 }

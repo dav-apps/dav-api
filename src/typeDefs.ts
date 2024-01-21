@@ -4,6 +4,7 @@ export const typeDefs = `#graphql
 
 	type Query {
 		retrieveTableObject(uuid: String!): TableObject
+		retrieveOrder(uuid: String!): Order
 	}
 
 	type Mutation {
@@ -38,6 +39,15 @@ export const typeDefs = `#graphql
 		price: Int!
 		currency: Currency!
 		type: TableObjectPriceType!
+	}
+
+	type Order {
+		uuid: String!
+		tableObject: TableObject!
+		paymentIntentId: String
+		price: Int
+		currency: Currency
+		completed: Boolean
 	}
 
 	type CheckoutSession {

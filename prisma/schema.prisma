@@ -484,7 +484,7 @@ model Order {
   paymentIntentId   String?          @map("payment_intent_id") @db.VarChar
   price             Int?
   currency          String?          @db.VarChar
-  completed         Boolean?         @default(false)
+  status            String?          @default("CREATED")
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   user              User             @relation(fields: [userId], references: [id])
@@ -499,6 +499,8 @@ model ShippingAddress {
   uuid       String   @unique @default(uuid()) @db.VarChar
   userId     BigInt   @map("user_id")
   name       String?  @db.VarChar
+  email      String?  @db.VarChar
+  phone      String?  @db.VarChar
   city       String?  @db.VarChar
   country    String?  @db.VarChar
   line1      String?  @db.VarChar

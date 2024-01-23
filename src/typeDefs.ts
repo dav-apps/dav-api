@@ -43,17 +43,20 @@ export const typeDefs = `#graphql
 
 	type Order {
 		uuid: String!
+		userId: Int!
 		tableObject: TableObject!
 		shippingAddress: ShippingAddress
 		paymentIntentId: String
-		price: Int
-		currency: Currency
-		completed: Boolean
+		price: Int!
+		currency: Currency!
+		status: OrderStatus!
 	}
 
 	type ShippingAddress {
 		uuid: String!
 		name: String
+		email: String
+		phone: String
 		city: String
 		country: String
 		line1: String
@@ -73,5 +76,11 @@ export const typeDefs = `#graphql
 	enum TableObjectPriceType {
 		PURCHASE
 		ORDER
+	}
+
+	enum OrderStatus {
+		CREATED
+		PREPARATION
+		SHIPPED
 	}
 `

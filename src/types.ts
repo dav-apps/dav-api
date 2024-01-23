@@ -20,6 +20,7 @@ export interface ApiError {
 
 export type Currency = "EUR"
 export type TableObjectPriceType = "PURCHASE" | "ORDER"
+export type OrderStatus = "CREATED" | "PREPARATION" | "SHIPPED"
 
 //#region Models
 export interface CheckoutSession {

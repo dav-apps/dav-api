@@ -26,11 +26,12 @@ async function stripeWebhook(req: Request, res: Response) {
 	}
 
 	// Handle the event
-	if (event.type == "payment_intent.succeeded") {
-		const paymentIntent = event.data.object as Stripe.PaymentIntent
+	if (event.type == "checkout.session.completed") {
+		const checkoutSession = event.data.object as Stripe.Checkout.Session
+		if (checkoutSession.payment_status == "unpaid") return res.send()
 
 		// Get the order id from the payment intent
-		const orderUuid = paymentIntent.metadata.order
+		const orderUuid = checkoutSession.metadata.order
 
 		if (orderUuid != null) {
 			// Find the order & update it
@@ -43,13 +44,16 @@ async function stripeWebhook(req: Request, res: Response) {
 				let shippingAddress = await prisma.shippingAddress.findFirst({
 					where: {
 						userId: order.userId,
-						name: paymentIntent.shipping.name,
-						city: paymentIntent.shipping.address.city,
-						country: paymentIntent.shipping.address.country,
-						line1: paymentIntent.shipping.address.line1,
-						line2: paymentIntent.shipping.address.line2,
-						postalCode: paymentIntent.shipping.address.postal_code,
-						state: paymentIntent.shipping.address.state
+						name: checkoutSession.customer_details.name,
+						email: checkoutSession.customer_details.email,
+						phone: checkoutSession.customer_details.phone,
+						city: checkoutSession.customer_details.address.city,
+						country: checkoutSession.customer_details.address.country,
+						line1: checkoutSession.customer_details.address.line1,
+						line2: checkoutSession.customer_details.address.line2,
+						postalCode:
+							checkoutSession.customer_details.address.postal_code,
+						state: checkoutSession.customer_details.address.state
 					}
 				})
 
@@ -58,13 +62,16 @@ async function stripeWebhook(req: Request, res: Response) {
 					shippingAddress = await prisma.shippingAddress.create({
 						data: {
 							user: { connect: { id: order.userId } },
-							name: paymentIntent.shipping.name,
-							city: paymentIntent.shipping.address.city,
-							country: paymentIntent.shipping.address.country,
-							line1: paymentIntent.shipping.address.line1,
-							line2: paymentIntent.shipping.address.line2,
-							postalCode: paymentIntent.shipping.address.postal_code,
-							state: paymentIntent.shipping.address.state
+							name: checkoutSession.customer_details.name,
+							email: checkoutSession.customer_details.email,
+							phone: checkoutSession.customer_details.phone,
+							city: checkoutSession.customer_details.address.city,
+							country: checkoutSession.customer_details.address.country,
+							line1: checkoutSession.customer_details.address.line1,
+							line2: checkoutSession.customer_details.address.line2,
+							postalCode:
+								checkoutSession.customer_details.address.postal_code,
+							state: checkoutSession.customer_details.address.state
 						}
 					})
 				}
@@ -82,8 +89,8 @@ async function stripeWebhook(req: Request, res: Response) {
 			order = await prisma.order.update({
 				where: { id: order.id },
 				data: {
-					paymentIntentId: paymentIntent.id,
-					completed: true
+					paymentIntentId: checkoutSession.payment_intent as string,
+					status: "PREPARATION"
 				}
 			})
 

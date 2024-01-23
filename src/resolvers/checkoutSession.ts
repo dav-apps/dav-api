@@ -94,6 +94,7 @@ export async function createCheckoutSession(
 	const checkoutSession = await context.stripe.checkout.sessions.create({
 		customer: session.user.stripeCustomerId,
 		shipping_address_collection: { allowed_countries: ["DE"] },
+		phone_number_collection: { enabled: true },
 		mode: "payment",
 		line_items: [
 			{
@@ -108,10 +109,8 @@ export async function createCheckoutSession(
 				}
 			}
 		],
-		payment_intent_data: {
-			metadata: {
-				order: order.uuid
-			}
+		metadata: {
+			order: order.uuid
 		},
 		success_url: args.successUrl,
 		cancel_url: args.cancelUrl

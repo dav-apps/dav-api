@@ -22,6 +22,10 @@ export const typeDefs = `#graphql
 			successUrl: String!
 			cancelUrl: String!
 		): CheckoutSession
+		updateOrder(
+			uuid: String!
+			status: OrderStatus
+		): Order
 	}
 
 	type TableObject {

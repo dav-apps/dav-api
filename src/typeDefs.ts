@@ -5,6 +5,11 @@ export const typeDefs = `#graphql
 	type Query {
 		retrieveTableObject(uuid: String!): TableObject
 		retrieveOrder(uuid: String!): Order
+		listShippingAddresses(
+			userId: Int!
+			limit: Int
+			offset: Int
+		): ShippingAddressList
 	}
 
 	type Mutation {
@@ -67,6 +72,11 @@ export const typeDefs = `#graphql
 		line2: String
 		postalCode: String
 		state: String
+	}
+
+	type ShippingAddressList {
+		total: Int!
+		items: [ShippingAddress!]!
 	}
 
 	type CheckoutSession {

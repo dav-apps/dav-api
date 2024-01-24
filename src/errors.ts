@@ -38,6 +38,11 @@ export const apiErrors = {
 		message: "TableObject needs a price to be purchased or ordered",
 		status: 400
 	},
+	userDoesNotExist: {
+		code: "USER_DOES_NOT_EXIST",
+		message: "User does not exist",
+		status: 404
+	},
 	devDoesNotExist: {
 		code: "DEV_DOES_NOT_EXIST",
 		message: "Dev does not exist",

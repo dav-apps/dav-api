@@ -1,7 +1,8 @@
 import {
 	ResolverContext,
 	CheckoutSession,
-	TableObjectPriceType
+	TableObjectPriceType,
+	Currency
 } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
@@ -9,7 +10,8 @@ import {
 	validateProductNameLength,
 	validateProductImage,
 	validateSuccessUrl,
-	validateCancelUrl
+	validateCancelUrl,
+	validatePrice
 } from "../services/validationService.js"
 
 export async function createCheckoutSession(
@@ -17,6 +19,8 @@ export async function createCheckoutSession(
 	args: {
 		tableObjectUuid: string
 		type: TableObjectPriceType
+		price?: number
+		currency?: Currency
 		productName: string
 		productImage: string
 		successUrl: string
@@ -50,9 +54,11 @@ export async function createCheckoutSession(
 		throwApiError(apiErrors.tableObjectDoesNotExist)
 	}
 
-	// Check if the table object has a price in the given currency
-	if (tableObject.tableObjectPrices.length == 0) {
-		throwApiError(apiErrors.tableObjectHasNoPrice)
+	if (args.price == null || args.currency == null) {
+		// Check if the table object has a price in the given currency
+		if (tableObject.tableObjectPrices.length == 0) {
+			throwApiError(apiErrors.tableObjectHasNoPrice)
+		}
 	}
 
 	// Validate the fields
@@ -63,14 +69,24 @@ export async function createCheckoutSession(
 		validateCancelUrl(args.cancelUrl)
 	)
 
-	let price = tableObject.tableObjectPrices[0].price
+	let price = 0
+	let currency: Currency = "EUR"
+
+	if (args.price == null || args.currency == null) {
+		price = tableObject.tableObjectPrices[0].price
+	} else {
+		throwValidationError(validatePrice(args.price))
+
+		price = args.price
+		currency = args.currency
+	}
 
 	// Create order
 	const order = await context.prisma.order.create({
 		data: {
 			user: { connect: { id: session.user.id } },
 			tableObject: { connect: { id: tableObject.id } },
-			currency: "EUR",
+			currency,
 			price
 		}
 	})
@@ -100,7 +116,7 @@ export async function createCheckoutSession(
 			{
 				quantity: 1,
 				price_data: {
-					currency: "eur",
+					currency,
 					unit_amount: price,
 					product_data: {
 						name: args.productName,

@@ -22,6 +22,8 @@ export const typeDefs = `#graphql
 		createCheckoutSession(
 			tableObjectUuid: String!
 			type: TableObjectPriceType!
+			price: Int
+			currency: Currency
 			productName: String!
 			productImage: String!
 			successUrl: String!

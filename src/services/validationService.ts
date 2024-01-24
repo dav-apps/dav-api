@@ -5,7 +5,7 @@ import { urlRegex } from "../constants.js"
 export function validateProductNameLength(productName: string) {
 	if (productName.length < 2) {
 		return validationErrors.productNameTooShort
-	} else if (productName.length > 30) {
+	} else if (productName.length > 60) {
 		return validationErrors.productNameTooLong
 	}
 }

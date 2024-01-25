@@ -53,6 +53,11 @@ export const apiErrors = {
 		message: "TableObject does not exist",
 		status: 404
 	},
+	sessionDoesNotExist: {
+		code: "SESSION_DOES_NOT_EXIST",
+		message: "Session does not exist",
+		status: 404
+	},
 	orderDoesNotExist: {
 		code: "ORDER_DOES_NOT_EXIST",
 		message: "Order does not exist",

@@ -9,6 +9,7 @@ export const resolvers = {
 	Query: {
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		retrieveOrder: orderResolvers.retrieveOrder,
+		listOrders: orderResolvers.listOrders,
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses
 	},
 	Mutation: {

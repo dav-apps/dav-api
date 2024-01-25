@@ -1,6 +1,6 @@
 import { TableObject, Order, ShippingAddress } from "@prisma/client"
 import { throwApiError, getDevByAuthToken } from "../utils.js"
-import { ResolverContext, OrderStatus } from "../types.js"
+import { ResolverContext, OrderStatus, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 
 export async function retrieveOrder(
@@ -26,6 +26,50 @@ export async function retrieveOrder(
 	}
 
 	return await context.prisma.order.findFirst({ where: { uuid: args.uuid } })
+}
+
+export async function listOrders(
+	parent: any,
+	args: { limit?: number; offset?: number },
+	context: ResolverContext
+): Promise<List<Order>> {
+	const accessToken = context.authorization
+
+	let take = args.limit || 10
+	if (take <= 0) take = 10
+
+	let skip = args.offset || 0
+	if (skip < 0) skip = 0
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await context.prisma.session.findFirst({
+		where: { token: accessToken },
+		include: { user: true }
+	})
+
+	if (session == null) {
+		throwApiError(apiErrors.sessionDoesNotExist)
+	}
+
+	const where = { userId: session.user.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.order.count({ where }),
+		context.prisma.order.findMany({
+			where,
+			take,
+			skip
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }
 
 export async function updateOrder(

@@ -40,6 +40,10 @@ export async function createCheckoutSession(
 		include: { user: true }
 	})
 
+	if (session == null) {
+		throwApiError(apiErrors.sessionDoesNotExist)
+	}
+
 	// Get the table object
 	const tableObject = await context.prisma.tableObject.findFirst({
 		where: { uuid: args.tableObjectUuid },

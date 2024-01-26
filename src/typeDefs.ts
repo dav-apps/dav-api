@@ -5,7 +5,11 @@ export const typeDefs = `#graphql
 	type Query {
 		retrieveTableObject(uuid: String!): TableObject
 		retrieveOrder(uuid: String!): Order
-		listOrders(limit: Int, offset: Int): OrderList!
+		listOrders(
+			status: [OrderStatus!]
+			limit: Int
+			offset: Int
+		): OrderList!
 		listShippingAddresses(
 			userId: Int!
 			limit: Int

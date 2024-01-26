@@ -30,7 +30,7 @@ export async function retrieveOrder(
 
 export async function listOrders(
 	parent: any,
-	args: { limit?: number; offset?: number },
+	args: { status?: OrderStatus[]; limit?: number; offset?: number },
 	context: ResolverContext
 ): Promise<List<Order>> {
 	const accessToken = context.authorization
@@ -57,12 +57,23 @@ export async function listOrders(
 
 	const where = { userId: session.user.id }
 
+	if (args.status != null) {
+		const or = []
+
+		for (let status of args.status) {
+			or.push({ status })
+		}
+
+		where["OR"] = or
+	}
+
 	const [total, items] = await context.prisma.$transaction([
 		context.prisma.order.count({ where }),
 		context.prisma.order.findMany({
 			where,
 			take,
-			skip
+			skip,
+			orderBy: { createdAt: "desc" }
 		})
 	])
 

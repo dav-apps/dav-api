@@ -24,7 +24,12 @@ export const typeDefs = `#graphql
 			currency: Currency!
 			type: TableObjectPriceType!
 		): TableObjectPrice
-		createCheckoutSession(
+		createSubscriptionCheckoutSession(
+			plan: Plan!
+			successUrl: String!
+			cancelUrl: String!
+		): CheckoutSession
+		createPaymentCheckoutSession(
 			tableObjectUuid: String!
 			type: TableObjectPriceType!
 			price: Int
@@ -93,6 +98,12 @@ export const typeDefs = `#graphql
 
 	type CheckoutSession {
 		url: String!
+	}
+
+	enum Plan {
+		FREE
+		PLUS
+		PRO
 	}
 
 	enum Currency {

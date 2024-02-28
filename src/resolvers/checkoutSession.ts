@@ -2,7 +2,8 @@ import {
 	ResolverContext,
 	CheckoutSession,
 	TableObjectPriceType,
-	Currency
+	Currency,
+	Plan
 } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, throwValidationError } from "../utils.js"
@@ -14,7 +15,88 @@ import {
 	validatePrice
 } from "../services/validationService.js"
 
-export async function createCheckoutSession(
+export async function createSubscriptionCheckoutSession(
+	parent: any,
+	args: {
+		plan: Plan
+		successUrl: string
+		cancelUrl: string
+	},
+	context: ResolverContext
+): Promise<CheckoutSession> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await context.prisma.session.findFirst({
+		where: { token: accessToken },
+		include: { user: true }
+	})
+
+	if (session == null) {
+		throwApiError(apiErrors.sessionDoesNotExist)
+	}
+
+	// Validate the plan
+	if (args.plan == "FREE") {
+		throwApiError(apiErrors.cannotCreateCheckoutSessionForFreePlan)
+	}
+
+	// Validate the URLs
+	throwValidationError(
+		validateSuccessUrl(args.successUrl),
+		validateCancelUrl(args.cancelUrl)
+	)
+
+	// Check if the user is below the given plan
+	const planNumber = args.plan == "PLUS" ? 1 : 2
+
+	if (session.user.plan >= planNumber) {
+		throwApiError(apiErrors.userOnOrBelowGivenPlan)
+	}
+
+	if (session.user.stripeCustomerId == null) {
+		// Create a stripe customer for the user
+		const createCustomerResponse = await context.stripe.customers.create({
+			email: session.user.email,
+			name: session.user.firstName
+		})
+
+		session.user.stripeCustomerId = createCustomerResponse.id
+
+		await context.prisma.user.update({
+			where: { id: session.user.id },
+			data: { stripeCustomerId: createCustomerResponse.id }
+		})
+	}
+
+	// Create the Stripe checkout session
+	let stripePlanId = process.env.STRIPE_DAV_PLUS_EUR_PLAN_ID
+
+	if (args.plan == "PRO") {
+		stripePlanId = process.env.STRIPE_DAV_PRO_EUR_PLAN_ID
+	}
+
+	const checkoutSession = await context.stripe.checkout.sessions.create({
+		customer: session.user.stripeCustomerId,
+		mode: "subscription",
+		line_items: [
+			{
+				price: stripePlanId,
+				quantity: 1
+			}
+		],
+		success_url: args.successUrl,
+		cancel_url: args.cancelUrl
+	})
+
+	return { url: checkoutSession.url }
+}
+
+export async function createPaymentCheckoutSession(
 	parent: any,
 	args: {
 		tableObjectUuid: string

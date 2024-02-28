@@ -38,6 +38,17 @@ export const apiErrors = {
 		message: "TableObject needs a price to be purchased or ordered",
 		status: 400
 	},
+	cannotCreateCheckoutSessionForFreePlan: {
+		code: "CANNOT_CREATE_CHECKOUT_SESSION_FOR_FREE_PLAN",
+		message:
+			"It is only possible to create a checkout session for a paid plan",
+		status: 400
+	},
+	userOnOrBelowGivenPlan: {
+		code: "USER_IS_ON_OR_BELOW_GIVEN_PLAN",
+		message: "The user is already on the given plan or on a higher plan",
+		status: 422
+	},
 	userDoesNotExist: {
 		code: "USER_DOES_NOT_EXIST",
 		message: "User does not exist",

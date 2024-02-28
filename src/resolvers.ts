@@ -14,7 +14,10 @@ export const resolvers = {
 	},
 	Mutation: {
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
-		createCheckoutSession: checkoutSessionResolvers.createCheckoutSession,
+		createSubscriptionCheckoutSession:
+			checkoutSessionResolvers.createSubscriptionCheckoutSession,
+		createPaymentCheckoutSession:
+			checkoutSessionResolvers.createPaymentCheckoutSession,
 		updateOrder: orderResolvers.updateOrder
 	},
 	TableObject: {

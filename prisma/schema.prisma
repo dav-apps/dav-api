@@ -251,18 +251,18 @@ model schema_migrations {
 }
 
 model Session {
-  id                     BigInt                @id @default(autoincrement())
-  userId                 BigInt                @map("user_id")
-  appId                  BigInt                @map("app_id")
-  token                  String?               @unique(map: "index_sessions_on_token") @db.VarChar
-  oldToken               String?               @unique(map: "index_sessions_on_old_token") @map("old_token") @db.VarChar
-  deviceName             String?               @map("device_name") @db.VarChar
-  deviceOs               String?               @map("device_os") @db.VarChar
-  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt              DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  app                    App                   @relation(fields: [appId], references: [id])
-  user                   User                  @relation(fields: [userId], references: [id])
-  web_push_subscriptions WebPushSubscription[]
+  id                   BigInt                @id @default(autoincrement())
+  userId               BigInt                @map("user_id")
+  appId                BigInt                @map("app_id")
+  token                String?               @unique(map: "index_sessions_on_token") @db.VarChar
+  oldToken             String?               @unique(map: "index_sessions_on_old_token") @map("old_token") @db.VarChar
+  deviceName           String?               @map("device_name") @db.VarChar
+  deviceOs             String?               @map("device_os") @db.VarChar
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  app                  App                   @relation(fields: [appId], references: [id])
+  user                 User                  @relation(fields: [userId], references: [id])
+  webPushSubscriptions WebPushSubscription[]
 
   @@map("sessions")
 }

@@ -34,8 +34,10 @@ await server.start()
 // Call setup function of each endpoint file
 stripeWebhookSetup(app)
 
-// Setup cron jobs
-setupTasks()
+if (process.env.ENVIRONMENT == "production") {
+	// Setup cron jobs
+	setupTasks()
+}
 
 app.use(
 	"/",

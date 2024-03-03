@@ -10,6 +10,7 @@ import Stripe from "stripe"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 import { setup as stripeWebhookSetup } from "./src/endpoints/stripeWebhook.js"
+import { setupTasks } from "./src/tasks.js"
 
 const port = process.env.PORT || 4000
 const app = express()
@@ -32,6 +33,9 @@ await server.start()
 
 // Call setup function of each endpoint file
 stripeWebhookSetup(app)
+
+// Setup cron jobs
+setupTasks()
 
 app.use(
 	"/",

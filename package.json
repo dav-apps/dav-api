@@ -22,9 +22,11 @@
 		"express": "^4.18.2",
 		"graphql": "^16.8.1",
 		"graphql-type-json": "^0.3.2",
+		"node-cron": "^3.0.3",
 		"stripe": "^14.12.0"
 	},
 	"devDependencies": {
+		"@types/node-cron": "^3.0.11",
 		"concurrently": "^8.2.2",
 		"nodemon": "^3.0.2",
 		"prisma": "^5.8.1",

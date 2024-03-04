@@ -1,7 +1,8 @@
-import { PrismaClient, Dev } from "@prisma/client"
+import { PrismaClient, Dev, TableObject } from "@prisma/client"
 import * as crypto from "crypto"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
+import { prisma, redis } from "../server.js"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 
@@ -80,4 +81,65 @@ export function userWasActive(
 	}
 
 	return DateTime.fromJSDate(lastActive) > DateTime.now().minus(duration)
+}
+
+export async function saveTableObjectInRedis(obj: TableObject) {
+	try {
+		let objData = {
+			id: obj.id,
+			user_id: obj.userId,
+			table_id: obj.tableId,
+			file: obj.file,
+			etag: obj.etag,
+			properties: {}
+		}
+
+		// Find the existing properties
+		let propertyKeys = await redis.keys(
+			`table_object_property:${obj.userId}:${obj.tableId}:${obj.uuid}:*`
+		)
+
+		let tableObjectProperties = await prisma.tableObjectProperty.findMany({
+			where: { tableObjectId: obj.id }
+		})
+
+		for (let prop of tableObjectProperties) {
+			let propType = await prisma.tablePropertyType.findFirst({
+				where: { tableId: obj.tableId, name: prop.name }
+			})
+
+			let type = 0
+
+			if (propType != null) {
+				type = propType.dataType
+			}
+
+			let value: any = prop.value
+
+			if (type == 1) {
+				value = value == "true"
+			} else if (type == 2 || type == 3) {
+				value = Number(value)
+			}
+
+			objData.properties[prop.name] = value
+
+			// Save the property
+			let key = `table_object_property:${obj.userId}:${obj.tableId}:${obj.uuid}:${prop.name}:${type}`
+			await redis.set(key, value)
+			delete propertyKeys[key]
+		}
+
+		await redis.set(`table_object:${obj.uuid}`, JSON.stringify(objData))
+
+		// Remove old properties
+		for (let key of propertyKeys) {
+			await redis.del(key)
+		}
+	} catch (error) {
+		// Create a new RedisTableObjectOperation
+		await prisma.redisTableObjectOperation.create({
+			data: { tableObjectUuid: obj.uuid, operation: "save" }
+		})
+	}
 }

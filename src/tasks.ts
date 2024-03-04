@@ -1,8 +1,8 @@
 import nodeCron from "node-cron"
 import webPush from "web-push"
 import { DateTime } from "luxon"
-import { prisma } from "../server.js"
-import { userWasActive } from "./utils.js"
+import { prisma, redis } from "../server.js"
+import { userWasActive, saveTableObjectInRedis } from "./utils.js"
 
 const timezone = "Etc/UTC"
 
@@ -13,10 +13,49 @@ webPush.setVapidDetails(
 )
 
 export async function setupTasks() {
+	nodeCron.schedule("0 1 * * *", updateRedisCaches, { timezone })
 	nodeCron.schedule("0 0 0 * * *", createUserSnapshots, { timezone })
 	nodeCron.schedule("0 0 0 * * *", createAppUserSnapshots, { timezone })
 	nodeCron.schedule("0 3 * * 0", deleteSessions, { timezone })
 	nodeCron.schedule("*/10 * * * *", sendNotifications, { timezone })
+}
+
+async function updateRedisCaches() {
+	const operations = await prisma.redisTableObjectOperation.findMany()
+
+	for (let objOperation of operations) {
+		if (objOperation.operation == "delete") {
+			try {
+				// Remove the table object and properties from redis
+				await redis.del(`table_object:${objOperation.tableObjectUuid}`)
+
+				let propertyKeys = await redis.keys(
+					`table_object_property:*:*:${objOperation.tableObjectUuid}:*`
+				)
+
+				for (let key of propertyKeys) {
+					await redis.del(key)
+				}
+
+				await prisma.redisTableObjectOperation.delete({
+					where: { id: objOperation.id }
+				})
+			} catch (error) {}
+		} else {
+			let tableObject = await prisma.tableObject.findFirst({
+				where: { uuid: objOperation.tableObjectUuid }
+			})
+
+			if (tableObject != null) {
+				// Update the table object in redis
+				await saveTableObjectInRedis(tableObject)
+			}
+
+			await prisma.redisTableObjectOperation.delete({
+				where: { id: objOperation.id }
+			})
+		}
+	}
 }
 
 async function createUserSnapshots() {
@@ -166,7 +205,6 @@ async function deleteSessions() {
 	})
 
 	for (let session of sessions) {
-		console.log(session.id)
 		await prisma.session.delete({ where: { id: session.id } })
 	}
 }

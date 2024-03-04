@@ -4,6 +4,8 @@ import { DateTime } from "luxon"
 import { prisma } from "../server.js"
 import { userWasActive } from "./utils.js"
 
+const timezone = "Etc/UTC"
+
 webPush.setVapidDetails(
 	"mailto:support@dav-apps.tech",
 	process.env.WEBPUSH_PUBLIC_KEY,
@@ -11,10 +13,10 @@ webPush.setVapidDetails(
 )
 
 export async function setupTasks() {
-	nodeCron.schedule("0 0 0 * * *", createUserSnapshots)
-	nodeCron.schedule("0 0 0 * * *", createAppUserSnapshots)
-	nodeCron.schedule("0 3 * * 0", deleteSessions)
-	nodeCron.schedule("*/10 * * * *", sendNotifications)
+	nodeCron.schedule("0 0 0 * * *", createUserSnapshots, { timezone })
+	nodeCron.schedule("0 0 0 * * *", createAppUserSnapshots, { timezone })
+	nodeCron.schedule("0 3 * * 0", deleteSessions, { timezone })
+	nodeCron.schedule("*/10 * * * *", sendNotifications, { timezone })
 }
 
 async function createUserSnapshots() {

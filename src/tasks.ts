@@ -10,7 +10,22 @@ webPush.setVapidDetails(
 )
 
 export function setupTasks() {
+	nodeCron.schedule("0 3 * * 0", deleteSessions)
 	nodeCron.schedule("*/10 * * * *", sendNotifications)
+}
+
+async function deleteSessions() {
+	// Delete sessions which were not used in the last 3 months
+	let minDate = DateTime.now().minus({ months: 4 }).toJSDate()
+
+	let sessions = await prisma.session.findMany({
+		where: { updatedAt: { lt: minDate } }
+	})
+
+	for (let session of sessions) {
+		console.log(session.id)
+		await prisma.session.delete({ where: { id: session.id } })
+	}
 }
 
 async function sendNotifications() {

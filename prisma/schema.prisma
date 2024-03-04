@@ -458,7 +458,7 @@ model WebPushSubscription {
   p256dh    String?  @db.VarChar
   auth      String?  @db.VarChar
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  session   Session  @relation(fields: [sessionId], references: [id])
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("web_push_subscriptions")
 }

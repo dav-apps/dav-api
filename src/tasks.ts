@@ -2,6 +2,7 @@ import nodeCron from "node-cron"
 import webPush from "web-push"
 import { DateTime } from "luxon"
 import { prisma } from "../server.js"
+import { userWasActive } from "./utils.js"
 
 webPush.setVapidDetails(
 	"mailto:support@dav-apps.tech",
@@ -9,9 +10,149 @@ webPush.setVapidDetails(
 	process.env.WEBPUSH_PRIVATE_KEY
 )
 
-export function setupTasks() {
+export async function setupTasks() {
+	nodeCron.schedule("0 0 0 * * *", createUserSnapshots)
+	nodeCron.schedule("0 0 0 * * *", createAppUserSnapshots)
 	nodeCron.schedule("0 3 * * 0", deleteSessions)
 	nodeCron.schedule("*/10 * * * *", sendNotifications)
+}
+
+async function createUserSnapshots() {
+	const users = await prisma.user.findMany()
+
+	let dailyActive = 0
+	let weeklyActive = 0
+	let monthlyActive = 0
+	let yearlyActive = 0
+	let freePlan = 0
+	let plusPlan = 0
+	let proPlan = 0
+	let emailConfirmed = 0
+	let emailUnconfirmed = 0
+
+	for (let user of users) {
+		if (userWasActive(user.lastActive, "day")) {
+			dailyActive++
+		}
+
+		if (userWasActive(user.lastActive, "week")) {
+			weeklyActive++
+		}
+
+		if (userWasActive(user.lastActive, "month")) {
+			monthlyActive++
+		}
+
+		if (userWasActive(user.lastActive, "year")) {
+			yearlyActive++
+		}
+
+		switch (user.plan) {
+			case 1:
+				plusPlan++
+				break
+			case 2:
+				proPlan++
+				break
+			default:
+				freePlan++
+				break
+		}
+
+		if (user.confirmed) {
+			emailConfirmed++
+		} else {
+			emailUnconfirmed++
+		}
+	}
+
+	await prisma.userSnapshot.create({
+		data: {
+			time: DateTime.now().setZone("utc").startOf("day").toJSDate(),
+			dailyActive,
+			weeklyActive,
+			monthlyActive,
+			yearlyActive,
+			freePlan,
+			plusPlan,
+			proPlan,
+			emailConfirmed,
+			emailUnconfirmed
+		}
+	})
+}
+
+async function createAppUserSnapshots() {
+	const apps = await prisma.app.findMany()
+
+	for (let app of apps) {
+		const appUsers = await prisma.appUser.findMany({
+			where: { appId: app.id },
+			include: { user: true }
+		})
+
+		let dailyActive = 0
+		let weeklyActive = 0
+		let monthlyActive = 0
+		let yearlyActive = 0
+		let freePlan = 0
+		let plusPlan = 0
+		let proPlan = 0
+		let emailConfirmed = 0
+		let emailUnconfirmed = 0
+
+		for (let appUser of appUsers) {
+			if (userWasActive(appUser.lastActive, "day")) {
+				dailyActive++
+			}
+
+			if (userWasActive(appUser.lastActive, "week")) {
+				weeklyActive++
+			}
+
+			if (userWasActive(appUser.lastActive, "month")) {
+				monthlyActive++
+			}
+
+			if (userWasActive(appUser.lastActive, "year")) {
+				yearlyActive++
+			}
+
+			switch (appUser.user.plan) {
+				case 1:
+					plusPlan++
+					break
+				case 2:
+					proPlan++
+					break
+				default:
+					freePlan++
+					break
+			}
+
+			if (appUser.user.confirmed) {
+				emailConfirmed++
+			} else {
+				emailUnconfirmed++
+			}
+		}
+
+		await prisma.appUserSnapshot.create({
+			data: {
+				appId: app.id,
+				time: DateTime.now().setZone("utc").startOf("day").toJSDate(),
+				dailyActive,
+				weeklyActive,
+				monthlyActive,
+				yearlyActive,
+				freePlan,
+				plusPlan,
+				proPlan,
+				emailConfirmed,
+				emailUnconfirmed
+			}
+		})
+	}
 }
 
 async function deleteSessions() {

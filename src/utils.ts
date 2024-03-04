@@ -1,6 +1,7 @@
 import { PrismaClient, Dev } from "@prisma/client"
 import * as crypto from "crypto"
 import { GraphQLError } from "graphql"
+import { DateTime, DurationLike } from "luxon"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 
@@ -57,4 +58,26 @@ export async function getDevByAuthToken(
 	}
 
 	return dev
+}
+
+export function userWasActive(
+	lastActive: Date,
+	timeframe: "day" | "week" | "month" | "year"
+): boolean {
+	if (lastActive == null) return false
+	let duration: DurationLike = { years: 1 }
+
+	switch (timeframe) {
+		case "day":
+			duration = { days: 1 }
+			break
+		case "week":
+			duration = { weeks: 1 }
+			break
+		case "month":
+			duration = { months: 1 }
+			break
+	}
+
+	return DateTime.fromJSDate(lastActive) > DateTime.now().minus(duration)
 }

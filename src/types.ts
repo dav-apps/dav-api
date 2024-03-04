@@ -1,9 +1,11 @@
 import { PrismaClient } from "@prisma/client"
+import { RedisClientType } from "redis"
 import Stripe from "stripe"
 
 export interface ResolverContext {
 	authorization: string
 	prisma: PrismaClient
+	redis: RedisClientType<any, any, any>
 	stripe: Stripe
 }
 

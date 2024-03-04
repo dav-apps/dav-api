@@ -6,6 +6,7 @@ import express from "express"
 import http from "http"
 import cors from "cors"
 import { PrismaClient } from "@prisma/client"
+import { createClient } from "redis"
 import Stripe from "stripe"
 import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
@@ -18,6 +19,16 @@ const httpServer = http.createServer(app)
 
 export const prisma = new PrismaClient()
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+//#region Redis config
+export const redis = createClient({
+	url: process.env.REDIS_URL,
+	database: process.env.ENVIRONMENT == "production" ? 1 : 2 // production: 1, staging: 2
+})
+
+redis.on("error", err => console.log("Redis Client Error", err))
+await redis.connect()
+//#endregion
 
 let schema = makeExecutableSchema({
 	typeDefs,
@@ -47,6 +58,7 @@ app.use(
 		context: async ({ req }) => ({
 			authorization: req.headers.authorization,
 			prisma,
+			redis,
 			stripe
 		})
 	})

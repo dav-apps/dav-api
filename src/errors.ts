@@ -79,9 +79,15 @@ export const apiErrors = {
 export const validationErrors = {
 	productNameTooShort: "PRODUCT_NAME_TOO_SHORT",
 	productNameTooLong: "PRODUCT_NAME_TOO_LONG",
+	titleTooShort: "TITLE_TOO_SHORT",
+	titleTooLong: "TITLE_TOO_LONG",
+	bodyTooShort: "BODY_TOO_SHORT",
+	bodyTooLong: "BODY_TOO_LONG",
+	uuidInvalid: "UUID_INVALID",
 	productImageInvalid: "PRODUCT_IMAGE_INVALID",
 	successUrlInvalid: "SUCCESS_URL_INVALID",
 	cancelUrlInvalid: "CANCEL_URL_INVALID",
 	priceInvalid: "PRICE_INVALID",
-	currencyInvalid: "CURRENCY_INVALID"
+	currencyInvalid: "CURRENCY_INVALID",
+	intervalInvalid: "INTERVAL_INVALID"
 }

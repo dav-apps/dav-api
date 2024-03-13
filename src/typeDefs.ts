@@ -24,6 +24,15 @@ export const typeDefs = `#graphql
 			currency: Currency!
 			type: TableObjectPriceType!
 		): TableObjectPrice
+		createNotification(
+			uuid: String
+			userId: Int!
+			appId: Int!
+			time: Int!
+			interval: Int!
+			title: String!
+			body: String!
+		): Notification
 		createSubscriptionCheckoutSession(
 			plan: Plan!
 			successUrl: String!
@@ -53,6 +62,14 @@ export const typeDefs = `#graphql
 	type TableObjectList {
 		total: Int!
 		items: [TableObject!]!
+	}
+
+	type Notification {
+		uuid: String!
+		time: String!
+		interval: String!
+		title: String!
+		body: String!
 	}
 
 	type TableObjectPrice {

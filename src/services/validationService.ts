@@ -1,3 +1,4 @@
+import * as validator from "validator"
 import { validationErrors } from "../errors.js"
 import { urlRegex } from "../constants.js"
 
@@ -7,6 +8,28 @@ export function validateProductNameLength(productName: string) {
 		return validationErrors.productNameTooShort
 	} else if (productName.length > 60) {
 		return validationErrors.productNameTooLong
+	}
+}
+
+export function validateTitleLength(title: string) {
+	if (title.length < 2) {
+		return validationErrors.titleTooShort
+	} else if (title.length > 40) {
+		return validationErrors.titleTooLong
+	}
+}
+
+export function validateBodyLength(body: string) {
+	if (body.length < 2) {
+		return validationErrors.bodyTooShort
+	} else if (body.length > 150) {
+		return validationErrors.bodyTooLong
+	}
+}
+
+export function validateUuid(uuid: string) {
+	if (!validator.isUUID(uuid)) {
+		return validationErrors.uuidInvalid
 	}
 }
 
@@ -31,6 +54,12 @@ export function validateCancelUrl(cancelUrl: string) {
 export function validatePrice(price: number) {
 	if (price < 0 || price > 100000) {
 		return validationErrors.priceInvalid
+	}
+}
+
+export function validateInterval(interval: number) {
+	if (interval < 0) {
+		return validationErrors.intervalInvalid
 	}
 }
 //#endregion

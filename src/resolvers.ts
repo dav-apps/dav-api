@@ -1,6 +1,7 @@
 import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
+import * as notificationResolvers from "./resolvers/notification.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as shippingAddressResolvers from "./resolvers/shippingAddress.js"
 import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
@@ -14,6 +15,7 @@ export const resolvers = {
 	},
 	Mutation: {
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
+		createNotification: notificationResolvers.createNotification,
 		createSubscriptionCheckoutSession:
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:

@@ -296,7 +296,7 @@ model TableObjectPrice {
   tableObjectId BigInt      @map("table_object_id")
   price         Int         @default(0)
   currency      String      @default("EUR") @db.VarChar
-  type          String      @default("PURCHASE")
+  type          String      @default("PURCHASE") @map("mode")
   tableObject   TableObject @relation(fields: [tableObjectId], references: [id])
 
   @@map("table_object_prices")

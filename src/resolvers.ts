@@ -1,4 +1,5 @@
 import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
+import * as userResolvers from "./resolvers/user.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
 import * as notificationResolvers from "./resolvers/notification.js"
@@ -22,7 +23,11 @@ export const resolvers = {
 			checkoutSessionResolvers.createPaymentCheckoutSession,
 		updateOrder: orderResolvers.updateOrder
 	},
+	User: {
+		id: userResolvers.id
+	},
 	TableObject: {
+		user: tableObjectResolvers.user,
 		properties: tableObjectResolvers.properties
 	},
 	Order: {

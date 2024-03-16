@@ -54,8 +54,13 @@ export const typeDefs = `#graphql
 		): Order
 	}
 
+	type User {
+		id: Int!
+	}
+
 	type TableObject {
 		uuid: String!
+		user: User!
 		properties: JSON
 	}
 

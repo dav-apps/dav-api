@@ -227,6 +227,8 @@ async function sendNotifications() {
 
 		// Send the notification to all web push subscriptions of the user
 		for (let session of notification.user.sessions) {
+			if (session.appId != notification.appId) continue
+
 			for (let webPushSubscription of session.webPushSubscriptions) {
 				try {
 					await webPush.sendNotification(

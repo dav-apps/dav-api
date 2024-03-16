@@ -10,6 +10,8 @@ import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
 export const resolvers = {
 	Query: {
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
+		listTableObjectsByProperty:
+			tableObjectResolvers.listTableObjectsByProperty,
 		retrieveOrder: orderResolvers.retrieveOrder,
 		listOrders: orderResolvers.listOrders,
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses

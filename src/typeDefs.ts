@@ -4,6 +4,15 @@ export const typeDefs = `#graphql
 
 	type Query {
 		retrieveTableObject(uuid: String!): TableObject
+		listTableObjectsByProperty(
+			userId: Int
+			appId: Int!
+			tableName: String
+			propertyName: String!
+			propertyValue: String!
+			limit: Int
+			offset: Int
+		): TableObjectList!
 		retrieveOrder(uuid: String!): Order
 		listOrders(
 			status: [OrderStatus!]

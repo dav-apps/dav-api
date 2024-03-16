@@ -1,7 +1,7 @@
-import { TableObject } from "@prisma/client"
-import { ResolverContext } from "../types.js"
+import { User, TableObject } from "@prisma/client"
+import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, getDevByAuthToken } from "../utils.js"
 
 export async function retrieveTableObject(
 	parent: any,
@@ -52,6 +52,87 @@ export async function retrieveTableObject(
 	}
 
 	return tableObject
+}
+
+export async function listTableObjectsByProperty(
+	parent: any,
+	args: {
+		userId?: number
+		appId: number
+		tableName?: string
+		propertyName: string
+		propertyValue: string
+		limit?: number
+		offset?: number
+	},
+	context: ResolverContext
+): Promise<List<TableObject>> {
+	const authToken = context.authorization
+
+	let take = args.limit || 10
+	if (take <= 0) take = 10
+
+	let skip = args.offset || 0
+	if (skip < 0) skip = 0
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Find the table
+	let table = null
+
+	if (args.tableName != null) {
+		table = await context.prisma.table.findFirst({
+			where: { appId: args.appId, name: args.tableName }
+		})
+	}
+
+	// Find the user
+	let user = null
+
+	if (args.userId != null) {
+		user = await context.prisma.user.findFirst({ where: { id: args.userId } })
+	}
+
+	let where = {
+		tableId: table?.id,
+		userId: user?.id,
+		tableObjectProperties: {
+			some: { name: args.propertyName, value: args.propertyValue }
+		}
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.tableObject.count({ where }),
+		context.prisma.tableObject.findMany({ where, take, skip })
+	])
+
+	return {
+		total,
+		items
+	}
+}
+
+export async function user(
+	tableObject: TableObject,
+	args: any,
+	context: ResolverContext
+): Promise<User> {
+	return await context.prisma.user.findFirst({
+		where: { id: tableObject.userId }
+	})
 }
 
 export async function properties(

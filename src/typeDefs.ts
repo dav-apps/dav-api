@@ -41,6 +41,9 @@ export const typeDefs = `#graphql
 			interval: Int!
 			title: String!
 			body: String!
+			icon: String
+			image: String
+			href: String
 		): Notification
 		createSubscriptionCheckoutSession(
 			plan: Plan!

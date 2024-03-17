@@ -241,7 +241,10 @@ async function sendNotifications() {
 						},
 						JSON.stringify({
 							title: notification.title,
-							body: notification.body
+							body: notification.body,
+							icon: notification.icon,
+							image: notification.image,
+							href: notification.href
 						})
 					)
 				} catch (error) {

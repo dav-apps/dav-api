@@ -1,6 +1,6 @@
 import * as validator from "validator"
 import { validationErrors } from "../errors.js"
-import { urlRegex } from "../constants.js"
+import { urlRegex, urlPathRegex } from "../constants.js"
 
 //#region Field validations
 export function validateProductNameLength(productName: string) {
@@ -60,6 +60,24 @@ export function validatePrice(price: number) {
 export function validateInterval(interval: number) {
 	if (interval < 0) {
 		return validationErrors.intervalInvalid
+	}
+}
+
+export function validateIcon(icon: string) {
+	if (icon.length > 0 && !urlRegex.test(icon) && !urlPathRegex.test(icon)) {
+		return validationErrors.iconInvalid
+	}
+}
+
+export function validateImage(image: string) {
+	if (image.length > 0 && !urlRegex.test(image) && !urlPathRegex.test(image)) {
+		return validationErrors.imageInvalid
+	}
+}
+
+export function validateHref(href: string) {
+	if (href.length > 0 && !urlRegex.test(href) && !urlPathRegex.test(href)) {
+		return validationErrors.hrefInvalid
 	}
 }
 //#endregion

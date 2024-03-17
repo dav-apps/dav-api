@@ -5,7 +5,10 @@ import {
 	validateUuid,
 	validateTitleLength,
 	validateBodyLength,
-	validateInterval
+	validateInterval,
+	validateIcon,
+	validateImage,
+	validateHref
 } from "../services/validationService.js"
 import {
 	throwApiError,
@@ -25,6 +28,9 @@ export async function createNotification(
 		interval: number
 		title: string
 		body: string
+		icon?: string
+		image?: string
+		href?: string
 	},
 	context: ResolverContext
 ): Promise<Notification> {
@@ -72,6 +78,18 @@ export async function createNotification(
 		validateInterval(args.interval)
 	)
 
+	if (args.icon != null) {
+		validations.push(validateIcon(args.icon))
+	}
+
+	if (args.image != null) {
+		validations.push(validateImage(args.image))
+	}
+
+	if (args.href != null) {
+		validations.push(validateHref(args.href))
+	}
+
 	throwValidationError(...validations)
 
 	// Create the notification
@@ -85,7 +103,10 @@ export async function createNotification(
 			time: DateTime.fromSeconds(args.time).toUTC().toString(),
 			interval: args.interval,
 			title: args.title,
-			body: args.body
+			body: args.body,
+			icon: args.icon,
+			image: args.image,
+			href: args.href
 		}
 	})
 }

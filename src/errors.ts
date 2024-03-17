@@ -89,5 +89,8 @@ export const validationErrors = {
 	cancelUrlInvalid: "CANCEL_URL_INVALID",
 	priceInvalid: "PRICE_INVALID",
 	currencyInvalid: "CURRENCY_INVALID",
-	intervalInvalid: "INTERVAL_INVALID"
+	intervalInvalid: "INTERVAL_INVALID",
+	iconInvalid: "ICON_INVALID",
+	imageInvalid: "IMAGE_INVALID",
+	hrefInvalid: "HREF_INVALID"
 }

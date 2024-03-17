@@ -195,6 +195,9 @@ model Notification {
   interval  Int?
   title     String?   @db.VarChar
   body      String?   @db.VarChar
+  icon      String?   @db.VarChar
+  image     String?   @db.VarChar
+  href      String?   @db.VarChar
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   app       App       @relation(fields: [appId], references: [id])

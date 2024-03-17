@@ -10,6 +10,7 @@ export const typeDefs = `#graphql
 			tableName: String
 			propertyName: String!
 			propertyValue: String!
+			exact: Boolean
 			limit: Int
 			offset: Int
 		): TableObjectList!

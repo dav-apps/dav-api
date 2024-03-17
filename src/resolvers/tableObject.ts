@@ -62,6 +62,7 @@ export async function listTableObjectsByProperty(
 		tableName?: string
 		propertyName: string
 		propertyValue: string
+		exact?: boolean
 		limit?: number
 		offset?: number
 	},
@@ -106,11 +107,16 @@ export async function listTableObjectsByProperty(
 		user = await context.prisma.user.findFirst({ where: { id: args.userId } })
 	}
 
+	let exact = args.exact ?? true
+
 	let where = {
 		tableId: table?.id,
 		userId: user?.id,
 		tableObjectProperties: {
-			some: { name: args.propertyName, value: args.propertyValue }
+			some: {
+				name: args.propertyName,
+				value: exact ? args.propertyValue : { contains: args.propertyValue }
+			}
 		}
 	}
 

@@ -214,6 +214,9 @@ export async function createPaymentCheckoutSession(
 		metadata: {
 			order: order.uuid
 		},
+		invoice_creation: {
+			enabled: true
+		},
 		customer_update: {
 			address: "auto"
 		},

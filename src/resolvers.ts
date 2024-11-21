@@ -33,7 +33,7 @@ export const resolvers = {
 		properties: tableObjectResolvers.properties
 	},
 	Order: {
-		userId: orderResolvers.userId,
+		user: orderResolvers.user,
 		tableObject: orderResolvers.tableObject,
 		shippingAddress: orderResolvers.shippingAddress
 	},

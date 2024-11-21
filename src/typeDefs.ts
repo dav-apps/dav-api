@@ -69,6 +69,7 @@ export const typeDefs = `#graphql
 
 	type User {
 		id: Int!
+		email: String!
 	}
 
 	type TableObject {
@@ -99,7 +100,7 @@ export const typeDefs = `#graphql
 
 	type Order {
 		uuid: String!
-		userId: Int!
+		user: User!
 		tableObject: TableObject!
 		shippingAddress: ShippingAddress
 		paymentIntentId: String

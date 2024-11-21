@@ -1,4 +1,4 @@
-import { TableObject, Order, ShippingAddress } from "@prisma/client"
+import { TableObject, Order, ShippingAddress, User } from "@prisma/client"
 import { throwApiError, getDevByAuthToken } from "../utils.js"
 import { ResolverContext, OrderStatus, List } from "../types.js"
 import { apiErrors } from "../errors.js"
@@ -122,10 +122,18 @@ export async function updateOrder(
 	})
 }
 
-export function userId(order: Order): number {
-	if (order == null) return null
+export async function user(
+	order: Order,
+	args: any,
+	context: ResolverContext
+): Promise<User> {
+	if (order.userId == null) {
+		return null
+	}
 
-	return Number(order.userId)
+	return await context.prisma.user.findFirst({
+		where: { id: order.userId }
+	})
 }
 
 export async function tableObject(

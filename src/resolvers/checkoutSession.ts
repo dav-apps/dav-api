@@ -214,6 +214,9 @@ export async function createPaymentCheckoutSession(
 		metadata: {
 			order: order.uuid
 		},
+		customer_update: {
+			address: "auto"
+		},
 		success_url: args.successUrl,
 		cancel_url: args.cancelUrl
 	})

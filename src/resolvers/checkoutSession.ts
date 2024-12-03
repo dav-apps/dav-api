@@ -1,3 +1,4 @@
+import Stripe from "stripe"
 import {
 	ResolverContext,
 	CheckoutSession,
@@ -105,6 +106,10 @@ export async function createPaymentCheckoutSession(
 		currency?: Currency
 		productName: string
 		productImage: string
+		shippingRate?: {
+			name: string
+			price: number
+		}
 		successUrl: string
 		cancelUrl: string
 	},
@@ -193,7 +198,7 @@ export async function createPaymentCheckoutSession(
 	}
 
 	// Create the Stripe checkout session
-	const checkoutSession = await context.stripe.checkout.sessions.create({
+	let sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
 		customer: session.user.stripeCustomerId,
 		shipping_address_collection: { allowed_countries: ["DE"] },
 		phone_number_collection: { enabled: true },
@@ -222,7 +227,26 @@ export async function createPaymentCheckoutSession(
 		},
 		success_url: args.successUrl,
 		cancel_url: args.cancelUrl
-	})
+	}
+
+	if (args.shippingRate != null) {
+		sessionCreateParams.shipping_options = [
+			{
+				shipping_rate_data: {
+					display_name: args.shippingRate.name,
+					type: "fixed_amount",
+					fixed_amount: {
+						amount: args.shippingRate.price,
+						currency: args.currency
+					}
+				}
+			}
+		]
+	}
+
+	const checkoutSession = await context.stripe.checkout.sessions.create(
+		sessionCreateParams
+	)
 
 	return { url: checkoutSession.url }
 }

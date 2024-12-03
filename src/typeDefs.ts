@@ -58,6 +58,7 @@ export const typeDefs = `#graphql
 			currency: Currency
 			productName: String!
 			productImage: String!
+			shippingRate: ShippingRate
 			successUrl: String!
 			cancelUrl: String!
 		): CheckoutSession
@@ -134,6 +135,11 @@ export const typeDefs = `#graphql
 
 	type CheckoutSession {
 		url: String!
+	}
+
+	input ShippingRate {
+		name: String!
+		price: Int!
 	}
 
 	enum Plan {

@@ -216,6 +216,15 @@ async function stripeWebhook(req: Request, res: Response) {
 			let purchase = await prisma.purchase.findFirst({
 				where: {
 					paymentIntentId: paymentIntent.id
+				},
+				include: {
+					tableObjectPurchases: {
+						include: {
+							tableObject: {
+								include: { table: { include: { app: true } } }
+							}
+						}
+					}
 				}
 			})
 
@@ -226,7 +235,31 @@ async function stripeWebhook(req: Request, res: Response) {
 				data: { completed: true }
 			})
 
-			// TODO: Notify client APIs of the completed purchase
+			// Notify client APIs of the completed purchase
+			for (let tableObjectPurchase of purchase.tableObjectPurchases) {
+				let webhookUrl =
+					tableObjectPurchase.tableObject.table.app.webhookUrl
+
+				if (webhookUrl == null) continue
+
+				try {
+					await axios({
+						method: "put",
+						url: webhookUrl,
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: process.env.WEBHOOK_KEY
+						},
+						data: {
+							type: "payment_intent_succeeded",
+							uuid: tableObjectPurchase.tableObject.uuid
+						}
+					})
+				} catch (error) {
+					console.error(error)
+					return res.status(500).send()
+				}
+			}
 
 			break
 		case "customer.subscription.created":

@@ -29,344 +29,387 @@ async function stripeWebhook(req: Request, res: Response) {
 	}
 
 	// Handle the event
+	let status = 200
+
 	switch (event.type) {
 		case "checkout.session.completed":
-			const checkoutSession = event.data.object as Stripe.Checkout.Session
-			if (checkoutSession.payment_status == "unpaid") break
-
-			// Get the order id from the payment intent
-			const orderUuid = checkoutSession.metadata.order
-
-			if (orderUuid != null) {
-				// Find the order & update it
-				let order = await prisma.order.findFirst({
-					where: { uuid: orderUuid }
-				})
-
-				if (order.shippingAddressId == null) {
-					// Try to find an existing shipping address with these values
-					let shippingAddress = await prisma.shippingAddress.findFirst({
-						where: {
-							userId: order.userId,
-							name: checkoutSession.customer_details.name,
-							email: checkoutSession.customer_details.email,
-							phone: checkoutSession.customer_details.phone,
-							city: checkoutSession.customer_details.address.city,
-							country: checkoutSession.customer_details.address.country,
-							line1: checkoutSession.customer_details.address.line1,
-							line2: checkoutSession.customer_details.address.line2,
-							postalCode:
-								checkoutSession.customer_details.address.postal_code,
-							state: checkoutSession.customer_details.address.state
-						}
-					})
-
-					if (shippingAddress == null) {
-						// Create a new shipping address
-						shippingAddress = await prisma.shippingAddress.create({
-							data: {
-								user: { connect: { id: order.userId } },
-								name: checkoutSession.customer_details.name,
-								email: checkoutSession.customer_details.email,
-								phone: checkoutSession.customer_details.phone,
-								city: checkoutSession.customer_details.address.city,
-								country:
-									checkoutSession.customer_details.address.country,
-								line1: checkoutSession.customer_details.address.line1,
-								line2: checkoutSession.customer_details.address.line2,
-								postalCode:
-									checkoutSession.customer_details.address.postal_code,
-								state: checkoutSession.customer_details.address.state
-							}
-						})
-					}
-
-					// Update the order with the shipping address
-					await prisma.order.update({
-						where: { id: order.id },
-						data: {
-							shippingAddress: { connect: { id: shippingAddress.id } }
-						}
-					})
-				}
-
-				// Update the order with the payment_intent_id
-				order = await prisma.order.update({
-					where: { id: order.id },
-					data: {
-						paymentIntentId: checkoutSession.payment_intent as string,
-						status: "PREPARATION"
-					}
-				})
-
-				// Notify the client
-				let tableObject = await prisma.tableObject.findFirst({
-					where: { id: order.tableObjectId },
-					include: { table: { include: { app: true } } }
-				})
-
-				const webhookUrl = tableObject?.table?.app?.webhookUrl
-
-				if (webhookUrl != null) {
-					try {
-						await axios({
-							method: "post",
-							url: webhookUrl,
-							headers: {
-								"Content-Type": "application/json",
-								Authorization: process.env.WEBHOOK_KEY
-							},
-							data: {
-								type: "order.completed",
-								uuid: order.uuid
-							}
-						})
-					} catch (error) {
-						console.error(error)
-					}
-				}
-			}
-
+			status = await handleCheckoutSessionCompletedEvent(event)
 			break
 		case "invoice.payment_succeeded":
-			let invoice = event.data.object as Stripe.Invoice
-			if (invoice.lines.data.length == 0) break
-
-			let productId = invoice.lines.data[0].plan?.product as string
-			if (productId == null) break
-
-			let periodEnd = invoice.lines.data[0].period?.end
-			if (periodEnd == null) break
-
-			let user = await prisma.user.findFirst({
-				where: {
-					stripeCustomerId: invoice.customer as string
-				}
-			})
-
-			if (user == null) break
-
-			// Update plan, period_end and subscription_status of the user
-			let plan = 1
-
-			if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
-				plan = 2
-			}
-
-			await prisma.user.update({
-				where: { id: user.id },
-				data: {
-					periodEnd: new Date(periodEnd * 1000),
-					subscriptionStatus: 0,
-					plan
-				}
-			})
-
+			status = await handleInvoicePaymentSucceededEvent(event)
 			break
 		case "invoice.payment_failed":
-			invoice = event.data.object as Stripe.Invoice
-			if (invoice.paid) break
-
-			user = await prisma.user.findFirst({
-				where: {
-					stripeCustomerId: invoice.customer as string
-				}
-			})
-
-			if (user == null) break
-
-			if (invoice.next_payment_attempt == null) {
-				// Downgrade the user to the free plan
-				await prisma.user.update({
-					where: { id: user.id },
-					data: {
-						plan: 0,
-						subscriptionStatus: 0,
-						periodEnd: null
-					}
-				})
-
-				// Send payment failed email
-				resend.emails.send({
-					from: noReplyEmailAddress,
-					to: user.email,
-					subject: "Subscription renewal failed - dav",
-					react: <PaymentFailedEmail name={user.firstName} />
-				})
-			} else if (invoice.attempt_count == 2) {
-				// Send payment attempt failed email
-				resend.emails.send({
-					from: noReplyEmailAddress,
-					to: user.email,
-					subject: "Subscription renewal failed - dav",
-					react: (
-						<PaymentAttemptFailedEmail
-							name={user.firstName}
-							plan={user.plan}
-						/>
-					)
-				})
-			}
-
+			status = await handleInvoicePaymentFailedEvent(event)
 			break
 		case "payment_intent.succeeded":
-			let paymentIntent = event.data.object as Stripe.PaymentIntent
-
-			// Find the purchase with the payment intent
-			let purchase = await prisma.purchase.findFirst({
-				where: {
-					paymentIntentId: paymentIntent.id
-				},
-				include: {
-					tableObjectPurchases: {
-						include: {
-							tableObject: {
-								include: { table: { include: { app: true } } }
-							}
-						}
-					}
-				}
-			})
-
-			if (purchase == null || purchase.completed) break
-
-			await prisma.purchase.update({
-				where: { id: purchase.id },
-				data: { completed: true }
-			})
-
-			// Notify client APIs of the completed purchase
-			for (let tableObjectPurchase of purchase.tableObjectPurchases) {
-				let webhookUrl =
-					tableObjectPurchase.tableObject.table.app.webhookUrl
-
-				if (webhookUrl == null) continue
-
-				try {
-					await axios({
-						method: "put",
-						url: webhookUrl,
-						headers: {
-							"Content-Type": "application/json",
-							Authorization: process.env.WEBHOOK_KEY
-						},
-						data: {
-							type: "payment_intent_succeeded",
-							uuid: tableObjectPurchase.tableObject.uuid
-						}
-					})
-				} catch (error) {
-					console.error(error)
-					return res.status(500).send()
-				}
-			}
-
+			status = await handlePaymentIntentSucceededEvent(event)
 			break
 		case "customer.subscription.created":
-			let subscription = event.data.object as Stripe.Subscription
-			if (subscription.items.data.length == 0) break
-
-			productId = subscription.items.data[0].plan?.product as string
-			if (productId == null) break
-
-			periodEnd = subscription.current_period_end
-			if (periodEnd == null) break
-
-			user = await prisma.user.findFirst({
-				where: {
-					stripeCustomerId: subscription.customer as string
-				}
-			})
-
-			if (user == null) break
-
-			// Update plan, period_end and subscription_status of the user
-			plan = 1
-
-			if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
-				plan = 2
-			}
-
-			await prisma.user.update({
-				where: { id: user.id },
-				data: {
-					periodEnd: new Date(periodEnd * 1000),
-					subscriptionStatus: 0,
-					plan
-				}
-			})
-
+			status = await handleCustomerSubscriptionCreatedEvent(event)
 			break
 		case "customer.subscription.updated":
-			subscription = event.data.object as Stripe.Subscription
-			if (subscription.items.data.length == 0) break
-
-			periodEnd = subscription.current_period_end
-			if (periodEnd == null) break
-
-			user = await prisma.user.findFirst({
-				where: {
-					stripeCustomerId: subscription.customer as string
-				}
-			})
-
-			if (user == null) break
-
-			if (subscription.status == "active") {
-				// Update plan, period_end and subscription_status of the user
-				let plan = 1
-
-				if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
-					plan = 2
-				}
-
-				await prisma.user.update({
-					where: { id: user.id },
-					data: {
-						periodEnd: new Date(periodEnd * 1000),
-						subscriptionStatus: subscription.cancel_at_period_end ? 1 : 0,
-						plan
-					}
-				})
-			} else if (subscription.status == "incomplete_expired") {
-				// Immediately cancel the subscription
-				await prisma.user.update({
-					where: { id: user.id },
-					data: {
-						plan: 0,
-						subscriptionStatus: 0,
-						periodEnd: null
-					}
-				})
-			}
-
+			status = await handleCustomerSubscriptionUpdatedEvent(event)
 			break
 		case "customer.subscription.deleted":
-			subscription = event.data.object as Stripe.Subscription
-			if (subscription.items.data.length == 0) break
-
-			user = await prisma.user.findFirst({
-				where: {
-					stripeCustomerId: subscription.customer as string
-				}
-			})
-
-			if (user == null) break
-
-			// Downgrade the user to the free plan
-			await prisma.user.update({
-				where: { id: user.id },
-				data: {
-					plan: 0,
-					subscriptionStatus: 0,
-					periodEnd: null
-				}
-			})
-
+			status = await handleCustomerSubscriptionDeletedEvent(event)
 			break
 	}
 
-	res.send()
+	res.status(status).send()
+}
+
+async function handleCheckoutSessionCompletedEvent(
+	event: any
+): Promise<number> {
+	const checkoutSession = event.data.object as Stripe.Checkout.Session
+	if (checkoutSession.payment_status == "unpaid") return 500
+
+	// Get the order id from the payment intent
+	const orderUuid = checkoutSession.metadata.order
+
+	if (orderUuid != null) {
+		// Find the order & update it
+		let order = await prisma.order.findFirst({
+			where: { uuid: orderUuid }
+		})
+
+		if (order.shippingAddressId == null) {
+			// Try to find an existing shipping address with these values
+			let shippingAddress = await prisma.shippingAddress.findFirst({
+				where: {
+					userId: order.userId,
+					name: checkoutSession.customer_details.name,
+					email: checkoutSession.customer_details.email,
+					phone: checkoutSession.customer_details.phone,
+					city: checkoutSession.customer_details.address.city,
+					country: checkoutSession.customer_details.address.country,
+					line1: checkoutSession.customer_details.address.line1,
+					line2: checkoutSession.customer_details.address.line2,
+					postalCode: checkoutSession.customer_details.address.postal_code,
+					state: checkoutSession.customer_details.address.state
+				}
+			})
+
+			if (shippingAddress == null) {
+				// Create a new shipping address
+				shippingAddress = await prisma.shippingAddress.create({
+					data: {
+						user: { connect: { id: order.userId } },
+						name: checkoutSession.customer_details.name,
+						email: checkoutSession.customer_details.email,
+						phone: checkoutSession.customer_details.phone,
+						city: checkoutSession.customer_details.address.city,
+						country: checkoutSession.customer_details.address.country,
+						line1: checkoutSession.customer_details.address.line1,
+						line2: checkoutSession.customer_details.address.line2,
+						postalCode:
+							checkoutSession.customer_details.address.postal_code,
+						state: checkoutSession.customer_details.address.state
+					}
+				})
+			}
+
+			// Update the order with the shipping address
+			await prisma.order.update({
+				where: { id: order.id },
+				data: {
+					shippingAddress: { connect: { id: shippingAddress.id } }
+				}
+			})
+		}
+
+		// Update the order with the payment_intent_id
+		order = await prisma.order.update({
+			where: { id: order.id },
+			data: {
+				paymentIntentId: checkoutSession.payment_intent as string,
+				status: "PREPARATION"
+			}
+		})
+
+		// Notify the client
+		let tableObject = await prisma.tableObject.findFirst({
+			where: { id: order.tableObjectId },
+			include: { table: { include: { app: true } } }
+		})
+
+		const webhookUrl = tableObject?.table?.app?.webhookUrl
+
+		if (webhookUrl != null) {
+			try {
+				await axios({
+					method: "post",
+					url: webhookUrl,
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: process.env.WEBHOOK_KEY
+					},
+					data: {
+						type: "order.completed",
+						uuid: order.uuid
+					}
+				})
+			} catch (error) {
+				console.error(error)
+				return 500
+			}
+		}
+	}
+
+	return 200
+}
+
+async function handleInvoicePaymentSucceededEvent(event: any): Promise<number> {
+	const invoice = event.data.object as Stripe.Invoice
+	if (invoice.lines.data.length == 0) return 500
+
+	const productId = invoice.lines.data[0].plan?.product as string
+	if (productId == null) return 500
+
+	const periodEnd = invoice.lines.data[0].period?.end
+	if (periodEnd == null) return 500
+
+	const user = await prisma.user.findFirst({
+		where: {
+			stripeCustomerId: invoice.customer as string
+		}
+	})
+
+	if (user == null) return 500
+
+	// Update plan, period_end and subscription_status of the user
+	let plan = 1
+
+	if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
+		plan = 2
+	}
+
+	await prisma.user.update({
+		where: { id: user.id },
+		data: {
+			periodEnd: new Date(periodEnd * 1000),
+			subscriptionStatus: 0,
+			plan
+		}
+	})
+
+	return 200
+}
+
+async function handleInvoicePaymentFailedEvent(event: any): Promise<number> {
+	const invoice = event.data.object as Stripe.Invoice
+	if (invoice.paid) return 500
+
+	const user = await prisma.user.findFirst({
+		where: {
+			stripeCustomerId: invoice.customer as string
+		}
+	})
+
+	if (user == null) return 500
+
+	if (invoice.next_payment_attempt == null) {
+		// Downgrade the user to the free plan
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				plan: 0,
+				subscriptionStatus: 0,
+				periodEnd: null
+			}
+		})
+
+		// Send payment failed email
+		resend.emails.send({
+			from: noReplyEmailAddress,
+			to: user.email,
+			subject: "Subscription renewal failed - dav",
+			react: <PaymentFailedEmail name={user.firstName} />
+		})
+	} else if (invoice.attempt_count == 2) {
+		// Send payment attempt failed email
+		resend.emails.send({
+			from: noReplyEmailAddress,
+			to: user.email,
+			subject: "Subscription renewal failed - dav",
+			react: (
+				<PaymentAttemptFailedEmail name={user.firstName} plan={user.plan} />
+			)
+		})
+	}
+
+	return 200
+}
+
+async function handlePaymentIntentSucceededEvent(event: any): Promise<number> {
+	const paymentIntent = event.data.object as Stripe.PaymentIntent
+
+	// Find the purchase with the payment intent
+	const purchase = await prisma.purchase.findFirst({
+		where: {
+			paymentIntentId: paymentIntent.id
+		},
+		include: {
+			tableObjectPurchases: {
+				include: {
+					tableObject: {
+						include: { table: { include: { app: true } } }
+					}
+				}
+			}
+		}
+	})
+
+	if (purchase == null || purchase.completed) return 200
+
+	await prisma.purchase.update({
+		where: { id: purchase.id },
+		data: { completed: true }
+	})
+
+	// Notify client APIs of the completed purchase
+	for (let tableObjectPurchase of purchase.tableObjectPurchases) {
+		let webhookUrl = tableObjectPurchase.tableObject.table.app.webhookUrl
+
+		if (webhookUrl == null) continue
+
+		try {
+			await axios({
+				method: "put",
+				url: webhookUrl,
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: process.env.WEBHOOK_KEY
+				},
+				data: {
+					type: "payment_intent_succeeded",
+					uuid: tableObjectPurchase.tableObject.uuid
+				}
+			})
+		} catch (error) {
+			console.error(error)
+			return 500
+		}
+	}
+
+	return 200
+}
+
+async function handleCustomerSubscriptionCreatedEvent(
+	event: any
+): Promise<number> {
+	const subscription = event.data.object as Stripe.Subscription
+	if (subscription.items.data.length == 0) return 500
+
+	const productId = subscription.items.data[0].plan?.product as string
+	if (productId == null) return 500
+
+	const periodEnd = subscription.current_period_end
+	if (periodEnd == null) return 500
+
+	const user = await prisma.user.findFirst({
+		where: {
+			stripeCustomerId: subscription.customer as string
+		}
+	})
+
+	if (user == null) return 500
+
+	// Update plan, period_end and subscription_status of the user
+	let plan = 1
+
+	if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
+		plan = 2
+	}
+
+	await prisma.user.update({
+		where: { id: user.id },
+		data: {
+			periodEnd: new Date(periodEnd * 1000),
+			subscriptionStatus: 0,
+			plan
+		}
+	})
+
+	return 200
+}
+
+async function handleCustomerSubscriptionUpdatedEvent(
+	event: any
+): Promise<number> {
+	const subscription = event.data.object as Stripe.Subscription
+	if (subscription.items.data.length == 0) return 500
+
+	const productId = subscription.items.data[0].plan?.product as string
+	if (productId == null) return 500
+
+	const periodEnd = subscription.current_period_end
+	if (periodEnd == null) return 500
+
+	const user = await prisma.user.findFirst({
+		where: {
+			stripeCustomerId: subscription.customer as string
+		}
+	})
+
+	if (user == null) return 500
+
+	if (subscription.status == "active") {
+		// Update plan, period_end and subscription_status of the user
+		let plan = 1
+
+		if (productId == process.env.STRIPE_DAV_PRO_PRODUCT_ID) {
+			plan = 2
+		}
+
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				periodEnd: new Date(periodEnd * 1000),
+				subscriptionStatus: subscription.cancel_at_period_end ? 1 : 0,
+				plan
+			}
+		})
+	} else if (subscription.status == "incomplete_expired") {
+		// Immediately cancel the subscription
+		await prisma.user.update({
+			where: { id: user.id },
+			data: {
+				plan: 0,
+				subscriptionStatus: 0,
+				periodEnd: null
+			}
+		})
+	}
+
+	return 200
+}
+
+async function handleCustomerSubscriptionDeletedEvent(
+	event: any
+): Promise<number> {
+	const subscription = event.data.object as Stripe.Subscription
+	if (subscription.items.data.length == 0) return 500
+
+	const user = await prisma.user.findFirst({
+		where: {
+			stripeCustomerId: subscription.customer as string
+		}
+	})
+
+	if (user == null) return 500
+
+	// Downgrade the user to the free plan
+	await prisma.user.update({
+		where: { id: user.id },
+		data: {
+			plan: 0,
+			subscriptionStatus: 0,
+			periodEnd: null
+		}
+	})
+
+	return 200
 }
 
 export function setup(app: Express) {

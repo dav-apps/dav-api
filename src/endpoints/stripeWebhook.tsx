@@ -2,7 +2,9 @@ import { Express, Request, Response, raw } from "express"
 import cors from "cors"
 import axios from "axios"
 import Stripe from "stripe"
-import { prisma, stripe } from "../../server.js"
+import { prisma, stripe, resend } from "../../server.js"
+import PaymentFailedEmail from "../emails/paymentFailed.js"
+import { noReplyEmailAddress } from "../constants.js"
 
 const endpointSecret = process.env.STRIPE_WEBHOOKS_SECRET
 
@@ -183,7 +185,13 @@ async function stripeWebhook(req: Request, res: Response) {
 					}
 				})
 
-				// TODO: Send payment failed email
+				// Send payment failed email
+				resend.emails.send({
+					from: noReplyEmailAddress,
+					to: user.email,
+					subject: "Subscription renewal failed",
+					react: <PaymentFailedEmail name={user.firstName} />
+				})
 			} else if (invoice.attempt_count == 2) {
 				// TODO: Send payment attempt failed email
 			}

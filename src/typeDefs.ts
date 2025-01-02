@@ -3,6 +3,11 @@ export const typeDefs = `#graphql
 	scalar JSONObject
 
 	type Query {
+		listApps(
+			published: Boolean
+			limit: Int
+			offset: Int
+		): AppList!
 		retrieveTableObject(uuid: String!): TableObject
 		listTableObjectsByProperty(
 			userId: Int
@@ -66,6 +71,21 @@ export const typeDefs = `#graphql
 			uuid: String!
 			status: OrderStatus
 		): Order
+	}
+
+	type App {
+		id: Int!
+		name: String!
+		description: String
+		published: Boolean
+		webLink: String
+		googlePlayLink: String
+		microsoftStoreLink: String
+	}
+
+	type AppList {
+		total: Int!
+		items: [App!]!
 	}
 
 	type User {

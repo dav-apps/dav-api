@@ -1,7 +1,14 @@
 import { App } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, throwValidationError } from "../utils.js"
+import {
+	validateNameLength,
+	validateDescriptionLength,
+	validateWebLink,
+	validateGooglePlayLink,
+	validateMicrosoftStoreLink
+} from "../services/validationService.js"
 
 export async function retrieveApp(
 	parent: any,
@@ -85,6 +92,126 @@ export async function listApps(
 		total,
 		items
 	}
+}
+
+export async function updateApp(
+	parent: any,
+	args: {
+		id: number
+		name?: string
+		description?: string
+		published?: boolean
+		webLink?: string
+		googlePlayLink?: string
+		microsoftStoreLink?: string
+	},
+	context: ResolverContext
+): Promise<App> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await context.prisma.session.findFirst({
+		where: { token: accessToken }
+	})
+
+	if (session == null) {
+		throwApiError(apiErrors.sessionDoesNotExist)
+	}
+
+	// Make sure this was called from the website
+	if (session.appId != BigInt(process.env.DAV_APPS_APP_ID)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (
+		args.name == null &&
+		args.description == null &&
+		args.published == null &&
+		args.webLink == null &&
+		args.googlePlayLink == null &&
+		args.microsoftStoreLink == null
+	) {
+		return null
+	}
+
+	// Get the app
+	const app = await context.prisma.app.findFirst({
+		where: { id: args.id }
+	})
+
+	if (app == null) {
+		throwApiError(apiErrors.appDoesNotExist)
+	}
+
+	// Check if the app belongs to the dev of the user
+	const dev = await context.prisma.dev.findFirst({
+		where: { userId: session.userId }
+	})
+
+	if (dev == null || app.devId != dev.id) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Validate the args
+	let errors: string[] = []
+
+	if (args.name != null) {
+		errors.push(validateNameLength(args.name))
+	}
+
+	if (args.description != null) {
+		errors.push(validateDescriptionLength(args.description))
+	}
+
+	if (args.webLink != null) {
+		errors.push(validateWebLink(args.webLink))
+	}
+
+	if (args.googlePlayLink != null) {
+		errors.push(validateGooglePlayLink(args.googlePlayLink))
+	}
+
+	if (args.microsoftStoreLink != null) {
+		errors.push(validateMicrosoftStoreLink(args.microsoftStoreLink))
+	}
+
+	throwValidationError(...errors)
+
+	// Update the app
+	let data = {}
+
+	if (args.name != null) {
+		data["name"] = args.name
+	}
+
+	if (args.description != null) {
+		data["description"] = args.description
+	}
+
+	if (args.published != null) {
+		data["published"] = args.published
+	}
+
+	if (args.webLink != null) {
+		data["webLink"] = args.webLink
+	}
+
+	if (args.googlePlayLink != null) {
+		data["googlePlayLink"] = args.googlePlayLink
+	}
+
+	if (args.microsoftStoreLink != null) {
+		data["microsoftStoreLink"] = args.microsoftStoreLink
+	}
+
+	return await context.prisma.app.update({
+		where: { id: app.id },
+		data
+	})
 }
 
 export function id(app: App, args: any, context: ResolverContext): number {

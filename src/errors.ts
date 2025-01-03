@@ -82,6 +82,10 @@ export const apiErrors = {
 }
 
 export const validationErrors = {
+	nameTooShort: "NAME_TOO_SHORT",
+	nameTooLong: "NAME_TOO_LONG",
+	descriptionTooShort: "DESCRIPTION_TOO_SHORT",
+	descriptionTooLong: "DESCRIPTION_TOO_LONG",
 	productNameTooShort: "PRODUCT_NAME_TOO_SHORT",
 	productNameTooLong: "PRODUCT_NAME_TOO_LONG",
 	titleTooShort: "TITLE_TOO_SHORT",
@@ -90,6 +94,9 @@ export const validationErrors = {
 	bodyTooLong: "BODY_TOO_LONG",
 	uuidInvalid: "UUID_INVALID",
 	productImageInvalid: "PRODUCT_IMAGE_INVALID",
+	webLinkInvalid: "WEB_LINK_INVALID",
+	googlePlayLinkInvalid: "GOOGLE_PLAY_LINK_INVALID",
+	microsoftStoreLinkInvalid: "MICROSOFT_STORE_LINK_INVALID",
 	successUrlInvalid: "SUCCESS_URL_INVALID",
 	cancelUrlInvalid: "CANCEL_URL_INVALID",
 	priceInvalid: "PRICE_INVALID",

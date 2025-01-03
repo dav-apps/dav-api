@@ -34,6 +34,15 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
+		updateApp(
+			id: Int!
+			name: String
+			description: String
+			published: Boolean
+			webLink: String
+			googlePlayLink: String
+			microsoftStoreLink: String
+		): App!
 		setTableObjectPrice(
 			tableObjectUuid: String!
 			price: Int!

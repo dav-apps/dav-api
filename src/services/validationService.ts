@@ -3,6 +3,22 @@ import { validationErrors } from "../errors.js"
 import { urlRegex, urlPathRegex } from "../constants.js"
 
 //#region Field validations
+export function validateNameLength(name: string) {
+	if (name.length < 2) {
+		return validationErrors.nameTooShort
+	} else if (name.length > 20) {
+		return validationErrors.nameTooLong
+	}
+}
+
+export function validateDescriptionLength(description: string) {
+	if (description.length < 2) {
+		return validationErrors.descriptionTooShort
+	} else if (description.length > 200) {
+		return validationErrors.descriptionTooLong
+	}
+}
+
 export function validateProductNameLength(productName: string) {
 	if (productName.length < 2) {
 		return validationErrors.productNameTooShort
@@ -36,6 +52,24 @@ export function validateUuid(uuid: string) {
 export function validateProductImage(productImage: string) {
 	if (productImage.length > 0 && !urlRegex.test(productImage)) {
 		return validationErrors.productImageInvalid
+	}
+}
+
+export function validateWebLink(webLink: string) {
+	if (webLink.length > 0 && !urlRegex.test(webLink)) {
+		return validationErrors.webLinkInvalid
+	}
+}
+
+export function validateGooglePlayLink(googlePlayLink: string) {
+	if (googlePlayLink.length > 0 && !urlRegex.test(googlePlayLink)) {
+		return validationErrors.googlePlayLinkInvalid
+	}
+}
+
+export function validateMicrosoftStoreLink(microsoftStoreLink: string) {
+	if (microsoftStoreLink.length > 0 && !urlRegex.test(microsoftStoreLink)) {
+		return validationErrors.microsoftStoreLinkInvalid
 	}
 }
 

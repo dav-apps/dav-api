@@ -20,6 +20,7 @@ export const resolvers = {
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses
 	},
 	Mutation: {
+		updateApp: appResolvers.updateApp,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
 		createNotification: notificationResolvers.createNotification,
 		createSubscriptionCheckoutSession:

@@ -10,6 +10,7 @@ import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
 
 export const resolvers = {
 	Query: {
+		retrieveApp: appResolvers.retrieveApp,
 		listApps: appResolvers.listApps,
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		listTableObjectsByProperty:

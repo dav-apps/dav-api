@@ -26,7 +26,7 @@ export async function retrieveTableObject(
 	})
 
 	if (tableObject == null) {
-		throwApiError(apiErrors.tableObjectDoesNotExist)
+		return null
 	}
 
 	// Check if the user can access the table object

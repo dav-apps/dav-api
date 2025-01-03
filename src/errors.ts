@@ -49,6 +49,11 @@ export const apiErrors = {
 		message: "The user is already on the given plan or on a higher plan",
 		status: 422
 	},
+	appDoesNotExist: {
+		code: "APP_DOES_NOT_EXIST",
+		message: "App does not exist",
+		status: 404
+	},
 	userDoesNotExist: {
 		code: "USER_DOES_NOT_EXIST",
 		message: "User does not exist",

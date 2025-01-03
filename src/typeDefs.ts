@@ -3,6 +3,7 @@ export const typeDefs = `#graphql
 	scalar JSONObject
 
 	type Query {
+		retrieveApp(id: Int!): App
 		listApps(
 			published: Boolean
 			limit: Int

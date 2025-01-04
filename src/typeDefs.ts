@@ -9,6 +9,11 @@ export const typeDefs = `#graphql
 			limit: Int
 			offset: Int
 		): AppList!
+		listAppUserSnapshots(
+			appId: Int!
+			start: Int
+			end: Int
+		): AppUserSnapshotList!
 		retrieveTableObject(uuid: String!): TableObject
 		listTableObjectsByProperty(
 			userId: Int
@@ -96,6 +101,24 @@ export const typeDefs = `#graphql
 	type AppList {
 		total: Int!
 		items: [App!]!
+	}
+
+	type AppUserSnapshot {
+		time: String!
+		dailyActive: Int!
+		weeklyActive: Int!
+		monthlyActive: Int!
+		yearlyActive: Int!
+		freePlan: Int!
+		plusPlan: Int!
+		proPlan: Int!
+		emailConfirmed: Int!
+		emailUnconfirmed: Int!
+	}
+
+	type AppUserSnapshotList {
+		total: Int!
+		items: [AppUserSnapshot!]!
 	}
 
 	type User {

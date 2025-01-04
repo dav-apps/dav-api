@@ -29,4 +29,8 @@ export type Plan = "FREE" | "PLUS" | "PRO"
 export interface CheckoutSession {
 	url: string
 }
+
+export interface CustomerPortalSession {
+	url: string
+}
 //#endregion

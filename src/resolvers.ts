@@ -8,6 +8,7 @@ import * as notificationResolvers from "./resolvers/notification.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as shippingAddressResolvers from "./resolvers/shippingAddress.js"
 import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
+import * as customerPortalSessionResolvers from "./resolvers/customerPortalSession.js"
 
 export const resolvers = {
 	Query: {
@@ -29,6 +30,8 @@ export const resolvers = {
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:
 			checkoutSessionResolvers.createPaymentCheckoutSession,
+		createCustomerPortalSession:
+			customerPortalSessionResolvers.createCustomerPortalSession,
 		updateOrder: orderResolvers.updateOrder
 	},
 	App: {

@@ -82,6 +82,7 @@ export const typeDefs = `#graphql
 			successUrl: String!
 			cancelUrl: String!
 		): CheckoutSession
+		createCustomerPortalSession: CustomerPortalSession!
 		updateOrder(
 			uuid: String!
 			status: OrderStatus
@@ -187,6 +188,10 @@ export const typeDefs = `#graphql
 	}
 
 	type CheckoutSession {
+		url: String!
+	}
+
+	type CustomerPortalSession {
 		url: String!
 	}
 

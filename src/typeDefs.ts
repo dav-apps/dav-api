@@ -14,6 +14,7 @@ export const typeDefs = `#graphql
 			start: Int
 			end: Int
 		): AppUserSnapshotList!
+		retrieveDev: Dev
 		retrieveTableObject(uuid: String!): TableObject
 		listTableObjectsByProperty(
 			userId: Int
@@ -120,6 +121,10 @@ export const typeDefs = `#graphql
 	type AppUserSnapshotList {
 		total: Int!
 		items: [AppUserSnapshot!]!
+	}
+
+	type Dev {
+		id: Int!
 	}
 
 	type User {

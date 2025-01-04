@@ -1,6 +1,7 @@
 import GraphQLJSON, { GraphQLJSONObject } from "graphql-type-json"
 import * as appResolvers from "./resolvers/app.js"
 import * as appUserSnapshotResolvers from "./resolvers/appUserSnapshot.js"
+import * as devResolvers from "./resolvers/dev.js"
 import * as userResolvers from "./resolvers/user.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
@@ -15,6 +16,7 @@ export const resolvers = {
 		retrieveApp: appResolvers.retrieveApp,
 		listApps: appResolvers.listApps,
 		listAppUserSnapshots: appUserSnapshotResolvers.listAppUserSnapshots,
+		retrieveDev: devResolvers.retrieveDev,
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		listTableObjectsByProperty:
 			tableObjectResolvers.listTableObjectsByProperty,

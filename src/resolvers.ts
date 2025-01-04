@@ -3,6 +3,7 @@ import * as appResolvers from "./resolvers/app.js"
 import * as appUserSnapshotResolvers from "./resolvers/appUserSnapshot.js"
 import * as devResolvers from "./resolvers/dev.js"
 import * as userResolvers from "./resolvers/user.js"
+import * as sessionResolvers from "./resolvers/session.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
 import * as notificationResolvers from "./resolvers/notification.js"
@@ -25,6 +26,7 @@ export const resolvers = {
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses
 	},
 	Mutation: {
+		createSession: sessionResolvers.createSession,
 		updateApp: appResolvers.updateApp,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
 		createNotification: notificationResolvers.createNotification,

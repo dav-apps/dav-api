@@ -20,6 +20,11 @@ export interface ApiError {
 	status?: number
 }
 
+export interface CreateSessionResult {
+	accessToken: string
+	websiteAccessToken?: string
+}
+
 export type Currency = "EUR"
 export type TableObjectPriceType = "PURCHASE" | "ORDER"
 export type OrderStatus = "CREATED" | "PREPARATION" | "SHIPPED"

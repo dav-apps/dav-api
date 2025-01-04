@@ -40,6 +40,14 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
+		createSession(
+			email: String!
+			password: String!
+			appId: Int!
+			apiKey: String!
+			deviceName: String
+			deviceOs: String
+		): CreateSessionResult!
 		updateApp(
 			id: Int!
 			name: String
@@ -198,6 +206,11 @@ export const typeDefs = `#graphql
 
 	type CustomerPortalSession {
 		url: String!
+	}
+
+	type CreateSessionResult {
+		accessToken: String!
+		websiteAccessToken: String
 	}
 
 	input ShippingRate {

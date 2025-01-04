@@ -421,7 +421,7 @@ model User {
   id                        BigInt                  @id @default(autoincrement())
   email                     String?                 @db.VarChar
   firstName                 String?                 @map("first_name") @db.VarChar
-  password_digest           String?                 @ignore @db.VarChar
+  password                  String?                 @map("password_digest") @db.VarChar
   confirmed                 Boolean?                @default(false)
   emailConfirmationToken    String?                 @map("email_confirmation_token") @db.VarChar
   passwordConfirmationToken String?                 @map("password_confirmation_token") @db.VarChar

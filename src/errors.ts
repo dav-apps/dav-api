@@ -33,6 +33,11 @@ export const apiErrors = {
 		message: "Session has ended and must be renewed",
 		status: 403
 	},
+	passwordIncorrect: {
+		code: "PASSWORD_INCORRECT",
+		message: "Password is incorrect",
+		status: 400
+	},
 	tableObjectHasNoPrice: {
 		code: "TABLE_OBJECT_HAS_NO_PRICE",
 		message: "TableObject needs a price to be purchased or ordered",

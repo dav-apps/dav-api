@@ -25,7 +25,7 @@ export const resend = new Resend(process.env.RESEND_API_KEY)
 //#region Redis config
 export const redis = createClient({
 	url: process.env.REDIS_URL,
-	database: process.env.ENVIRONMENT == "production" ? 1 : 2 // production: 1, staging: 2
+	database: process.env.ENV == "production" ? 1 : 2 // production: 1, staging: 2
 })
 
 redis.on("error", err => console.log("Redis Client Error", err))
@@ -47,7 +47,7 @@ await server.start()
 // Call setup function of each endpoint file
 stripeWebhookSetup(app)
 
-if (process.env.ENVIRONMENT == "production") {
+if (process.env.ENV == "production") {
 	// Setup cron jobs
 	setupTasks()
 }

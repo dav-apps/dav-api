@@ -90,7 +90,7 @@ export async function getSessionFromToken(params: {
 	} else if (checkRenew) {
 		// Check if the session needs to be renewed
 		if (
-			process.env.ENVIRONMENT == "production" &&
+			process.env.ENV == "production" &&
 			DateTime.fromJSDate(session.updatedAt) <
 				DateTime.now().minus({ days: 1 })
 		) {

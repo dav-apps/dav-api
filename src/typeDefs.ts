@@ -15,6 +15,7 @@ export const typeDefs = `#graphql
 			end: Int
 		): AppUserSnapshotList!
 		retrieveUser: User
+		retrieveUserById(id: Int!): User
 		retrieveDev: Dev
 		retrieveTableObject(uuid: String!): TableObject
 		listTableObjectsByProperty(

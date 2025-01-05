@@ -41,6 +41,38 @@ export async function retrieveUser(
 	})
 }
 
+export async function retrieveUserById(
+	parent: any,
+	args: {
+		id: number
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	return await context.prisma.user.findFirst({
+		where: {
+			id: args.id
+		}
+	})
+}
+
 export async function createUser(
 	parent: any,
 	args: {

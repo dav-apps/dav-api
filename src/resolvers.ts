@@ -27,6 +27,8 @@ export const resolvers = {
 	},
 	Mutation: {
 		createSession: sessionResolvers.createSession,
+		createSessionFromAccessToken:
+			sessionResolvers.createSessionFromAccessToken,
 		updateApp: appResolvers.updateApp,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
 		createNotification: notificationResolvers.createNotification,

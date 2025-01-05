@@ -48,6 +48,13 @@ export const typeDefs = `#graphql
 			deviceName: String
 			deviceOs: String
 		): CreateSessionResult!
+		createSessionFromAccessToken(
+			accessToken: String!
+			appId: Int!
+			apiKey: String!
+			deviceName: String
+			deviceOs: String
+		): CreateSessionResult!
 		updateApp(
 			id: Int!
 			name: String

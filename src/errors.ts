@@ -92,6 +92,10 @@ export const apiErrors = {
 }
 
 export const validationErrors = {
+	firstNameTooShort: "FIRST_NAME_TOO_SHORT",
+	firstNameTooLong: "FIRST_NAME_TOO_LONG",
+	passwordTooShort: "PASSWORD_TOO_SHORT",
+	passwordTooLong: "PASSWORD_TOO_LONG",
 	nameTooShort: "NAME_TOO_SHORT",
 	nameTooLong: "NAME_TOO_LONG",
 	descriptionTooShort: "DESCRIPTION_TOO_SHORT",
@@ -103,6 +107,7 @@ export const validationErrors = {
 	bodyTooShort: "BODY_TOO_SHORT",
 	bodyTooLong: "BODY_TOO_LONG",
 	uuidInvalid: "UUID_INVALID",
+	emailInvalid: "EMAIL_INVALID",
 	productImageInvalid: "PRODUCT_IMAGE_INVALID",
 	webLinkInvalid: "WEB_LINK_INVALID",
 	googlePlayLinkInvalid: "GOOGLE_PLAY_LINK_INVALID",
@@ -114,5 +119,6 @@ export const validationErrors = {
 	intervalInvalid: "INTERVAL_INVALID",
 	iconInvalid: "ICON_INVALID",
 	imageInvalid: "IMAGE_INVALID",
-	hrefInvalid: "HREF_INVALID"
+	hrefInvalid: "HREF_INVALID",
+	emailAlreadyInUse: "EMAIL_ALREADY_IN_USE"
 }

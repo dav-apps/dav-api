@@ -66,31 +66,31 @@ export async function createNotificationForUser(
 	})
 
 	// Validate the args
-	let validations = []
+	let errors = []
 
 	if (args.uuid != null) {
-		validations.push(validateUuid(args.uuid))
+		errors.push(validateUuid(args.uuid))
 	}
 
-	validations.push(
+	errors.push(
 		validateTitleLength(args.title),
 		validateBodyLength(args.body),
 		validateInterval(args.interval)
 	)
 
 	if (args.icon != null) {
-		validations.push(validateIcon(args.icon))
+		errors.push(validateIcon(args.icon))
 	}
 
 	if (args.image != null) {
-		validations.push(validateImage(args.image))
+		errors.push(validateImage(args.image))
 	}
 
 	if (args.href != null) {
-		validations.push(validateHref(args.href))
+		errors.push(validateHref(args.href))
 	}
 
-	throwValidationError(...validations)
+	throwValidationError(...errors)
 
 	// Create the notification
 	const uuid = args.uuid ?? crypto.randomUUID()

@@ -3,6 +3,22 @@ import { validationErrors } from "../errors.js"
 import { urlRegex, urlPathRegex } from "../constants.js"
 
 //#region Field validations
+export function validateFirstNameLength(firstName: string) {
+	if (firstName.length < 2) {
+		return validationErrors.firstNameTooShort
+	} else if (firstName.length > 20) {
+		return validationErrors.firstNameTooLong
+	}
+}
+
+export function validatePasswordLength(password: string) {
+	if (password.length < 7) {
+		return validationErrors.passwordTooShort
+	} else if (password.length > 25) {
+		return validationErrors.passwordTooLong
+	}
+}
+
 export function validateNameLength(name: string) {
 	if (name.length < 2) {
 		return validationErrors.nameTooShort
@@ -46,6 +62,12 @@ export function validateBodyLength(body: string) {
 export function validateUuid(uuid: string) {
 	if (!validator.isUUID(uuid)) {
 		return validationErrors.uuidInvalid
+	}
+}
+
+export function validateEmail(email: string) {
+	if (!validator.isEmail(email)) {
+		return validationErrors.emailInvalid
 	}
 }
 

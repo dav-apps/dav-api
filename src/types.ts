@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, User } from "@prisma/client"
 import { RedisClientType } from "redis"
 import Stripe from "stripe"
 
@@ -21,6 +21,12 @@ export interface ApiError {
 }
 
 export interface SessionResult {
+	accessToken: string
+	websiteAccessToken?: string
+}
+
+export interface CreateUserResult {
+	user: User
 	accessToken: string
 	websiteAccessToken?: string
 }

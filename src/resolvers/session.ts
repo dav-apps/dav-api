@@ -105,7 +105,8 @@ export async function createSession(
 	})
 
 	const websiteAppId = BigInt(process.env.DAV_APPS_APP_ID)
-	let result: { accessToken: string; websiteAccessToken?: string } = {
+
+	let result: SessionResult = {
 		accessToken: session.token
 	}
 

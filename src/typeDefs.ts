@@ -40,6 +40,14 @@ export const typeDefs = `#graphql
 	}
 
 	type Mutation {
+		createUser(
+			email: String!
+			password: String!
+			appId: Int!
+			apiKey: String!
+			deviceName: String
+			deviceOs: String
+		): CreateUserResult!
 		createSession(
 			email: String!
 			password: String!
@@ -214,6 +222,12 @@ export const typeDefs = `#graphql
 
 	type CustomerPortalSession {
 		url: String!
+	}
+
+	type CreateUserResult {
+		user: User!
+		accessToken: String!
+		websiteAccessToken: String
 	}
 
 	type SessionResult {

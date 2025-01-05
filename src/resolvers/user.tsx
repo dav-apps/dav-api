@@ -1,8 +1,15 @@
 import { User } from "@prisma/client"
 import { createId } from "@paralleldrive/cuid2"
+import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
-import { throwApiError, getDevByAuthToken, generateHex } from "../utils.js"
+import { noReplyEmailAddress } from "../constants.js"
+import {
+	throwApiError,
+	getDevByAuthToken,
+	getWebsiteBaseUrl,
+	generateHex
+} from "../utils.js"
 import {
 	validateEmail,
 	validateFirstNameLength,
@@ -141,7 +148,18 @@ export async function createUser(
 		result.websiteAccessToken = websiteSession.token
 	}
 
-	// TODO: Send user confirmation email
+	// Send user confirmation email
+	context.resend.emails.send({
+		from: noReplyEmailAddress,
+		to: user.email,
+		subject: "Welcome to dav",
+		react: (
+			<EmailConfirmationEmail
+				name={user.firstName}
+				link={`${getWebsiteBaseUrl()}/email-link?type=confirmUser&userId=${user.id}&emailConfirmationToken=${user.emailConfirmationToken}`}
+			/>
+		)
+	})
 
 	return result
 }

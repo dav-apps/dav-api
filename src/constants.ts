@@ -1,3 +1,7 @@
+export const websiteBaseUrlDevelopment = "http://localhost:4000"
+export const websiteBaseUrlStaging =
+	"https://dav-website-staging-o3oot.ondigitalocean.app"
+export const websiteBaseUrlProduction = "https://dav-apps.tech"
 export const noReplyEmailAddress = "no-reply@dav-apps.tech"
 
 //#region Regexes

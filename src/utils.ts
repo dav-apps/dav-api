@@ -5,6 +5,11 @@ import { DateTime, DurationLike } from "luxon"
 import { prisma, redis } from "../server.js"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
+import {
+	websiteBaseUrlDevelopment,
+	websiteBaseUrlStaging,
+	websiteBaseUrlProduction
+} from "./constants.js"
 
 export function throwApiError(error: ApiError) {
 	throw new GraphQLError(error.message, {
@@ -182,6 +187,17 @@ export async function saveTableObjectInRedis(obj: TableObject) {
 		await prisma.redisTableObjectOperation.create({
 			data: { tableObjectUuid: obj.uuid, operation: "save" }
 		})
+	}
+}
+
+export function getWebsiteBaseUrl() {
+	switch (process.env.ENV) {
+		case "staging":
+			return websiteBaseUrlStaging
+		case "production":
+			return websiteBaseUrlProduction
+		default:
+			return websiteBaseUrlDevelopment
 	}
 }
 

@@ -61,7 +61,8 @@ app.use(
 			authorization: req.headers.authorization,
 			prisma,
 			redis,
-			stripe
+			stripe,
+			resend
 		})
 	})
 )

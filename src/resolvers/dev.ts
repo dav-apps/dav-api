@@ -1,7 +1,7 @@
 import { Dev } from "@prisma/client"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, getSessionFromToken } from "../utils.js"
 
 export async function retrieveDev(
 	parent: any,
@@ -15,13 +15,10 @@ export async function retrieveDev(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
-
-	if (session == null) {
-		throwApiError(apiErrors.sessionDoesNotExist)
-	}
 
 	// Make sure this was called from the website
 	if (session.appId != BigInt(process.env.DAV_APPS_APP_ID)) {

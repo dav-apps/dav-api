@@ -1,5 +1,9 @@
 import { TableObject, Order, ShippingAddress, User } from "@prisma/client"
-import { throwApiError, getDevByAuthToken } from "../utils.js"
+import {
+	throwApiError,
+	getDevByAuthToken,
+	getSessionFromToken
+} from "../utils.js"
 import { ResolverContext, OrderStatus, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 
@@ -46,16 +50,12 @@ export async function listOrders(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken },
-		include: { user: true }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
 
-	if (session == null) {
-		throwApiError(apiErrors.sessionDoesNotExist)
-	}
-
-	const where = { userId: session.user.id }
+	const where = { userId: session.userId }
 
 	if (args.status != null) {
 		const or = []

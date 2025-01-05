@@ -7,7 +7,11 @@ import {
 	Plan
 } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError, throwValidationError } from "../utils.js"
+import {
+	throwApiError,
+	throwValidationError,
+	getSessionFromToken
+} from "../utils.js"
 import {
 	validateProductNameLength,
 	validateProductImage,
@@ -32,13 +36,17 @@ export async function createSubscriptionCheckoutSession(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken },
-		include: { user: true }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
 
-	if (session == null) {
-		throwApiError(apiErrors.sessionDoesNotExist)
+	const user = await context.prisma.user.findFirst({
+		where: { id: session.userId }
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
 	}
 
 	// Validate the plan
@@ -55,21 +63,21 @@ export async function createSubscriptionCheckoutSession(
 	// Check if the user is below the given plan
 	const planNumber = args.plan == "PLUS" ? 1 : 2
 
-	if (session.user.plan >= planNumber) {
+	if (user.plan >= planNumber) {
 		throwApiError(apiErrors.userOnOrBelowGivenPlan)
 	}
 
-	if (session.user.stripeCustomerId == null) {
+	if (user.stripeCustomerId == null) {
 		// Create a stripe customer for the user
 		const createCustomerResponse = await context.stripe.customers.create({
-			email: session.user.email,
-			name: session.user.firstName
+			email: user.email,
+			name: user.firstName
 		})
 
-		session.user.stripeCustomerId = createCustomerResponse.id
+		user.stripeCustomerId = createCustomerResponse.id
 
 		await context.prisma.user.update({
-			where: { id: session.user.id },
+			where: { id: user.id },
 			data: { stripeCustomerId: createCustomerResponse.id }
 		})
 	}
@@ -82,7 +90,7 @@ export async function createSubscriptionCheckoutSession(
 	}
 
 	const checkoutSession = await context.stripe.checkout.sessions.create({
-		customer: session.user.stripeCustomerId,
+		customer: user.stripeCustomerId,
 		mode: "subscription",
 		line_items: [
 			{
@@ -122,13 +130,17 @@ export async function createPaymentCheckoutSession(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken },
-		include: { user: true }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
 
-	if (session == null) {
-		throwApiError(apiErrors.sessionDoesNotExist)
+	const user = await context.prisma.user.findFirst({
+		where: { id: session.userId }
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
 	}
 
 	// Get the table object
@@ -175,31 +187,31 @@ export async function createPaymentCheckoutSession(
 	// Create order
 	const order = await context.prisma.order.create({
 		data: {
-			user: { connect: { id: session.user.id } },
+			user: { connect: { id: user.id } },
 			tableObject: { connect: { id: tableObject.id } },
 			currency,
 			price
 		}
 	})
 
-	if (session.user.stripeCustomerId == null) {
+	if (user.stripeCustomerId == null) {
 		// Create a stripe customer for the user
 		const createCustomerResponse = await context.stripe.customers.create({
-			email: session.user.email,
-			name: session.user.firstName
+			email: user.email,
+			name: user.firstName
 		})
 
-		session.user.stripeCustomerId = createCustomerResponse.id
+		user.stripeCustomerId = createCustomerResponse.id
 
 		await context.prisma.user.update({
-			where: { id: session.user.id },
+			where: { id: user.id },
 			data: { stripeCustomerId: createCustomerResponse.id }
 		})
 	}
 
 	// Create the Stripe checkout session
 	let sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
-		customer: session.user.stripeCustomerId,
+		customer: user.stripeCustomerId,
 		shipping_address_collection: { allowed_countries: ["DE"] },
 		phone_number_collection: { enabled: true },
 		mode: "payment",
@@ -244,9 +256,8 @@ export async function createPaymentCheckoutSession(
 		]
 	}
 
-	const checkoutSession = await context.stripe.checkout.sessions.create(
-		sessionCreateParams
-	)
+	const checkoutSession =
+		await context.stripe.checkout.sessions.create(sessionCreateParams)
 
 	return { url: checkoutSession.url }
 }

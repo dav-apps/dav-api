@@ -2,7 +2,11 @@ import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import { ResolverContext, SessionResult } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError, getDevByAuthToken } from "../utils.js"
+import {
+	throwApiError,
+	getDevByAuthToken,
+	getSessionFromToken
+} from "../utils.js"
 
 export async function createSession(
 	parent: any,
@@ -173,8 +177,9 @@ export async function createSessionFromAccessToken(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: args.accessToken }
+	const session = await getSessionFromToken({
+		token: args.accessToken,
+		prisma: context.prisma
 	})
 
 	// Make sure the session is for the website
@@ -225,15 +230,17 @@ export async function renewSession(
 	args: {},
 	context: ResolverContext
 ): Promise<SessionResult> {
-	const authToken = context.authorization
+	const accessToken = context.authorization
 
-	if (authToken == null) {
+	if (accessToken == null) {
 		throwApiError(apiErrors.notAuthenticated)
 	}
 
 	// Get the session
-	let session = await context.prisma.session.findFirst({
-		where: { token: authToken }
+	let session = await getSessionFromToken({
+		token: accessToken,
+		checkRenew: false,
+		prisma: context.prisma
 	})
 
 	// Move the current token to old_token and generate a new token

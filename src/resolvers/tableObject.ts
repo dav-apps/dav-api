@@ -1,7 +1,11 @@
 import { User, TableObject } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError, getDevByAuthToken } from "../utils.js"
+import {
+	throwApiError,
+	getDevByAuthToken,
+	getSessionFromToken
+} from "../utils.js"
 
 export async function retrieveTableObject(
 	parent: any,
@@ -15,8 +19,9 @@ export async function retrieveTableObject(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
 
 	// Get the table object

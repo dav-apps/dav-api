@@ -61,6 +61,47 @@ export async function getDevByAuthToken(
 	return dev
 }
 
+export async function getSessionFromToken(params: {
+	token: string
+	checkRenew?: boolean
+	prisma: PrismaClient
+}) {
+	let checkRenew = params.checkRenew ?? true
+
+	let session = await prisma.session.findFirst({
+		where: { token: params.token }
+	})
+
+	if (session == null) {
+		// Check if there is a session with old_token = token
+		session = await prisma.session.findFirst({
+			where: { oldToken: params.token }
+		})
+
+		if (session == null) {
+			// Session does not exist
+			throwApiError(apiErrors.sessionDoesNotExist)
+		} else {
+			// The old token was used
+			// Delete the session, as the token may be stolen
+			prisma.session.delete({ where: { id: session.id } })
+			throwApiError(apiErrors.oldAccessTokenUsed)
+		}
+	} else if (checkRenew) {
+		// Check if the session needs to be renewed
+		if (
+			process.env.ENVIRONMENT == "production" &&
+			DateTime.fromJSDate(session.updatedAt) <
+				DateTime.now().minus({ days: 1 })
+		) {
+			// Session has ended
+			throwApiError(apiErrors.sessionEnded)
+		}
+	}
+
+	return session
+}
+
 export function userWasActive(
 	lastActive: Date,
 	timeframe: "day" | "week" | "month" | "year"

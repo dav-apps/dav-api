@@ -28,6 +28,11 @@ export const apiErrors = {
 		message: "Validation failed",
 		status: 400
 	},
+	oldAccessTokenUsed: {
+		code: "OLD_ACCESS_TOKEN_USED",
+		message: "Can't use old access token",
+		status: 403
+	},
 	sessionEnded: {
 		code: "SESSION_ENDED",
 		message: "Session has ended and must be renewed",

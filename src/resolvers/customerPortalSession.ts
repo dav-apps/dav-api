@@ -1,6 +1,6 @@
 import { ResolverContext, CustomerPortalSession } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError } from "../utils.js"
+import { throwApiError, getSessionFromToken } from "../utils.js"
 
 export async function createCustomerPortalSession(
 	parent: any,
@@ -14,13 +14,17 @@ export async function createCustomerPortalSession(
 	}
 
 	// Get the session
-	const session = await context.prisma.session.findFirst({
-		where: { token: accessToken },
-		include: { user: true }
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
 	})
 
-	if (session == null) {
-		throwApiError(apiErrors.sessionDoesNotExist)
+	const user = await context.prisma.user.findFirst({
+		where: { id: session.userId }
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
 	}
 
 	// Make sure this was called from the website
@@ -28,24 +32,24 @@ export async function createCustomerPortalSession(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	if (session.user.stripeCustomerId == null) {
+	if (user.stripeCustomerId == null) {
 		// Create a stripe customer for the user
 		const createCustomerResponse = await context.stripe.customers.create({
-			email: session.user.email,
-			name: session.user.firstName
+			email: user.email,
+			name: user.firstName
 		})
 
-		session.user.stripeCustomerId = createCustomerResponse.id
+		user.stripeCustomerId = createCustomerResponse.id
 
 		await context.prisma.user.update({
-			where: { id: session.user.id },
+			where: { id: user.id },
 			data: { stripeCustomerId: createCustomerResponse.id }
 		})
 	}
 
 	// Create the customer portal session
 	const portalSession = await context.stripe.billingPortal.sessions.create({
-		customer: session.user.stripeCustomerId
+		customer: user.stripeCustomerId
 	})
 
 	return {

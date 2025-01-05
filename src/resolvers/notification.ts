@@ -18,7 +18,7 @@ import {
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 
-export async function createNotification(
+export async function createNotificationForUser(
 	parent: any,
 	args: {
 		uuid?: string

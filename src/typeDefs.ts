@@ -71,7 +71,7 @@ export const typeDefs = `#graphql
 			currency: Currency!
 			type: TableObjectPriceType!
 		): TableObjectPrice
-		createNotification(
+		createNotificationForUser(
 			uuid: String
 			userId: Int!
 			appId: Int!

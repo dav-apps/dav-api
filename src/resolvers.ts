@@ -32,7 +32,8 @@ export const resolvers = {
 		renewSession: sessionResolvers.renewSession,
 		updateApp: appResolvers.updateApp,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
-		createNotification: notificationResolvers.createNotification,
+		createNotificationForUser:
+			notificationResolvers.createNotificationForUser,
 		createSubscriptionCheckoutSession:
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:

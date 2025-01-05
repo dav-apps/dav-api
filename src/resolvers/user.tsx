@@ -2,6 +2,7 @@ import { User } from "@prisma/client"
 import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
+import ChangeEmailEmail from "../emails/changeEmail.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import { noReplyEmailAddress } from "../constants.js"
@@ -315,7 +316,18 @@ export async function updateUser(
 	})
 
 	if (args.email != null) {
-		// TODO: Send change email email
+		// Send change email email
+		context.resend.emails.send({
+			from: noReplyEmailAddress,
+			to: user.newEmail,
+			subject: "Confirm your new email address - dav",
+			react: (
+				<ChangeEmailEmail
+					name={user.firstName}
+					link={`${getWebsiteBaseUrl()}/email-link?type=changeEmail&userId=${user.id}&emailConfirmationToken=${user.emailConfirmationToken}`}
+				/>
+			)
+		})
 	}
 
 	if (args.password != null) {

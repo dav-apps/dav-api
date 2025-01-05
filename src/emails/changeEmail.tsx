@@ -10,9 +10,9 @@ export default function Email(props: { name: string; link: string }) {
 			<Body>
 				<Logo />
 
-				<Text style={{ marginBottom: "8px" }}>Welcome to dav, {name}!</Text>
+				<Text style={{ marginBottom: "8px" }}>Hi {name},</Text>
 				<Text style={{ marginTop: "0", marginBottom: "0" }}>
-					Click the following link to confirm your email address:
+					Click the following link to confirm your new email address:
 					<br />
 					<a href={link} target="_blank">
 						Confirm your email address

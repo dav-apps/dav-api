@@ -20,7 +20,7 @@ export interface ApiError {
 	status?: number
 }
 
-export interface CreateSessionResult {
+export interface SessionResult {
 	accessToken: string
 	websiteAccessToken?: string
 }

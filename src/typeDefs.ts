@@ -47,14 +47,15 @@ export const typeDefs = `#graphql
 			apiKey: String!
 			deviceName: String
 			deviceOs: String
-		): CreateSessionResult!
+		): SessionResult!
 		createSessionFromAccessToken(
 			accessToken: String!
 			appId: Int!
 			apiKey: String!
 			deviceName: String
 			deviceOs: String
-		): CreateSessionResult!
+		): SessionResult!
+		renewSession: SessionResult!
 		updateApp(
 			id: Int!
 			name: String
@@ -215,7 +216,7 @@ export const typeDefs = `#graphql
 		url: String!
 	}
 
-	type CreateSessionResult {
+	type SessionResult {
 		accessToken: String!
 		websiteAccessToken: String
 	}

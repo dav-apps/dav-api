@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
-import { ResolverContext, CreateSessionResult } from "../types.js"
+import { ResolverContext, SessionResult } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getDevByAuthToken } from "../utils.js"
 
@@ -15,7 +15,7 @@ export async function createSession(
 		deviceOs?: string
 	},
 	context: ResolverContext
-): Promise<CreateSessionResult> {
+): Promise<SessionResult> {
 	const authToken = context.authorization
 
 	if (authToken == null) {
@@ -133,7 +133,7 @@ export async function createSessionFromAccessToken(
 		deviceOs?: string
 	},
 	context: ResolverContext
-): Promise<CreateSessionResult> {
+): Promise<SessionResult> {
 	const authToken = context.authorization
 
 	if (authToken == null) {
@@ -217,5 +217,35 @@ export async function createSessionFromAccessToken(
 
 	return {
 		accessToken: newSession.token
+	}
+}
+
+export async function renewSession(
+	parent: any,
+	args: {},
+	context: ResolverContext
+): Promise<SessionResult> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	let session = await context.prisma.session.findFirst({
+		where: { token: authToken }
+	})
+
+	// Move the current token to old_token and generate a new token
+	session = await context.prisma.session.update({
+		where: { id: session.id },
+		data: {
+			oldToken: session.token,
+			token: createId()
+		}
+	})
+
+	return {
+		accessToken: session.token
 	}
 }

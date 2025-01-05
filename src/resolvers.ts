@@ -29,6 +29,7 @@ export const resolvers = {
 		createSession: sessionResolvers.createSession,
 		createSessionFromAccessToken:
 			sessionResolvers.createSessionFromAccessToken,
+		renewSession: sessionResolvers.renewSession,
 		updateApp: appResolvers.updateApp,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
 		createNotification: notificationResolvers.createNotification,

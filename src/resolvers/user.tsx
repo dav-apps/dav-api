@@ -3,6 +3,7 @@ import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import ChangeEmailEmail from "../emails/changeEmail.js"
+import ChangePasswordEmail from "../emails/changePassword.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import { noReplyEmailAddress } from "../constants.js"
@@ -331,7 +332,18 @@ export async function updateUser(
 	}
 
 	if (args.password != null) {
-		// TODO: Send change password email
+		// Send change password email
+		context.resend.emails.send({
+			from: noReplyEmailAddress,
+			to: user.email,
+			subject: "Confirm your new password - dav",
+			react: (
+				<ChangePasswordEmail
+					name={user.firstName}
+					link={`${getWebsiteBaseUrl()}/email-link?type=changePassword&userId=${user.id}&passwordConfirmationToken=${user.passwordConfirmationToken}`}
+				/>
+			)
+		})
 	}
 
 	return user

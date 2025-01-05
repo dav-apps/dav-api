@@ -28,6 +28,8 @@ export const resolvers = {
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses
 	},
 	Mutation: {
+		createUser: userResolvers.createUser,
+		updateUser: userResolvers.updateUser,
 		createSession: sessionResolvers.createSession,
 		createSessionFromAccessToken:
 			sessionResolvers.createSessionFromAccessToken,

@@ -1,4 +1,5 @@
 import { User } from "@prisma/client"
+import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
@@ -8,6 +9,7 @@ import {
 	throwApiError,
 	getDevByAuthToken,
 	getSessionFromToken,
+	throwValidationError,
 	getWebsiteBaseUrl,
 	generateHex
 } from "../utils.js"
@@ -167,7 +169,7 @@ export async function createUser(
 		data: {
 			email: args.email,
 			firstName: args.firstName,
-			password: args.password,
+			password: await bcrypt.hash(args.password, 10),
 			emailConfirmationToken: generateHex(20)
 		}
 	})
@@ -219,6 +221,108 @@ export async function createUser(
 	})
 
 	return result
+}
+
+export async function updateUser(
+	parent: any,
+	args: {
+		email?: string
+		firstName?: string
+		password?: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Make sure this was called from the website
+	if (session.appId != BigInt(process.env.DAV_APPS_APP_ID)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			id: session.userId
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	if (args.email == null && args.firstName == null && args.password == null) {
+		return user
+	}
+
+	// Validate the args
+	let errors: string[] = []
+
+	if (args.email != null) {
+		errors.push(validateEmail(args.email))
+
+		// Check if the email is already in use
+		if (
+			(await context.prisma.user.findFirst({
+				where: { email: args.email }
+			})) != null
+		) {
+			errors.push(validationErrors.emailAlreadyInUse)
+		}
+	}
+
+	if (args.firstName != null) {
+		errors.push(validateFirstNameLength(args.firstName))
+	}
+
+	if (args.password != null) {
+		errors.push(validatePasswordLength(args.password))
+	}
+
+	throwValidationError(...errors)
+
+	// Update the user
+	let data = {}
+
+	if (args.email != null) {
+		data["newEmail"] = args.email
+		data["emailConfirmationToken"] = generateHex(20)
+	}
+
+	if (args.firstName != null) {
+		data["firstName"] = args.firstName
+	}
+
+	if (args.password != null) {
+		data["newPassword"] = await bcrypt.hash(args.password, 10)
+		data["passwordConfirmationToken"] = generateHex(20)
+	}
+
+	user = await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data
+	})
+
+	if (args.email != null) {
+		// TODO: Send change email email
+	}
+
+	if (args.password != null) {
+		// TODO: Send change password email
+	}
+
+	return user
 }
 
 export function id(user: User, args: any, context: ResolverContext): number {

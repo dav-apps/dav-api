@@ -50,6 +50,11 @@ export const typeDefs = `#graphql
 			deviceName: String
 			deviceOs: String
 		): CreateUserResult!
+		updateUser(
+			email: String
+			firstName: String
+			password: String
+		): User!
 		createSession(
 			email: String!
 			password: String!

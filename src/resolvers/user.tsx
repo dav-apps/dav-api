@@ -7,6 +7,7 @@ import { noReplyEmailAddress } from "../constants.js"
 import {
 	throwApiError,
 	getDevByAuthToken,
+	getSessionFromToken,
 	getWebsiteBaseUrl,
 	generateHex
 } from "../utils.js"
@@ -15,6 +16,30 @@ import {
 	validateFirstNameLength,
 	validatePasswordLength
 } from "../services/validationService.js"
+
+export async function retrieveUser(
+	parent: any,
+	args: {},
+	context: ResolverContext
+): Promise<User> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	return await context.prisma.user.findFirst({
+		where: {
+			id: session.userId
+		}
+	})
+}
 
 export async function createUser(
 	parent: any,

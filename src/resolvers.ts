@@ -17,6 +17,7 @@ export const resolvers = {
 		retrieveApp: appResolvers.retrieveApp,
 		listApps: appResolvers.listApps,
 		listAppUserSnapshots: appUserSnapshotResolvers.listAppUserSnapshots,
+		retrieveUser: userResolvers.retrieveUser,
 		retrieveDev: devResolvers.retrieveDev,
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		listTableObjectsByProperty:

@@ -669,6 +669,69 @@ export async function saveNewPasswordOfUser(
 	})
 }
 
+export async function resetEmailOfUser(
+	parent: any,
+	args: {
+		id: number
+		emailConfirmationToken: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			id: args.id
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user has an old email
+	if (user.oldEmail == null) {
+		throwApiError(apiErrors.oldEmailOfUserIsEmpty)
+	}
+
+	// Check the email confirmation token
+	if (user.emailConfirmationToken != args.emailConfirmationToken) {
+		throwApiError(apiErrors.emailConfirmationTokenIncorrect)
+	}
+
+	// Update the user
+	user = await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			email: user.oldEmail,
+			oldEmail: null,
+			emailConfirmationToken: null
+		}
+	})
+
+	await updateEmailOfStripeCustomer(user, context.stripe)
+
+	return user
+}
+
 export function id(user: User, args: any, context: ResolverContext): number {
 	return Number(user.id)
 }

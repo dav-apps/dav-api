@@ -109,6 +109,11 @@ export const apiErrors = {
 		message: "The password confirmation token is incorrect",
 		status: 400
 	},
+	oldEmailOfUserIsEmpty: {
+		code: "OLD_EMAIL_OF_USER_IS_EMPTY",
+		message: "User.oldEmail has no value",
+		status: 412
+	},
 	newEmailOfUserIsEmpty: {
 		code: "NEW_EMAIL_OF_USER_IS_EMPTY",
 		message: "User.newEmail has no value",

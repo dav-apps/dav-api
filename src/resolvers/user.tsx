@@ -610,6 +610,65 @@ export async function saveNewEmailOfUser(
 	return user
 }
 
+export async function saveNewPasswordOfUser(
+	parent: any,
+	args: {
+		id: number
+		passwordConfirmationToken: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	const user = await context.prisma.user.findFirst({
+		where: {
+			id: args.id
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user has a new password
+	if (user.newPassword == null) {
+		throwApiError(apiErrors.newPasswordOfUserIsEmpty)
+	}
+
+	// Check the password confirmation token
+	if (user.passwordConfirmationToken != args.passwordConfirmationToken) {
+		throwApiError(apiErrors.passwordConfirmationTokenIncorrect)
+	}
+
+	// Update the user
+	return await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			password: user.newPassword,
+			newPassword: null,
+			passwordConfirmationToken: null
+		}
+	})
+}
+
 export function id(user: User, args: any, context: ResolverContext): number {
 	return Number(user.id)
 }

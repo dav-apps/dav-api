@@ -104,9 +104,19 @@ export const apiErrors = {
 		message: "The email confirmation token is incorrect",
 		status: 400
 	},
+	passwordConfirmationTokenIncorrect: {
+		code: "PASSWORD_CONFIRMATION_TOKEN_INCORRECT",
+		message: "The password confirmation token is incorrect",
+		status: 400
+	},
 	newEmailOfUserIsEmpty: {
 		code: "NEW_EMAIL_OF_USER_IS_EMPTY",
 		message: "User.newEmail has no value",
+		status: 412
+	},
+	newPasswordOfUserIsEmpty: {
+		code: "NEW_PASSWORD_OF_USER_IS_EMPTY",
+		message: "User.newPassword has no value",
 		status: 412
 	}
 }

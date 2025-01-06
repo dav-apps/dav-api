@@ -732,6 +732,63 @@ export async function resetEmailOfUser(
 	return user
 }
 
+export async function setPasswordOfUser(
+	parent: any,
+	args: {
+		id: number
+		password: string
+		passwordConfirmationToken: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			id: args.id
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Validate the password
+	throwValidationError(validatePasswordLength(args.password))
+
+	// Check the password confirmation token
+	if (user.passwordConfirmationToken != args.passwordConfirmationToken) {
+		throwApiError(apiErrors.passwordConfirmationTokenIncorrect)
+	}
+
+	// Update the user
+	return await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			password: await bcrypt.hash(args.password, 10),
+			passwordConfirmationToken: null
+		}
+	})
+}
+
 export function id(user: User, args: any, context: ResolverContext): number {
 	return Number(user.id)
 }

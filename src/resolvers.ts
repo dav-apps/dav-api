@@ -37,6 +37,7 @@ export const resolvers = {
 		saveNewEmailOfUser: userResolvers.saveNewEmailOfUser,
 		saveNewPasswordOfUser: userResolvers.saveNewPasswordOfUser,
 		resetEmailOfUser: userResolvers.resetEmailOfUser,
+		setPasswordOfUser: userResolvers.setPasswordOfUser,
 		createSession: sessionResolvers.createSession,
 		createSessionFromAccessToken:
 			sessionResolvers.createSessionFromAccessToken,

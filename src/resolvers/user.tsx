@@ -349,6 +349,67 @@ export async function updateUser(
 	return user
 }
 
+export async function sendConfirmationEmailForUser(
+	parent: any,
+	args: {
+		userId: number
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			id: args.userId
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Generate the email confirmation token
+	user = await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			emailConfirmationToken: generateHex(20)
+		}
+	})
+
+	// Send the confirmation email
+	context.resend.emails.send({
+		from: noReplyEmailAddress,
+		to: user.email,
+		subject: "Confirm your email address - dav",
+		react: (
+			<EmailConfirmationEmail
+				name={user.firstName}
+				link={`${getWebsiteBaseUrl()}/email-link?type=confirmUser&userId=${user.id}&emailConfirmationToken=${user.emailConfirmationToken}`}
+			/>
+		)
+	})
+
+	return user
+}
+
 export function id(user: User, args: any, context: ResolverContext): number {
 	return Number(user.id)
 }

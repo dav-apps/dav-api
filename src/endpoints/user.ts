@@ -11,7 +11,7 @@ import { prisma } from "../../server.js"
 import { validateImageContentType } from "../services/validationService.js"
 import { upload } from "../services/fileService.js"
 
-export async function uploadProfileImageOfUser(req: Request, res: Response) {
+export async function uploadUserProfileImage(req: Request, res: Response) {
 	try {
 		const accessToken = req.headers.authorization
 		const session = await getSessionFromToken({
@@ -85,6 +85,6 @@ export function setup(app: Express) {
 		"/user/profileImage",
 		raw({ type: "*/*", limit: "10mb" }),
 		cors(),
-		uploadProfileImageOfUser
+		uploadUserProfileImage
 	)
 }

@@ -30,6 +30,7 @@ export const resolvers = {
 	Mutation: {
 		createUser: userResolvers.createUser,
 		updateUser: userResolvers.updateUser,
+		sendConfirmationEmailForUser: userResolvers.sendConfirmationEmailForUser,
 		createSession: sessionResolvers.createSession,
 		createSessionFromAccessToken:
 			sessionResolvers.createSessionFromAccessToken,

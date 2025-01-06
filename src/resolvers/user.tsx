@@ -5,6 +5,7 @@ import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import ChangeEmailEmail from "../emails/changeEmail.js"
 import ChangePasswordEmail from "../emails/changePassword.js"
 import PasswordResetEmail from "../emails/passwordReset.js"
+import ResetEmailEmail from "../emails/resetEmail.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import { noReplyEmailAddress } from "../constants.js"
@@ -13,6 +14,7 @@ import {
 	getDevByAuthToken,
 	getSessionFromToken,
 	throwValidationError,
+	updateEmailOfStripeCustomer,
 	getWebsiteBaseUrl,
 	generateHex
 } from "../utils.js"
@@ -528,6 +530,84 @@ export async function confirmUser(
 			emailConfirmationToken: null
 		}
 	})
+}
+
+export async function saveNewEmailOfUser(
+	parent: any,
+	args: {
+		id: number
+		emailConfirmationToken: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			id: args.id
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Check if the user has a new email
+	if (user.newEmail == null) {
+		throwApiError(apiErrors.newEmailOfUserIsEmpty)
+	}
+
+	// Check the email confirmation token
+	if (user.emailConfirmationToken != args.emailConfirmationToken) {
+		throwApiError(apiErrors.emailConfirmationTokenIncorrect)
+	}
+
+	// Update the user
+	user = await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			oldEmail: user.email,
+			email: user.newEmail,
+			newEmail: null,
+			emailConfirmationToken: generateHex(20)
+		}
+	})
+
+	await updateEmailOfStripeCustomer(user, context.stripe)
+
+	// Send reset email email
+	await context.resend.emails.send({
+		from: noReplyEmailAddress,
+		to: user.oldEmail,
+		subject: "Your email address has changed - dav",
+		react: (
+			<ResetEmailEmail
+				name={user.firstName}
+				newEmail={user.email}
+				link={`${getWebsiteBaseUrl()}/email-link?type=resetEmail&userId=${user.id}&emailConfirmationToken=${user.emailConfirmationToken}`}
+			/>
+		)
+	})
+
+	return user
 }
 
 export function id(user: User, args: any, context: ResolverContext): number {

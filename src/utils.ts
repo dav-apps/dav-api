@@ -1,8 +1,9 @@
-import { PrismaClient, Dev, TableObject } from "@prisma/client"
+import { PrismaClient, User, Dev, TableObject } from "@prisma/client"
 import * as crypto from "crypto"
 import { Response } from "express"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
+import Stripe from "stripe"
 import { prisma, redis } from "../server.js"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
@@ -228,6 +229,14 @@ export async function saveTableObjectInRedis(obj: TableObject) {
 			data: { tableObjectUuid: obj.uuid, operation: "save" }
 		})
 	}
+}
+
+export async function updateEmailOfStripeCustomer(user: User, stripe: Stripe) {
+	if (user.stripeCustomerId == null) return
+
+	await stripe.customers.update(user.stripeCustomerId, {
+		email: user.email
+	})
 }
 
 export function getWebsiteBaseUrl() {

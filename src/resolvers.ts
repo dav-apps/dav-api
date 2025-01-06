@@ -31,6 +31,8 @@ export const resolvers = {
 		createUser: userResolvers.createUser,
 		updateUser: userResolvers.updateUser,
 		sendConfirmationEmailForUser: userResolvers.sendConfirmationEmailForUser,
+		sendPasswordResetEmailForUser:
+			userResolvers.sendPasswordResetEmailForUser,
 		createSession: sessionResolvers.createSession,
 		createSessionFromAccessToken:
 			sessionResolvers.createSessionFromAccessToken,

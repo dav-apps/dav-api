@@ -4,6 +4,7 @@ import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import ChangeEmailEmail from "../emails/changeEmail.js"
 import ChangePasswordEmail from "../emails/changePassword.js"
+import PasswordResetEmail from "../emails/passwordReset.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import { noReplyEmailAddress } from "../constants.js"
@@ -210,7 +211,7 @@ export async function createUser(
 	}
 
 	// Send user confirmation email
-	context.resend.emails.send({
+	await context.resend.emails.send({
 		from: noReplyEmailAddress,
 		to: user.email,
 		subject: "Welcome to dav",
@@ -318,7 +319,7 @@ export async function updateUser(
 
 	if (args.email != null) {
 		// Send change email email
-		context.resend.emails.send({
+		await context.resend.emails.send({
 			from: noReplyEmailAddress,
 			to: user.newEmail,
 			subject: "Confirm your new email address - dav",
@@ -333,7 +334,7 @@ export async function updateUser(
 
 	if (args.password != null) {
 		// Send change password email
-		context.resend.emails.send({
+		await context.resend.emails.send({
 			from: noReplyEmailAddress,
 			to: user.email,
 			subject: "Confirm your new password - dav",
@@ -395,7 +396,7 @@ export async function sendConfirmationEmailForUser(
 	})
 
 	// Send the confirmation email
-	context.resend.emails.send({
+	await context.resend.emails.send({
 		from: noReplyEmailAddress,
 		to: user.email,
 		subject: "Confirm your email address - dav",
@@ -403,6 +404,67 @@ export async function sendConfirmationEmailForUser(
 			<EmailConfirmationEmail
 				name={user.firstName}
 				link={`${getWebsiteBaseUrl()}/email-link?type=confirmUser&userId=${user.id}&emailConfirmationToken=${user.emailConfirmationToken}`}
+			/>
+		)
+	})
+
+	return user
+}
+
+export async function sendPasswordResetEmailForUser(
+	parent: any,
+	args: {
+		email: string
+	},
+	context: ResolverContext
+): Promise<User> {
+	const authToken = context.authorization
+
+	if (authToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the dev
+	const dev = await getDevByAuthToken(authToken, context.prisma)
+
+	if (dev == null) {
+		throwApiError(apiErrors.authenticationFailed)
+	}
+
+	if (dev.id != BigInt(1)) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Get the user
+	let user = await context.prisma.user.findFirst({
+		where: {
+			email: args.email
+		}
+	})
+
+	if (user == null) {
+		throwApiError(apiErrors.userDoesNotExist)
+	}
+
+	// Generate the password confirmation token
+	user = await context.prisma.user.update({
+		where: {
+			id: user.id
+		},
+		data: {
+			passwordConfirmationToken: generateHex(20)
+		}
+	})
+
+	// Send the password reset email
+	await context.resend.emails.send({
+		from: noReplyEmailAddress,
+		to: user.email,
+		subject: "Reset your password - dav",
+		react: (
+			<PasswordResetEmail
+				name={user.firstName}
+				link={`${getWebsiteBaseUrl()}/reset-password?userId=${user.id}&passwordConfirmationToken=${user.passwordConfirmationToken}`}
 			/>
 		)
 	})

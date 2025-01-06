@@ -54,6 +54,11 @@ export const apiErrors = {
 			"It is only possible to create a checkout session for a paid plan",
 		status: 400
 	},
+	userIsAlreadyConfirmed: {
+		code: "USER_IS_ALREADY_CONFIRMED",
+		message: "The email of the user is already confirmed",
+		status: 400
+	},
 	userOnOrBelowGivenPlan: {
 		code: "USER_IS_ON_OR_BELOW_GIVEN_PLAN",
 		message: "The user is already on the given plan or on a higher plan",
@@ -92,6 +97,11 @@ export const apiErrors = {
 	imageDataInvalid: {
 		code: "IMAGE_DATA_INVALID",
 		message: "The image data is not valid",
+		status: 400
+	},
+	emailConfirmationTokenIncorrect: {
+		code: "EMAIL_CONFIRMATION_TOKEN_INCORRECT",
+		message: "The email confirmation token is incorrect",
 		status: 400
 	}
 }

@@ -57,6 +57,10 @@ export const typeDefs = `#graphql
 		): User!
 		sendConfirmationEmailForUser(userId: Int!): User!
 		sendPasswordResetEmailForUser(email: String!): User!
+		confirmUser(
+			id: Int!
+			emailConfirmationToken: String!
+		): User!
 		createSession(
 			email: String!
 			password: String!

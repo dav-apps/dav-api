@@ -88,6 +88,11 @@ export const apiErrors = {
 		code: "ORDER_DOES_NOT_EXIST",
 		message: "Order does not exist",
 		status: 404
+	},
+	imageDataInvalid: {
+		code: "IMAGE_DATA_INVALID",
+		message: "The image data is not valid",
+		status: 400
 	}
 }
 

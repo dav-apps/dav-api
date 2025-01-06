@@ -1,6 +1,14 @@
 import * as validator from "validator"
-import { validationErrors } from "../errors.js"
+import { apiErrors, validationErrors } from "../errors.js"
 import { urlRegex, urlPathRegex } from "../constants.js"
+
+//#region Endpoint validations
+export function validateImageContentType(contentType: string) {
+	if (contentType != "image/png" && contentType != "image/jpeg") {
+		return apiErrors.contentTypeNotSupported
+	}
+}
+//#endregion
 
 //#region Field validations
 export function validateFirstNameLength(firstName: string) {

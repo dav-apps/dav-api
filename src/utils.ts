@@ -1,5 +1,6 @@
 import { PrismaClient, Dev, TableObject } from "@prisma/client"
 import * as crypto from "crypto"
+import { Response } from "express"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
 import { prisma, redis } from "../server.js"
@@ -35,6 +36,30 @@ export function throwValidationError(...errors: string[]) {
 	}
 }
 
+export function throwEndpointError(error?: ApiError) {
+	if (error != null) {
+		throw new Error(error.code)
+	}
+}
+
+export function handleEndpointError(res: Response, e: Error) {
+	// Find the error by error code
+	let error = Object.values(apiErrors).find(err => err.code == e.message)
+
+	if (error != null) {
+		sendEndpointError(res, error)
+	} else {
+		sendEndpointError(res, apiErrors.unexpectedError)
+	}
+}
+
+function sendEndpointError(res: Response, error: ApiError) {
+	res.status(error.status || 400).json({
+		code: error.code,
+		message: error.message
+	})
+}
+
 export async function getDevByAuthToken(
 	authToken: string,
 	prisma: PrismaClient
@@ -67,11 +92,13 @@ export async function getDevByAuthToken(
 }
 
 export async function getSessionFromToken(params: {
+	prisma: PrismaClient
 	token: string
 	checkRenew?: boolean
-	prisma: PrismaClient
+	context?: "graphql" | "endpoint"
 }) {
 	let checkRenew = params.checkRenew ?? true
+	let context = params.context ?? "graphql"
 
 	let session = await prisma.session.findFirst({
 		where: { token: params.token }
@@ -85,12 +112,21 @@ export async function getSessionFromToken(params: {
 
 		if (session == null) {
 			// Session does not exist
-			throwApiError(apiErrors.sessionDoesNotExist)
+			if (context == "endpoint") {
+				throwEndpointError(apiErrors.sessionDoesNotExist)
+			} else {
+				throwApiError(apiErrors.sessionDoesNotExist)
+			}
 		} else {
 			// The old token was used
 			// Delete the session, as the token may be stolen
 			prisma.session.delete({ where: { id: session.id } })
-			throwApiError(apiErrors.oldAccessTokenUsed)
+
+			if (context == "endpoint") {
+				throwEndpointError(apiErrors.oldAccessTokenUsed)
+			} else {
+				throwApiError(apiErrors.oldAccessTokenUsed)
+			}
 		}
 	} else if (checkRenew) {
 		// Check if the session needs to be renewed
@@ -100,7 +136,11 @@ export async function getSessionFromToken(params: {
 				DateTime.now().minus({ days: 1 })
 		) {
 			// Session has ended
-			throwApiError(apiErrors.sessionEnded)
+			if (context == "endpoint") {
+				throwEndpointError(apiErrors.sessionEnded)
+			} else {
+				throwApiError(apiErrors.sessionEnded)
+			}
 		}
 	}
 

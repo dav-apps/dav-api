@@ -1,18 +1,17 @@
-import { AppUserSnapshot } from "@prisma/client"
+import { UserSnapshot } from "@prisma/client"
 import { DateTime } from "luxon"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"
 
-export async function listAppUserSnapshots(
+export async function listUserSnapshots(
 	parent: any,
 	args: {
-		appId: number
 		start?: number
 		end?: number
 	},
 	context: ResolverContext
-): Promise<List<AppUserSnapshot>> {
+): Promise<List<UserSnapshot>> {
 	const accessToken = context.authorization
 
 	if (accessToken == null) {
@@ -30,21 +29,8 @@ export async function listAppUserSnapshots(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Get the app
-	const app = await context.prisma.app.findFirst({
-		where: { id: args.appId }
-	})
-
-	if (app == null) {
-		throwApiError(apiErrors.appDoesNotExist)
-	}
-
-	// Check if the app belongs to the dev of the user
-	const dev = await context.prisma.dev.findFirst({
-		where: { userId: session.userId }
-	})
-
-	if (dev == null || app.devId != dev.id) {
+	// Make sure the user is the first dev
+	if (session.userId != BigInt(1)) {
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
@@ -61,7 +47,6 @@ export async function listAppUserSnapshots(
 	}
 
 	let where = {
-		appId: args.appId,
 		time: {
 			gte: start.toJSDate(),
 			lte: end.toJSDate()
@@ -69,8 +54,8 @@ export async function listAppUserSnapshots(
 	}
 
 	const [total, items] = await context.prisma.$transaction([
-		context.prisma.appUserSnapshot.count({ where }),
-		context.prisma.appUserSnapshot.findMany({
+		context.prisma.userSnapshot.count({ where }),
+		context.prisma.userSnapshot.findMany({
 			where,
 			orderBy: { time: "desc" }
 		})

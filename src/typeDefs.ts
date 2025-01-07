@@ -14,6 +14,10 @@ export const typeDefs = `#graphql
 			start: Int
 			end: Int
 		): AppUserSnapshotList!
+		listUserSnapshots(
+			start: Int
+			end: Int
+		): UserSnapshotList!
 		retrieveUser: User
 		retrieveUserById(id: Int!): User
 		retrieveDev: Dev
@@ -175,6 +179,24 @@ export const typeDefs = `#graphql
 	type AppUserSnapshotList {
 		total: Int!
 		items: [AppUserSnapshot!]!
+	}
+
+	type UserSnapshot {
+		time: String!
+		dailyActive: Int!
+		weeklyActive: Int!
+		monthlyActive: Int!
+		yearlyActive: Int!
+		freePlan: Int!
+		plusPlan: Int!
+		proPlan: Int!
+		emailConfirmed: Int!
+		emailUnconfirmed: Int!
+	}
+
+	type UserSnapshotList {
+		total: Int!
+		items: [UserSnapshot!]!
 	}
 
 	type Dev {

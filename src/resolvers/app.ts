@@ -1,4 +1,4 @@
-import { App } from "@prisma/client"
+import { App, Table } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import {
@@ -212,6 +212,27 @@ export async function updateApp(
 	})
 }
 
-export function id(app: App, args: any, context: ResolverContext): number {
+export function id(app: App, args: {}, context: ResolverContext): number {
 	return Number(app.id)
+}
+
+export async function tables(
+	app: App,
+	args: {},
+	context: ResolverContext
+): Promise<List<Table>> {
+	let where = { appId: app.id }
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.table.count({ where }),
+		context.prisma.table.findMany({
+			where,
+			orderBy: { id: "asc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }

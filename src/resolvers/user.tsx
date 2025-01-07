@@ -789,6 +789,6 @@ export async function setPasswordOfUser(
 	})
 }
 
-export function id(user: User, args: any, context: ResolverContext): number {
+export function id(user: User, args: {}, context: ResolverContext): number {
 	return Number(user.id)
 }

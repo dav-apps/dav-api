@@ -156,6 +156,7 @@ export const typeDefs = `#graphql
 		webLink: String
 		googlePlayLink: String
 		microsoftStoreLink: String
+		tables: TableList!
 	}
 
 	type AppList {
@@ -206,6 +207,16 @@ export const typeDefs = `#graphql
 	type User {
 		id: Int!
 		email: String!
+	}
+
+	type Table {
+		id: Int!
+		name: String!
+	}
+
+	type TableList {
+		total: Int!
+		items: [Table!]!
 	}
 
 	type TableObject {

@@ -5,6 +5,7 @@ import * as userSnapshotResolvers from "./resolvers/userSnapshot.js"
 import * as devResolvers from "./resolvers/dev.js"
 import * as userResolvers from "./resolvers/user.js"
 import * as sessionResolvers from "./resolvers/session.js"
+import * as tableResolvers from "./resolvers/table.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
 import * as notificationResolvers from "./resolvers/notification.js"
@@ -57,10 +58,14 @@ export const resolvers = {
 		updateOrder: orderResolvers.updateOrder
 	},
 	App: {
-		id: appResolvers.id
+		id: appResolvers.id,
+		tables: appResolvers.tables
 	},
 	User: {
 		id: userResolvers.id
+	},
+	Table: {
+		id: tableResolvers.id
 	},
 	TableObject: {
 		user: tableObjectResolvers.user,

@@ -98,6 +98,7 @@ export const typeDefs = `#graphql
 			deviceOs: String
 		): SessionResult!
 		renewSession: SessionResult!
+		deleteSession: SessionResult!
 		updateApp(
 			id: Int!
 			name: String

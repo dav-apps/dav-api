@@ -257,3 +257,30 @@ export async function renewSession(
 		accessToken: session.token
 	}
 }
+
+export async function deleteSession(
+	parent: any,
+	args: {},
+	context: ResolverContext
+): Promise<SessionResult> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Delete the session
+	await context.prisma.session.delete({
+		where: { id: session.id }
+	})
+
+	return {
+		accessToken
+	}
+}

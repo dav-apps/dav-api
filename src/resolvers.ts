@@ -63,7 +63,9 @@ export const resolvers = {
 		tables: appResolvers.tables
 	},
 	User: {
-		id: userResolvers.id
+		id: userResolvers.id,
+		totalStorage: userResolvers.totalStorage,
+		usedStorage: userResolvers.usedStorage
 	},
 	Table: {
 		id: tableResolvers.id

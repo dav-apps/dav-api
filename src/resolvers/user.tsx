@@ -8,7 +8,13 @@ import PasswordResetEmail from "../emails/passwordReset.js"
 import ResetEmailEmail from "../emails/resetEmail.js"
 import { ResolverContext, CreateUserResult } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
-import { noReplyEmailAddress } from "../constants.js"
+import {
+	noReplyEmailAddress,
+	unconfirmedStorage,
+	freePlanStorage,
+	plusPlanStorage,
+	proPlanStorage
+} from "../constants.js"
 import {
 	throwApiError,
 	getDevByAuthToken,
@@ -791,4 +797,30 @@ export async function setPasswordOfUser(
 
 export function id(user: User, args: {}, context: ResolverContext): number {
 	return Number(user.id)
+}
+
+export function totalStorage(
+	user: User,
+	args: {},
+	context: ResolverContext
+): number {
+	if (!user.confirmed) {
+		return unconfirmedStorage
+	} else if (user.plan == 1) {
+		// User is on dav Plus
+		return plusPlanStorage
+	} else if (user.plan == 2) {
+		// User is on dav Pro
+		return proPlanStorage
+	} else {
+		return freePlanStorage
+	}
+}
+
+export function usedStorage(
+	user: User,
+	args: {},
+	context: ResolverContext
+): number {
+	return Number(user.usedStorage)
 }

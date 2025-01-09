@@ -208,6 +208,14 @@ export const typeDefs = `#graphql
 	type User {
 		id: Int!
 		email: String!
+		firstName: String!
+		confirmed: Boolean!
+		totalStorage: Int!
+		usedStorage: Int!
+		stripeCustomerId: String
+		plan: Plan!
+		subscriptionStatus: SubscriptionStatus!
+		periodEnd: String
 	}
 
 	type Table {
@@ -308,6 +316,11 @@ export const typeDefs = `#graphql
 		FREE
 		PLUS
 		PRO
+	}
+
+	enum SubscriptionStatus {
+		ACTIVE
+		ENDING
 	}
 
 	enum Currency {

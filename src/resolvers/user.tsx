@@ -361,7 +361,7 @@ export async function updateUser(
 export async function sendConfirmationEmailForUser(
 	parent: any,
 	args: {
-		userId: number
+		id: number
 	},
 	context: ResolverContext
 ): Promise<User> {
@@ -385,7 +385,7 @@ export async function sendConfirmationEmailForUser(
 	// Get the user
 	let user = await context.prisma.user.findFirst({
 		where: {
-			id: args.userId
+			id: args.id
 		}
 	})
 

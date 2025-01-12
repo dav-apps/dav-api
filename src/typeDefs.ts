@@ -223,6 +223,7 @@ export const typeDefs = `#graphql
 		dev: Dev
 		provider: Provider
 		profileImage: UserProfileImage!
+		apps: AppList!
 	}
 
 	type UserProfileImage {

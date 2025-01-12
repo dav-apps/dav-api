@@ -68,7 +68,8 @@ export const resolvers = {
 		usedStorage: userResolvers.usedStorage,
 		dev: userResolvers.dev,
 		provider: userResolvers.provider,
-		profileImage: userResolvers.profileImage
+		profileImage: userResolvers.profileImage,
+		apps: userResolvers.apps
 	},
 	Table: {
 		id: tableResolvers.id

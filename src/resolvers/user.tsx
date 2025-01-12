@@ -1,4 +1,4 @@
-import { User, Dev, Provider } from "@prisma/client"
+import { User, Dev, Provider, App } from "@prisma/client"
 import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
@@ -8,6 +8,7 @@ import PasswordResetEmail from "../emails/passwordReset.js"
 import ResetEmailEmail from "../emails/resetEmail.js"
 import {
 	ResolverContext,
+	List,
 	CreateUserResult,
 	UserProfileImage
 } from "../types.js"
@@ -876,5 +877,30 @@ export async function profileImage(
 			url: getSpacesFileLink("profileImages/default.png"),
 			etag: defaultProfileImageEtag
 		}
+	}
+}
+
+export async function apps(
+	user: User,
+	args: {},
+	context: ResolverContext
+): Promise<List<App>> {
+	const where = {
+		userId: user.id
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.appUser.count({
+			where
+		}),
+		context.prisma.appUser.findMany({
+			where,
+			include: { app: true }
+		})
+	])
+
+	return {
+		total,
+		items: items.map(appUser => appUser.app)
 	}
 }

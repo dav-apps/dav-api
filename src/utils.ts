@@ -250,6 +250,18 @@ export function getWebsiteBaseUrl() {
 	}
 }
 
+export function getSpacesBucketName() {
+	if (process.env.ENV == "production") {
+		return "dav-backend"
+	} else {
+		return "dav-backend-dev"
+	}
+}
+
+export function getSpacesFileLink(key: string) {
+	return `https://${getSpacesBucketName()}.fra1.cdn.digitaloceanspaces.com/${key}`
+}
+
 export function generateHex(length: number): string {
 	const bytes = new Uint8Array(length)
 	crypto.getRandomValues(bytes)

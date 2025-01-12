@@ -6,14 +6,19 @@ import ChangeEmailEmail from "../emails/changeEmail.js"
 import ChangePasswordEmail from "../emails/changePassword.js"
 import PasswordResetEmail from "../emails/passwordReset.js"
 import ResetEmailEmail from "../emails/resetEmail.js"
-import { ResolverContext, CreateUserResult } from "../types.js"
+import {
+	ResolverContext,
+	CreateUserResult,
+	UserProfileImage
+} from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import {
 	noReplyEmailAddress,
 	unconfirmedStorage,
 	freePlanStorage,
 	plusPlanStorage,
-	proPlanStorage
+	proPlanStorage,
+	defaultProfileImageEtag
 } from "../constants.js"
 import {
 	throwApiError,
@@ -22,6 +27,7 @@ import {
 	throwValidationError,
 	updateEmailOfStripeCustomer,
 	getWebsiteBaseUrl,
+	getSpacesFileLink,
 	generateHex
 } from "../utils.js"
 import {
@@ -847,4 +853,28 @@ export function provider(
 			userId: user.id
 		}
 	})
+}
+
+export async function profileImage(
+	user: User,
+	args: {},
+	context: ResolverContext
+): Promise<UserProfileImage> {
+	const userProfileImage = await context.prisma.userProfileImage.findFirst({
+		where: {
+			userId: user.id
+		}
+	})
+
+	if (userProfileImage != null) {
+		return {
+			url: getSpacesFileLink(`profileImages/${user.id}`),
+			etag: userProfileImage.etag ?? defaultProfileImageEtag
+		}
+	} else {
+		return {
+			url: getSpacesFileLink("profileImages/default.png"),
+			etag: defaultProfileImageEtag
+		}
+	}
 }

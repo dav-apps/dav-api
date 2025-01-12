@@ -39,6 +39,11 @@ export type OrderStatus = "CREATED" | "PREPARATION" | "SHIPPED"
 export type Plan = "FREE" | "PLUS" | "PRO"
 
 //#region Models
+export interface UserProfileImage {
+	url: string
+	etag: string
+}
+
 export interface CheckoutSession {
 	url: string
 }

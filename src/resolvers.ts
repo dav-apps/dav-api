@@ -67,7 +67,8 @@ export const resolvers = {
 		totalStorage: userResolvers.totalStorage,
 		usedStorage: userResolvers.usedStorage,
 		dev: userResolvers.dev,
-		provider: userResolvers.provider
+		provider: userResolvers.provider,
+		profileImage: userResolvers.profileImage
 	},
 	Table: {
 		id: tableResolvers.id

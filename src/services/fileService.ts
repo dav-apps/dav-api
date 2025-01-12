@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { getSpacesBucketName } from "../utils.js"
 
 const s3Client = new S3Client({
 	endpoint: "https://fra1.digitaloceanspaces.com",
@@ -10,14 +11,6 @@ const s3Client = new S3Client({
 	}
 })
 
-function getBucketName() {
-	if (process.env.ENV == "production") {
-		return "dav-backend"
-	} else {
-		return "dav-backend-dev"
-	}
-}
-
 export async function upload(
 	key: string,
 	body: any,
@@ -26,7 +19,7 @@ export async function upload(
 	try {
 		let result = await s3Client.send(
 			new PutObjectCommand({
-				Bucket: getBucketName(),
+				Bucket: getSpacesBucketName(),
 				Key: key,
 				Body: body,
 				ACL: "public-read",
@@ -39,8 +32,4 @@ export async function upload(
 		console.log("Error", err)
 		return null
 	}
-}
-
-export function getFileLink(key: string) {
-	return `https://${getBucketName()}.fra1.cdn.digitaloceanspaces.com/${key}`
 }

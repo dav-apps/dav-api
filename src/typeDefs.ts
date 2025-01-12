@@ -222,6 +222,12 @@ export const typeDefs = `#graphql
 		periodEnd: String
 		dev: Dev
 		provider: Provider
+		profileImage: UserProfileImage!
+	}
+
+	type UserProfileImage {
+		url: String!
+		etag: String!
 	}
 
 	type Table {

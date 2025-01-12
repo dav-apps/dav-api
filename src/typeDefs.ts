@@ -205,6 +205,10 @@ export const typeDefs = `#graphql
 		id: Int!
 	}
 
+	type Provider {
+		id: Int!
+	}
+
 	type User {
 		id: Int!
 		email: String!
@@ -216,6 +220,8 @@ export const typeDefs = `#graphql
 		plan: Plan!
 		subscriptionStatus: SubscriptionStatus!
 		periodEnd: String
+		dev: Dev
+		provider: Provider
 	}
 
 	type Table {

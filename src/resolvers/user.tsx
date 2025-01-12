@@ -1,4 +1,4 @@
-import { User } from "@prisma/client"
+import { User, Dev, Provider } from "@prisma/client"
 import bcrypt from "bcrypt"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
@@ -823,4 +823,28 @@ export function usedStorage(
 	context: ResolverContext
 ): number {
 	return Number(user.usedStorage)
+}
+
+export function dev(
+	user: User,
+	args: {},
+	context: ResolverContext
+): Promise<Dev> {
+	return context.prisma.dev.findFirst({
+		where: {
+			userId: user.id
+		}
+	})
+}
+
+export function provider(
+	user: User,
+	args: {},
+	context: ResolverContext
+): Promise<Provider> {
+	return context.prisma.provider.findFirst({
+		where: {
+			userId: user.id
+		}
+	})
 }

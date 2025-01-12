@@ -1,5 +1,5 @@
-import { Dev } from "@prisma/client"
-import { ResolverContext } from "../types.js"
+import { Dev, App } from "@prisma/client"
+import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"
 
@@ -29,4 +29,31 @@ export async function retrieveDev(
 	return await context.prisma.dev.findFirst({
 		where: { userId: session.userId }
 	})
+}
+
+export function id(dev: Dev): number {
+	return Number(dev.id)
+}
+
+export async function apps(
+	dev: Dev,
+	args: {},
+	context: ResolverContext
+): Promise<List<App>> {
+	const where = {
+		devId: dev.id
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.app.count({ where }),
+		context.prisma.app.findMany({
+			where,
+			orderBy: { createdAt: "desc" }
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }

@@ -802,7 +802,7 @@ export async function setPasswordOfUser(
 	})
 }
 
-export function id(user: User, args: {}, context: ResolverContext): number {
+export function id(user: User): number {
 	return Number(user.id)
 }
 
@@ -895,7 +895,8 @@ export async function apps(
 		}),
 		context.prisma.appUser.findMany({
 			where,
-			include: { app: true }
+			include: { app: true },
+			orderBy: { createdAt: "desc" }
 		})
 	])
 

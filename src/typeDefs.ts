@@ -203,6 +203,7 @@ export const typeDefs = `#graphql
 
 	type Dev {
 		id: Int!
+		apps: AppList!
 	}
 
 	type Provider {

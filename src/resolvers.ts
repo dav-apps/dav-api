@@ -71,6 +71,10 @@ export const resolvers = {
 		profileImage: userResolvers.profileImage,
 		apps: userResolvers.apps
 	},
+	Dev: {
+		id: devResolvers.id,
+		apps: devResolvers.apps
+	},
 	Table: {
 		id: tableResolvers.id
 	},

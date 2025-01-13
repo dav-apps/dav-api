@@ -853,6 +853,10 @@ export function subscriptionStatus(user: User): SubscriptionStatus {
 	return "ACTIVE"
 }
 
+export function periodEnd(user: User): string {
+	return user.periodEnd?.toISOString()
+}
+
 export function dev(
 	user: User,
 	args: {},

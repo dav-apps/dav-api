@@ -215,8 +215,8 @@ export const typeDefs = `#graphql
 		email: String!
 		firstName: String!
 		confirmed: Boolean!
-		totalStorage: Int!
-		usedStorage: Int!
+		totalStorage: Float!
+		usedStorage: Float!
 		stripeCustomerId: String
 		plan: Plan!
 		subscriptionStatus: SubscriptionStatus!

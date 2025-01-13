@@ -10,7 +10,9 @@ import {
 	ResolverContext,
 	List,
 	CreateUserResult,
-	UserProfileImage
+	UserProfileImage,
+	Plan,
+	SubscriptionStatus
 } from "../types.js"
 import { apiErrors, validationErrors } from "../errors.js"
 import {
@@ -830,6 +832,25 @@ export function usedStorage(
 	context: ResolverContext
 ): number {
 	return Number(user.usedStorage)
+}
+
+export function plan(user: User): Plan {
+	switch (user.plan) {
+		case 1:
+			return "PLUS"
+		case 2:
+			return "PRO"
+		default:
+			return "FREE"
+	}
+}
+
+export function subscriptionStatus(user: User): SubscriptionStatus {
+	if (user.subscriptionStatus == 1) {
+		return "ENDING"
+	}
+
+	return "ACTIVE"
 }
 
 export function dev(

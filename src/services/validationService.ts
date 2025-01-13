@@ -1,4 +1,4 @@
-import * as validator from "validator"
+import validator from "validator"
 import { apiErrors, validationErrors } from "../errors.js"
 import { urlRegex, urlPathRegex } from "../constants.js"
 

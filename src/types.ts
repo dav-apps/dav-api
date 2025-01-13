@@ -37,6 +37,7 @@ export type Currency = "EUR"
 export type TableObjectPriceType = "PURCHASE" | "ORDER"
 export type OrderStatus = "CREATED" | "PREPARATION" | "SHIPPED"
 export type Plan = "FREE" | "PLUS" | "PRO"
+export type SubscriptionStatus = "ACTIVE" | "ENDING"
 
 //#region Models
 export interface UserProfileImage {

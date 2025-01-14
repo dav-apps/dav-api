@@ -66,3 +66,7 @@ export async function listUserSnapshots(
 		items
 	}
 }
+
+export function time(userSnapshot: UserSnapshot): string {
+	return userSnapshot.time.toISOString()
+}

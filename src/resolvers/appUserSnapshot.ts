@@ -81,3 +81,7 @@ export async function listAppUserSnapshots(
 		items
 	}
 }
+
+export function time(appUserSnapshot: AppUserSnapshot): string {
+	return appUserSnapshot.time.toISOString()
+}

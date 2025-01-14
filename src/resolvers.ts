@@ -74,6 +74,12 @@ export const resolvers = {
 		profileImage: userResolvers.profileImage,
 		apps: userResolvers.apps
 	},
+	UserSnapshot: {
+		time: userSnapshotResolvers.time
+	},
+	AppUserSnapshot: {
+		time: appUserSnapshotResolvers.time
+	},
 	Dev: {
 		id: devResolvers.id,
 		apps: devResolvers.apps

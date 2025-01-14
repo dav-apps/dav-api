@@ -142,6 +142,8 @@ export async function createUser(
 	errors.push(validateFirstNameLength(args.firstName))
 	errors.push(validatePasswordLength(args.password))
 
+	throwValidationError(...errors)
+
 	// Cut the device name and device os if they are too long
 	let deviceName = null
 	let deviceOs = null

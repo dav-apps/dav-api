@@ -48,6 +48,7 @@ export const typeDefs = `#graphql
 	type Mutation {
 		createUser(
 			email: String!
+			firstName: String!
 			password: String!
 			appId: Int!
 			apiKey: String!

@@ -1,4 +1,4 @@
-export const websiteBaseUrlDevelopment = "http://localhost:4000"
+export const websiteBaseUrlDevelopment = "http://localhost:3000"
 export const websiteBaseUrlStaging =
 	"https://dav-website-staging-o3oot.ondigitalocean.app"
 export const websiteBaseUrlProduction = "https://dav-apps.tech"

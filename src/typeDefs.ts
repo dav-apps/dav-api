@@ -144,6 +144,7 @@ export const typeDefs = `#graphql
 			cancelUrl: String!
 		): CheckoutSession
 		createCustomerPortalSession: CustomerPortalSession!
+		createPurchase(tableObjectUuid: String!): Purchase
 		updateOrder(
 			uuid: String!
 			status: OrderStatus
@@ -267,6 +268,12 @@ export const typeDefs = `#graphql
 		price: Int!
 		currency: Currency!
 		type: TableObjectPriceType!
+	}
+
+	type Purchase {
+		uuid: String!
+		price: Int!
+		currency: Currency!
 	}
 
 	type Order {

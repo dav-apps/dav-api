@@ -64,6 +64,11 @@ export const apiErrors = {
 		message: "The user is already on the given plan or on a higher plan",
 		status: 422
 	},
+	tableObjectIsNotFree: {
+		code: "TABLE_OBJECT_IS_NOT_FREE",
+		message: "You can only create purchases for free table objects",
+		status: 400
+	},
 	appDoesNotExist: {
 		code: "APP_DOES_NOT_EXIST",
 		message: "App does not exist",

@@ -9,6 +9,7 @@ import * as tableResolvers from "./resolvers/table.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
 import * as notificationResolvers from "./resolvers/notification.js"
+import * as purchaseResolvers from "./resolvers/purchase.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as shippingAddressResolvers from "./resolvers/shippingAddress.js"
 import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
@@ -56,6 +57,7 @@ export const resolvers = {
 			checkoutSessionResolvers.createPaymentCheckoutSession,
 		createCustomerPortalSession:
 			customerPortalSessionResolvers.createCustomerPortalSession,
+		createPurchase: purchaseResolvers.createPurchase,
 		updateOrder: orderResolvers.updateOrder
 	},
 	App: {

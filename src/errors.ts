@@ -33,9 +33,9 @@ export const apiErrors = {
 		message: "Can't use old access token",
 		status: 403
 	},
-	sessionEnded: {
-		code: "SESSION_ENDED",
-		message: "Session has ended and must be renewed",
+	sessionExpired: {
+		code: "SESSION_EXPIRED",
+		message: "Session has expired and must be renewed",
 		status: 403
 	},
 	passwordIncorrect: {

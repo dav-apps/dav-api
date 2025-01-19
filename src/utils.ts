@@ -136,11 +136,11 @@ export async function getSessionFromToken(params: {
 			DateTime.fromJSDate(session.updatedAt) <
 				DateTime.now().minus({ days: 1 })
 		) {
-			// Session has ended
+			// Session has expired
 			if (context == "endpoint") {
-				throwEndpointError(apiErrors.sessionEnded)
+				throwEndpointError(apiErrors.sessionExpired)
 			} else {
-				throwApiError(apiErrors.sessionEnded)
+				throwApiError(apiErrors.sessionExpired)
 			}
 		}
 	}

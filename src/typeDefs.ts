@@ -113,6 +113,7 @@ export const typeDefs = `#graphql
 			uuid: String
 			tableId: Int!
 		): TableObject!
+		deleteTableObject(uuid: String!): TableObject!
 		setTableObjectPrice(
 			tableObjectUuid: String!
 			price: Int!

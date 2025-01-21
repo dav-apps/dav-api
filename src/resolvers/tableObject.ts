@@ -204,6 +204,53 @@ export async function createTableObject(
 	return tableObject
 }
 
+export async function deleteTableObject(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<TableObject> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the table object
+	const tableObject = await context.prisma.tableObject.findFirst({
+		where: { uuid: args.uuid },
+		include: { table: true }
+	})
+
+	// Make sure the table object belongs to the user and app of the session
+	if (
+		tableObject.userId != session.userId ||
+		tableObject.table.appId != session.appId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// TODO: Save that the user was active
+	// TODO: Delete the file if the table object has one
+	// TODO: Remove the table object from redis
+	// TODO: Update the etag of the table
+	// TODO: Notify connected clients
+
+	// Delete the table object
+	await context.prisma.tableObject.delete({
+		where: { id: tableObject.id }
+	})
+
+	return tableObject
+}
+
 export async function user(
 	tableObject: TableObject,
 	args: any,

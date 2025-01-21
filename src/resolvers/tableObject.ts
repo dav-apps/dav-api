@@ -136,6 +136,74 @@ export async function listTableObjectsByProperty(
 	}
 }
 
+export async function createTableObject(
+	parent: any,
+	args: {
+		uuid?: string
+		tableId: number
+	},
+	context: ResolverContext
+): Promise<TableObject> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the table
+	const table = await context.prisma.table.findFirst({
+		where: { id: args.tableId }
+	})
+
+	if (table == null) {
+		throwApiError(apiErrors.tableDoesNotExist)
+	}
+
+	// Check if the table belongs to the app of the session
+	if (table.appId != session.appId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Create the table object
+	let uuid = args.uuid
+
+	if (uuid == null) {
+		uuid = crypto.randomUUID()
+	}
+
+	// Check if the uuid is already taken
+	let existingTableObject = await context.prisma.tableObject.findFirst({
+		where: { uuid }
+	})
+
+	if (existingTableObject != null) {
+		throwApiError(apiErrors.uuidAlreadyInUse)
+	}
+
+	const tableObject = await context.prisma.tableObject.create({
+		data: {
+			uuid,
+			userId: session.userId,
+			tableId: args.tableId
+		}
+	})
+
+	// TODO: Calculate the etag of the table object
+	// TODO: Save the table object in redis
+	// TODO: Save that the user was active
+	// TODO: Save that the user uses the app
+	// TODO: Update the etag of the table
+	// TODO: Notify connected clients
+
+	return tableObject
+}
+
 export async function user(
 	tableObject: TableObject,
 	args: any,

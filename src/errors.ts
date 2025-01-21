@@ -84,6 +84,11 @@ export const apiErrors = {
 		message: "Dev does not exist",
 		status: 404
 	},
+	tableDoesNotExist: {
+		code: "TABLE_DOES_NOT_EXIST",
+		message: "Table does not exist",
+		status: 404
+	},
 	tableObjectDoesNotExist: {
 		code: "TABLE_OBJECT_NOT_EXISTS",
 		message: "TableObject does not exist",
@@ -113,6 +118,11 @@ export const apiErrors = {
 		code: "PASSWORD_CONFIRMATION_TOKEN_INCORRECT",
 		message: "The password confirmation token is incorrect",
 		status: 400
+	},
+	uuidAlreadyInUse: {
+		code: "UUID_ALREADY_IN_USE",
+		message: "The UUID is already in use",
+		status: 409
 	},
 	oldEmailOfUserIsEmpty: {
 		code: "OLD_EMAIL_OF_USER_IS_EMPTY",

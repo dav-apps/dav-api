@@ -109,6 +109,10 @@ export const typeDefs = `#graphql
 			googlePlayLink: String
 			microsoftStoreLink: String
 		): App!
+		createTableObject(
+			uuid: String
+			tableId: Int!
+		): TableObject!
 		setTableObjectPrice(
 			tableObjectUuid: String!
 			price: Int!

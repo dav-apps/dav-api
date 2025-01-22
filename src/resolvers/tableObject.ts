@@ -35,10 +35,10 @@ export async function retrieveTableObject(
 	}
 
 	// Check if the user can access the table object
+	let tableId = tableObject.tableId
 	const userAccess = await context.prisma.tableObjectUserAccess.findFirst({
 		where: { userId: session.userId, tableObjectId: tableObject.id }
 	})
-	let tableId = tableObject.tableId
 
 	if (userAccess == null) {
 		// Make sure the table object belongs to the user and app
@@ -141,6 +141,7 @@ export async function createTableObject(
 	args: {
 		uuid?: string
 		tableId: number
+		file: boolean
 	},
 	context: ResolverContext
 ): Promise<TableObject> {
@@ -190,7 +191,8 @@ export async function createTableObject(
 		data: {
 			uuid,
 			userId: session.userId,
-			tableId: args.tableId
+			tableId: args.tableId,
+			file: args.file ?? false
 		}
 	})
 

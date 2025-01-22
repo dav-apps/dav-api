@@ -13,6 +13,7 @@ import { typeDefs } from "./src/typeDefs.js"
 import { resolvers } from "./src/resolvers.js"
 import { setup as stripeWebhookSetup } from "./src/endpoints/stripeWebhook.js"
 import { setup as userSetup } from "./src/endpoints/user.js"
+import { setup as tableObjectSetup } from "./src/endpoints/tableObject.js"
 import { setupTasks } from "./src/tasks.js"
 
 const port = process.env.PORT || 4000
@@ -48,6 +49,7 @@ await server.start()
 // Call setup function of each endpoint file
 stripeWebhookSetup(app)
 userSetup(app)
+tableObjectSetup(app)
 
 if (process.env.ENV == "production") {
 	// Setup cron jobs

@@ -8,6 +8,15 @@ export function validateImageContentType(contentType: string) {
 		return apiErrors.contentTypeNotSupported
 	}
 }
+
+export function validateContentType(contentType: string) {
+	if (
+		contentType == null ||
+		contentType == "application/x-www-form-urlencoded"
+	) {
+		return apiErrors.contentTypeNotSupported
+	}
+}
 //#endregion
 
 //#region Field validations

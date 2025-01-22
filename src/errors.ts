@@ -69,6 +69,11 @@ export const apiErrors = {
 		message: "You can only create purchases for free table objects",
 		status: 400
 	},
+	tableObjectIsNotFile: {
+		code: "TABLE_OBJECT_IS_NOT_FILE",
+		message: "TableObject is not a file",
+		status: 422
+	},
 	appDoesNotExist: {
 		code: "APP_DOES_NOT_EXIST",
 		message: "App does not exist",
@@ -77,6 +82,11 @@ export const apiErrors = {
 	userDoesNotExist: {
 		code: "USER_DOES_NOT_EXIST",
 		message: "User does not exist",
+		status: 404
+	},
+	sessionDoesNotExist: {
+		code: "SESSION_DOES_NOT_EXIST",
+		message: "Session does not exist",
 		status: 404
 	},
 	devDoesNotExist: {
@@ -90,13 +100,8 @@ export const apiErrors = {
 		status: 404
 	},
 	tableObjectDoesNotExist: {
-		code: "TABLE_OBJECT_NOT_EXISTS",
+		code: "TABLE_OBJECT_DOES_NOT_EXIST",
 		message: "TableObject does not exist",
-		status: 404
-	},
-	sessionDoesNotExist: {
-		code: "SESSION_DOES_NOT_EXIST",
-		message: "Session does not exist",
 		status: 404
 	},
 	orderDoesNotExist: {

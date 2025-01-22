@@ -8,6 +8,10 @@ export const freePlanStorage = 2000000000 // 2 GB
 export const plusPlanStorage = 15000000000 // 15 GB
 export const proPlanStorage = 50000000000 // 50 GB
 export const defaultProfileImageEtag = "0x8D7C9D1558903CA"
+export const sizePropertyName = "size"
+export const typePropertyName = "type"
+export const etagPropertyName = "etag"
+export const extPropertyName = "ext"
 
 //#region Regexes
 export const urlRegex =

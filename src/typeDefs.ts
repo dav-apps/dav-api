@@ -254,6 +254,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		user: User!
 		properties: JSON
+		purchases: PurchaseList!
 	}
 
 	type TableObjectList {
@@ -264,7 +265,7 @@ export const typeDefs = `#graphql
 	type Notification {
 		uuid: String!
 		time: String!
-		interval: String!
+		interval: Int!
 		title: String!
 		body: String!
 	}
@@ -280,6 +281,11 @@ export const typeDefs = `#graphql
 		uuid: String!
 		price: Int!
 		currency: Currency!
+	}
+
+	type PurchaseList {
+		total: Int!
+		items: [Purchase!]!
 	}
 
 	type Order {

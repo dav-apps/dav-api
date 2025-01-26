@@ -1,4 +1,4 @@
-import { User, TableObject } from "@prisma/client"
+import { User, TableObject, Purchase } from "@prisma/client"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import {
@@ -281,4 +281,20 @@ export async function properties(
 	}
 
 	return result
+}
+
+export async function purchases(
+	tableObject: TableObject,
+	args: any,
+	context: ResolverContext
+): Promise<List<Purchase>> {
+	const purchases = await context.prisma.tableObjectPurchase.findMany({
+		where: { tableObjectId: tableObject.id },
+		include: { purchase: true }
+	})
+
+	return {
+		total: purchases.length,
+		items: purchases.map(tableObjectPurchase => tableObjectPurchase.purchase)
+	}
 }

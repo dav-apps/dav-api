@@ -93,7 +93,8 @@ export const resolvers = {
 	},
 	TableObject: {
 		user: tableObjectResolvers.user,
-		properties: tableObjectResolvers.properties
+		properties: tableObjectResolvers.properties,
+		purchases: tableObjectResolvers.purchases
 	},
 	Order: {
 		user: orderResolvers.user,

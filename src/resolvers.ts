@@ -25,6 +25,7 @@ export const resolvers = {
 		retrieveUser: userResolvers.retrieveUser,
 		retrieveUserById: userResolvers.retrieveUserById,
 		retrieveDev: devResolvers.retrieveDev,
+		retrieveTable: tableResolvers.retrieveTable,
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		listTableObjectsByProperty:
 			tableObjectResolvers.listTableObjectsByProperty,

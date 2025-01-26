@@ -8,6 +8,7 @@ import * as sessionResolvers from "./resolvers/session.js"
 import * as tableResolvers from "./resolvers/table.js"
 import * as tableObjectResolvers from "./resolvers/tableObject.js"
 import * as tableObjectPriceResolvers from "./resolvers/tableObjectPrice.js"
+import * as tableObjectUserAccessResolvers from "./resolvers/tableObjectUserAccess.js"
 import * as notificationResolvers from "./resolvers/notification.js"
 import * as purchaseResolvers from "./resolvers/purchase.js"
 import * as orderResolvers from "./resolvers/order.js"
@@ -51,6 +52,8 @@ export const resolvers = {
 		createTableObject: tableObjectResolvers.createTableObject,
 		deleteTableObject: tableObjectResolvers.deleteTableObject,
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
+		createTableObjectUserAccess:
+			tableObjectUserAccessResolvers.createTableObjectUserAccess,
 		createNotificationForUser:
 			notificationResolvers.createNotificationForUser,
 		createSubscriptionCheckoutSession:

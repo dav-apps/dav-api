@@ -121,6 +121,10 @@ export const typeDefs = `#graphql
 			currency: Currency!
 			type: TableObjectPriceType!
 		): TableObjectPrice
+		createTableObjectUserAccess(
+			tableObjectUuid: String!
+			tableAlias: Int
+		): TableObjectUserAccess!
 		createNotificationForUser(
 			uuid: String
 			userId: Int!
@@ -262,19 +266,23 @@ export const typeDefs = `#graphql
 		items: [TableObject!]!
 	}
 
+	type TableObjectPrice {
+		tableObject: TableObject!
+		price: Int!
+		currency: Currency!
+		type: TableObjectPriceType!
+	}
+
+	type TableObjectUserAccess {
+		tableAlias: Int
+	}
+
 	type Notification {
 		uuid: String!
 		time: String!
 		interval: Int!
 		title: String!
 		body: String!
-	}
-
-	type TableObjectPrice {
-		tableObject: TableObject!
-		price: Int!
-		currency: Currency!
-		type: TableObjectPriceType!
 	}
 
 	type Purchase {

@@ -248,6 +248,10 @@ export const typeDefs = `#graphql
 	type Table {
 		id: Int!
 		name: String!
+		tableObjects(
+			limit: Int
+			offset: Int
+		): TableObjectList!
 	}
 
 	type TableList {

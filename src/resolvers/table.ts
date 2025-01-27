@@ -1,5 +1,5 @@
-import { Table } from "@prisma/client"
-import { ResolverContext } from "../types.js"
+import { Table, TableObject } from "@prisma/client"
+import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"
 
@@ -45,4 +45,50 @@ export async function retrieveTable(
 
 export function id(table: Table, args: {}, context: ResolverContext): number {
 	return Number(table.id)
+}
+
+export async function tableObjects(
+	table: Table,
+	args: {
+		limit?: number
+		offset?: number
+	},
+	context: ResolverContext
+): Promise<List<TableObject>> {
+	const accessToken = context.authorization
+
+	let take = args.limit || 10
+	if (take <= 0) take = 10
+
+	let skip = args.offset || 0
+	if (skip < 0) skip = 0
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	const where = {
+		tableId: table.id,
+		userId: session.userId
+	}
+
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.tableObject.count({ where }),
+		context.prisma.tableObject.findMany({
+			where,
+			take,
+			skip
+		})
+	])
+
+	return {
+		total,
+		items
+	}
 }

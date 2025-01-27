@@ -93,7 +93,8 @@ export const resolvers = {
 		apps: devResolvers.apps
 	},
 	Table: {
-		id: tableResolvers.id
+		id: tableResolvers.id,
+		tableObjects: tableResolvers.tableObjects
 	},
 	TableObject: {
 		user: tableObjectResolvers.user,

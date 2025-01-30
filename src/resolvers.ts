@@ -60,6 +60,7 @@ export const resolvers = {
 		createNotificationForUser:
 			notificationResolvers.createNotificationForUser,
 		updateNotification: notificationResolvers.updateNotification,
+		deleteNotification: notificationResolvers.deleteNotification,
 		createSubscriptionCheckoutSession:
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:

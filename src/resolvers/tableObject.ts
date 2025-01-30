@@ -246,11 +246,9 @@ export async function deleteTableObject(
 	// TODO: Notify connected clients
 
 	// Delete the table object
-	await context.prisma.tableObject.delete({
+	return await context.prisma.tableObject.delete({
 		where: { id: tableObject.id }
 	})
-
-	return tableObject
 }
 
 export async function user(

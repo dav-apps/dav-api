@@ -323,3 +323,43 @@ export async function updateNotification(
 		data
 	})
 }
+
+export async function deleteNotification(
+	parent: any,
+	args: { uuid: string },
+	context: ResolverContext
+): Promise<Notification> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the notification
+	const notification = await context.prisma.notification.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	if (notification == null) {
+		throwApiError(apiErrors.notificationDoesNotExist)
+	}
+
+	// Check if the user can access the notification
+	if (
+		notification.userId != session.userId ||
+		notification.appId != session.appId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Delete the notification
+	return await context.prisma.notification.delete({
+		where: { uuid: args.uuid }
+	})
+}

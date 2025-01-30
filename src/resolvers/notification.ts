@@ -13,10 +13,83 @@ import {
 import {
 	throwApiError,
 	throwValidationError,
-	getDevByAuthToken
+	getDevByAuthToken,
+	getSessionFromToken
 } from "../utils.js"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
+
+export async function createNotification(
+	parent: any,
+	args: {
+		uuid?: string
+		time: number
+		interval: number
+		title: string
+		body: string
+		icon?: string
+		image?: string
+		href?: string
+	},
+	context: ResolverContext
+): Promise<Notification> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Validate the args
+	let errors = []
+
+	if (args.uuid != null) {
+		errors.push(validateUuid(args.uuid))
+	}
+
+	errors.push(
+		validateTitleLength(args.title),
+		validateBodyLength(args.body),
+		validateInterval(args.interval)
+	)
+
+	if (args.icon != null) {
+		errors.push(validateIcon(args.icon))
+	}
+
+	if (args.image != null) {
+		errors.push(validateImage(args.image))
+	}
+
+	if (args.href != null) {
+		errors.push(validateHref(args.href))
+	}
+
+	throwValidationError(...errors)
+
+	// Create the notification
+	const uuid = args.uuid ?? crypto.randomUUID()
+
+	return await context.prisma.notification.create({
+		data: {
+			userId: session.userId,
+			appId: session.appId,
+			uuid,
+			time: DateTime.fromSeconds(args.time).toUTC().toString(),
+			interval: args.interval,
+			title: args.title,
+			body: args.body,
+			icon: args.icon,
+			image: args.image,
+			href: args.href
+		}
+	})
+}
 
 export async function createNotificationForUser(
 	parent: any,

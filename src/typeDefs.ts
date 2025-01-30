@@ -126,6 +126,16 @@ export const typeDefs = `#graphql
 			tableObjectUuid: String!
 			tableAlias: Int
 		): TableObjectUserAccess!
+		createNotification(
+			uuid: String
+			time: Int!
+			interval: Int!
+			title: String!
+			body: String!
+			icon: String
+			image: String
+			href: String
+		): Notification!
 		createNotificationForUser(
 			uuid: String
 			userId: Int!
@@ -137,7 +147,7 @@ export const typeDefs = `#graphql
 			icon: String
 			image: String
 			href: String
-		): Notification
+		): Notification!
 		createSubscriptionCheckoutSession(
 			plan: Plan!
 			successUrl: String!

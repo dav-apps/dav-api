@@ -33,6 +33,7 @@ export const typeDefs = `#graphql
 			limit: Int
 			offset: Int
 		): TableObjectList!
+		retrieveNotification(uuid: String!): Notification
 		retrieveOrder(uuid: String!): Order
 		listOrders(
 			status: [OrderStatus!]

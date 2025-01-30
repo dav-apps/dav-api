@@ -29,6 +29,7 @@ export const resolvers = {
 		retrieveTableObject: tableObjectResolvers.retrieveTableObject,
 		listTableObjectsByProperty:
 			tableObjectResolvers.listTableObjectsByProperty,
+		retrieveNotification: notificationResolvers.retrieveNotification,
 		retrieveOrder: orderResolvers.retrieveOrder,
 		listOrders: orderResolvers.listOrders,
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses

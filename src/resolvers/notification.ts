@@ -19,6 +19,43 @@ import {
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 
+export async function retrieveNotification(
+	parent: any,
+	args: { uuid: string },
+	context: ResolverContext
+): Promise<Notification> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the notification
+	const notification = await context.prisma.notification.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	if (notification == null) {
+		return null
+	}
+
+	// Check if the user can access the notification
+	if (
+		notification.userId != session.userId ||
+		notification.appId != session.appId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return notification
+}
+
 export async function createNotification(
 	parent: any,
 	args: {

@@ -47,6 +47,30 @@ export function id(table: Table, args: {}, context: ResolverContext): number {
 	return Number(table.id)
 }
 
+export async function etag(
+	table: Table,
+	args: {},
+	context: ResolverContext
+): Promise<string> {
+	const accessToken = context.authorization
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the correct table etag
+	let tableEtag = await context.prisma.tableEtag.findFirst({
+		where: {
+			userId: session.userId,
+			tableId: table.id
+		}
+	})
+
+	return tableEtag?.etag
+}
+
 export async function tableObjects(
 	table: Table,
 	args: {

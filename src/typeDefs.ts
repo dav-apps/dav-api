@@ -248,6 +248,7 @@ export const typeDefs = `#graphql
 	type Table {
 		id: Int!
 		name: String!
+		etag: String
 		tableObjects(
 			limit: Int
 			offset: Int
@@ -262,6 +263,7 @@ export const typeDefs = `#graphql
 	type TableObject {
 		uuid: String!
 		user: User!
+		etag: String
 		properties: JSON
 		purchases: PurchaseList!
 	}

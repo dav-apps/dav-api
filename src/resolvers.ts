@@ -94,6 +94,7 @@ export const resolvers = {
 	},
 	Table: {
 		id: tableResolvers.id,
+		etag: tableResolvers.etag,
 		tableObjects: tableResolvers.tableObjects
 	},
 	TableObject: {

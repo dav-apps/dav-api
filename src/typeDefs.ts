@@ -149,6 +149,16 @@ export const typeDefs = `#graphql
 			image: String
 			href: String
 		): Notification!
+		updateNotification(
+			uuid: String!
+			time: Int
+			interval: Int
+			title: String
+			body: String
+			icon: String
+			image: String
+			href: String
+		): Notification!
 		createSubscriptionCheckoutSession(
 			plan: Plan!
 			successUrl: String!

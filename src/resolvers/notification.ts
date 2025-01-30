@@ -220,3 +220,106 @@ export async function createNotificationForUser(
 		}
 	})
 }
+
+export async function updateNotification(
+	parent: any,
+	args: {
+		uuid: string
+		time?: number
+		interval?: number
+		title?: string
+		body?: string
+		icon?: string
+		image?: string
+		href?: string
+	},
+	context: ResolverContext
+): Promise<Notification> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the notification
+	const notification = await context.prisma.notification.findFirst({
+		where: { uuid: args.uuid }
+	})
+
+	if (notification == null) {
+		throwApiError(apiErrors.notificationDoesNotExist)
+	}
+
+	// Check if the user can access the notification
+	if (
+		notification.userId != session.userId ||
+		notification.appId != session.appId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Validate the args
+	let errors = []
+
+	errors.push(
+		validateTitleLength(args.title),
+		validateBodyLength(args.body),
+		validateInterval(args.interval)
+	)
+
+	if (args.icon != null) {
+		errors.push(validateIcon(args.icon))
+	}
+
+	if (args.image != null) {
+		errors.push(validateImage(args.image))
+	}
+
+	if (args.href != null) {
+		errors.push(validateHref(args.href))
+	}
+
+	throwValidationError(...errors)
+
+	// Update the notification
+	let data = {}
+
+	if (args.time != null) {
+		data["time"] = DateTime.fromSeconds(args.time).toUTC().toString()
+	}
+
+	if (args.interval != null) {
+		data["interval"] = args.interval
+	}
+
+	if (args.title != null) {
+		data["title"] = args.title
+	}
+
+	if (args.body != null) {
+		data["body"] = args.body
+	}
+
+	if (args.icon != null) {
+		data["icon"] = args.icon
+	}
+
+	if (args.image != null) {
+		data["image"] = args.image
+	}
+
+	if (args.href != null) {
+		data["href"] = args.href
+	}
+
+	return await context.prisma.notification.update({
+		where: { uuid: args.uuid },
+		data
+	})
+}

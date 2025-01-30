@@ -59,6 +59,7 @@ export const resolvers = {
 		createNotification: notificationResolvers.createNotification,
 		createNotificationForUser:
 			notificationResolvers.createNotificationForUser,
+		updateNotification: notificationResolvers.updateNotification,
 		createSubscriptionCheckoutSession:
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:

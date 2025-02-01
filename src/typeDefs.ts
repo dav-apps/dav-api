@@ -33,7 +33,7 @@ export const typeDefs = `#graphql
 			limit: Int
 			offset: Int
 		): TableObjectList!
-		retrieveNotification(uuid: String!): Notification
+		listNotifications: NotificationList!
 		retrieveOrder(uuid: String!): Order
 		listOrders(
 			status: [OrderStatus!]
@@ -312,6 +312,11 @@ export const typeDefs = `#graphql
 		interval: Int!
 		title: String!
 		body: String!
+	}
+
+	type NotificationList {
+		total: Int!
+		items: [Notification!]!
 	}
 
 	type Purchase {

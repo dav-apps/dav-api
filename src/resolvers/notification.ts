@@ -16,14 +16,14 @@ import {
 	getDevByAuthToken,
 	getSessionFromToken
 } from "../utils.js"
-import { ResolverContext } from "../types.js"
+import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 
-export async function retrieveNotification(
+export async function listNotifications(
 	parent: any,
-	args: { uuid: string },
+	args: {},
 	context: ResolverContext
-): Promise<Notification> {
+): Promise<List<Notification>> {
 	const accessToken = context.authorization
 
 	if (accessToken == null) {
@@ -36,24 +36,25 @@ export async function retrieveNotification(
 		prisma: context.prisma
 	})
 
-	// Get the notification
-	const notification = await context.prisma.notification.findFirst({
-		where: { uuid: args.uuid }
-	})
-
-	if (notification == null) {
-		return null
+	// Get the notifications
+	let where = {
+		userId: session.userId,
+		appId: session.appId
 	}
 
-	// Check if the user can access the notification
-	if (
-		notification.userId != session.userId ||
-		notification.appId != session.appId
-	) {
-		throwApiError(apiErrors.actionNotAllowed)
-	}
+	const [total, items] = await context.prisma.$transaction([
+		context.prisma.notification.count({
+			where
+		}),
+		context.prisma.notification.findMany({
+			where
+		})
+	])
 
-	return notification
+	return {
+		total,
+		items
+	}
 }
 
 export async function createNotification(

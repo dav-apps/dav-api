@@ -172,11 +172,7 @@ export async function createTableObject(
 	}
 
 	// Create the table object
-	let uuid = args.uuid
-
-	if (uuid == null) {
-		uuid = crypto.randomUUID()
-	}
+	let uuid = args.uuid ?? crypto.randomUUID()
 
 	// Check if the uuid is already taken
 	let existingTableObject = await context.prisma.tableObject.findFirst({

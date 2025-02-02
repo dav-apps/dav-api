@@ -160,6 +160,12 @@ export const typeDefs = `#graphql
 			href: String
 		): Notification!
 		deleteNotification(uuid: String!): Notification!
+		createWebPushSubscription(
+			uuid: String
+			endpoint: String!
+			p256dh: String!
+			auth: String!
+		): WebPushSubscription!
 		createSubscriptionCheckoutSession(
 			plan: Plan!
 			successUrl: String!
@@ -362,6 +368,13 @@ export const typeDefs = `#graphql
 	type ShippingAddressList {
 		total: Int!
 		items: [ShippingAddress!]!
+	}
+
+	type WebPushSubscription {
+		uuid: String!
+		endpoint: String!
+		p256dh: String!
+		auth: String!
 	}
 
 	type CheckoutSession {

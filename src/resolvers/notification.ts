@@ -113,6 +113,15 @@ export async function createNotification(
 	// Create the notification
 	const uuid = args.uuid ?? crypto.randomUUID()
 
+	// Check if the uuid is already taken
+	let existingNotification = await context.prisma.notification.findFirst({
+		where: { uuid }
+	})
+
+	if (existingNotification != null) {
+		throwApiError(apiErrors.uuidAlreadyInUse)
+	}
+
 	return await context.prisma.notification.create({
 		data: {
 			userId: session.userId,

@@ -13,6 +13,7 @@ import * as notificationResolvers from "./resolvers/notification.js"
 import * as purchaseResolvers from "./resolvers/purchase.js"
 import * as orderResolvers from "./resolvers/order.js"
 import * as shippingAddressResolvers from "./resolvers/shippingAddress.js"
+import * as webPushSubscriptionResolvers from "./resolvers/webPushSubscription.js"
 import * as checkoutSessionResolvers from "./resolvers/checkoutSession.js"
 import * as customerPortalSessionResolvers from "./resolvers/customerPortalSession.js"
 
@@ -61,6 +62,8 @@ export const resolvers = {
 			notificationResolvers.createNotificationForUser,
 		updateNotification: notificationResolvers.updateNotification,
 		deleteNotification: notificationResolvers.deleteNotification,
+		createWebPushSubscription:
+			webPushSubscriptionResolvers.createWebPushSubscription,
 		createSubscriptionCheckoutSession:
 			checkoutSessionResolvers.createSubscriptionCheckoutSession,
 		createPaymentCheckoutSession:

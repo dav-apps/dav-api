@@ -76,6 +76,30 @@ export function validateBodyLength(body: string) {
 	}
 }
 
+export function validateEndpointLength(endpoint: string) {
+	if (endpoint.length < 1) {
+		return validationErrors.endpointTooShort
+	} else if (endpoint.length > 10000) {
+		return validationErrors.endpointTooLong
+	}
+}
+
+export function validateP256dhLength(p256dh: string) {
+	if (p256dh.length < 1) {
+		return validationErrors.p256dhTooShort
+	} else if (p256dh.length > 250) {
+		return validationErrors.p256dhTooLong
+	}
+}
+
+export function validateAuthLength(auth: string) {
+	if (auth.length < 1) {
+		return validationErrors.authTooShort
+	} else if (auth.length > 250) {
+		return validationErrors.authTooLong
+	}
+}
+
 export function validateUuid(uuid: string) {
 	if (!validator.isUUID(uuid)) {
 		return validationErrors.uuidInvalid

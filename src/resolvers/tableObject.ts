@@ -1,10 +1,17 @@
 import { User, TableObject, Purchase } from "@prisma/client"
+import {
+	validatePropertyNameLength,
+	validateExtLength
+} from "../services/validationService.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
+import { extPropertyName } from "../constants.js"
 import {
 	throwApiError,
 	getDevByAuthToken,
-	getSessionFromToken
+	getSessionFromToken,
+	throwValidationError,
+	createTablePropertyType
 } from "../utils.js"
 
 export async function retrieveTableObject(
@@ -142,6 +149,8 @@ export async function createTableObject(
 		uuid?: string
 		tableId: number
 		file: boolean
+		ext?: string
+		properties: { [key: string]: string | number | boolean }
 	},
 	context: ResolverContext
 ): Promise<TableObject> {
@@ -171,6 +180,22 @@ export async function createTableObject(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
+	// Get the properties
+	if (args.properties != null && !args.file) {
+		// Validate the properties
+		for (let key of Object.keys(args.properties)) {
+			const value = args.properties[key]
+
+			let errors: string[] = [validatePropertyNameLength(key)]
+
+			if (typeof value == "string") {
+				errors.push(validatePropertyNameLength(value))
+			}
+
+			throwValidationError(...errors)
+		}
+	}
+
 	// Create the table object
 	let uuid = args.uuid ?? crypto.randomUUID()
 
@@ -191,6 +216,35 @@ export async function createTableObject(
 			file: args.file ?? false
 		}
 	})
+
+	// Create the table object properties
+	for (let key of Object.keys(args.properties)) {
+		const value = args.properties[key]
+
+		await createTablePropertyType(context.prisma, table.id, key, value)
+
+		await context.prisma.tableObjectProperty.create({
+			data: {
+				tableObjectId: tableObject.id,
+				name: key,
+				value: value.toString()
+			}
+		})
+	}
+
+	if (args.file && args.ext != null) {
+		// Validate the ext
+		throwValidationError(validateExtLength(args.ext))
+
+		// Create the ext property
+		await context.prisma.tableObjectProperty.create({
+			data: {
+				tableObjectId: tableObject.id,
+				name: extPropertyName,
+				value: args.ext
+			}
+		})
+	}
 
 	// TODO: Calculate the etag of the table object
 	// TODO: Save the table object in redis

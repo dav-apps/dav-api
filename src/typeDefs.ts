@@ -116,6 +116,7 @@ export const typeDefs = `#graphql
 			uuid: String
 			tableId: Int!
 			file: Boolean
+			properties: JSONObject
 		): TableObject!
 		deleteTableObject(uuid: String!): TableObject!
 		setTableObjectPrice(
@@ -294,7 +295,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		user: User!
 		etag: String
-		properties: JSON
+		properties: JSONObject!
 		purchases: PurchaseList!
 	}
 
@@ -377,6 +378,10 @@ export const typeDefs = `#graphql
 		endpoint: String!
 		p256dh: String!
 		auth: String!
+	}
+
+	type WebsocketConnection {
+		token: String!
 	}
 
 	type CheckoutSession {

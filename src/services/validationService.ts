@@ -52,6 +52,28 @@ export function validateDescriptionLength(description: string) {
 	}
 }
 
+export function validatePropertyNameLength(name: string) {
+	if (name.length < 2) {
+		return validationErrors.propertyNameTooShort
+	} else if (name.length > 100) {
+		return validationErrors.propertyNameTooLong
+	}
+}
+
+export function validatePropertyValueLength(value: string) {
+	if (value.length > 65000) {
+		return validationErrors.propertyValueTooLong
+	}
+}
+
+export function validateExtLength(ext: string) {
+	if (ext.length < 1) {
+		return validationErrors.extTooShort
+	} else if (ext.length > 5) {
+		return validationErrors.extTooLong
+	}
+}
+
 export function validateProductNameLength(productName: string) {
 	if (productName.length < 2) {
 		return validationErrors.productNameTooShort

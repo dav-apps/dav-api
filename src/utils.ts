@@ -231,6 +231,29 @@ export async function saveTableObjectInRedis(obj: TableObject) {
 	}
 }
 
+export async function createTablePropertyType(
+	prisma: PrismaClient,
+	tableId: bigint,
+	name: string,
+	value: string | number | boolean
+) {
+	// Check if a property type with the name already exists
+	let existingPropertyTypeCount = await prisma.tablePropertyType.count({
+		where: { tableId, name }
+	})
+
+	if (existingPropertyTypeCount > 0) return
+
+	let dataType = 0
+
+	if (typeof value == "boolean") dataType = 1
+	else if (typeof value == "number") dataType = 2
+
+	await prisma.tablePropertyType.create({
+		data: { tableId, name, dataType }
+	})
+}
+
 export async function updateEmailOfStripeCustomer(user: User, stripe: Stripe) {
 	if (user.stripeCustomerId == null) return
 

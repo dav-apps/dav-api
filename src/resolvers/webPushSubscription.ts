@@ -13,6 +13,43 @@ import {
 	throwValidationError
 } from "../utils.js"
 
+export async function retrieveWebPushSubscription(
+	parent: any,
+	args: {
+		uuid: string
+	},
+	context: ResolverContext
+): Promise<WebPushSubscription> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the web push subscription
+	const webPushSubscription =
+		await context.prisma.webPushSubscription.findFirst({
+			where: { uuid: args.uuid }
+		})
+
+	if (webPushSubscription == null) {
+		return null
+	}
+
+	// Check if the web push subscription belongs to the session
+	if (webPushSubscription.sessionId != session.id) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	return webPushSubscription
+}
+
 export async function createWebPushSubscription(
 	parent: any,
 	args: {

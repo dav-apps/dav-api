@@ -45,6 +45,7 @@ export const typeDefs = `#graphql
 			limit: Int
 			offset: Int
 		): ShippingAddressList!
+		retrieveWebPushSubscription(uuid: String!): WebPushSubscription
 	}
 
 	type Mutation {

@@ -33,7 +33,9 @@ export const resolvers = {
 		listNotifications: notificationResolvers.listNotifications,
 		retrieveOrder: orderResolvers.retrieveOrder,
 		listOrders: orderResolvers.listOrders,
-		listShippingAddresses: shippingAddressResolvers.listShippingAddresses
+		listShippingAddresses: shippingAddressResolvers.listShippingAddresses,
+		retrieveWebPushSubscription:
+			webPushSubscriptionResolvers.retrieveWebPushSubscription
 	},
 	Mutation: {
 		createUser: userResolvers.createUser,

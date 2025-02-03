@@ -118,6 +118,11 @@ export const typeDefs = `#graphql
 			file: Boolean
 			properties: JSONObject
 		): TableObject!
+		updateTableObject(
+			uuid: String!
+			ext: String
+			properties: JSONObject
+		): TableObject!
 		deleteTableObject(uuid: String!): TableObject!
 		setTableObjectPrice(
 			tableObjectUuid: String!

@@ -256,6 +256,134 @@ export async function createTableObject(
 	return tableObject
 }
 
+export async function updateTableObject(
+	parent: any,
+	args: {
+		uuid: string
+		ext?: string
+		properties?: { [key: string]: string | number | boolean }
+	},
+	context: ResolverContext
+): Promise<TableObject> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the table object
+	const tableObject = await context.prisma.tableObject.findFirst({
+		where: { uuid: args.uuid },
+		include: { table: true }
+	})
+
+	if (tableObject == null) {
+		throwApiError(apiErrors.tableObjectDoesNotExist)
+	}
+
+	if (
+		tableObject.userId != session.userId ||
+		tableObject.table.appId != session.appId
+	) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	if (tableObject.file && args.ext != null) {
+		// Validate the ext
+		throwValidationError(validateExtLength(args.ext))
+
+		// Try to find the table object property
+		const extProperty = await context.prisma.tableObjectProperty.findFirst({
+			where: { tableObjectId: tableObject.id, name: extPropertyName }
+		})
+
+		if (extProperty == null) {
+			// Create the ext property
+			await context.prisma.tableObjectProperty.create({
+				data: {
+					tableObjectId: tableObject.id,
+					name: extPropertyName,
+					value: args.ext
+				}
+			})
+		} else {
+			// Update the ext property
+			await context.prisma.tableObjectProperty.update({
+				where: { id: extProperty.id },
+				data: { value: args.ext }
+			})
+		}
+	}
+
+	if (args.properties != null) {
+		// Validate the properties
+		for (let key of Object.keys(args.properties)) {
+			const value = args.properties[key]
+
+			let errors: string[] = [validatePropertyNameLength(key)]
+
+			if (typeof value == "string") {
+				errors.push(validatePropertyNameLength(value))
+			}
+
+			throwValidationError(...errors)
+		}
+
+		// Update the table object properties
+		for (let key of Object.keys(args.properties)) {
+			const value = args.properties[key]
+
+			// Try to find the table object property
+			const property = await context.prisma.tableObjectProperty.findFirst({
+				where: { tableObjectId: tableObject.id, name: key }
+			})
+
+			if (property == null && value != null) {
+				await createTablePropertyType(
+					context.prisma,
+					tableObject.table.id,
+					key,
+					value
+				)
+
+				// Create the table object property
+				await context.prisma.tableObjectProperty.create({
+					data: {
+						tableObjectId: tableObject.id,
+						name: key,
+						value: value.toString()
+					}
+				})
+			} else if (property != null && value == null) {
+				// Delete the table object property
+				await context.prisma.tableObjectProperty.delete({
+					where: { id: property.id }
+				})
+			} else if (property != null && value != null) {
+				// Update the table object property
+				await context.prisma.tableObjectProperty.update({
+					where: { id: property.id },
+					data: { value: value.toString() }
+				})
+			}
+		}
+	}
+
+	// TODO: Calculate the etag of the table object
+	// TODO: Save the table object in redis
+	// TODO: Save that the user was active
+	// TODO: Update the etag of the table
+	// TODO: Notify connected clients
+
+	return tableObject
+}
+
 export async function deleteTableObject(
 	parent: any,
 	args: {

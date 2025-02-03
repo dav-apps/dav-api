@@ -294,6 +294,7 @@ export const typeDefs = `#graphql
 	type TableObject {
 		uuid: String!
 		user: User!
+		table: Table!
 		etag: String
 		properties: JSONObject!
 		purchases: PurchaseList!

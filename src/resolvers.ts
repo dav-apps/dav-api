@@ -111,6 +111,7 @@ export const resolvers = {
 	},
 	TableObject: {
 		user: tableObjectResolvers.user,
+		table: tableObjectResolvers.table,
 		properties: tableObjectResolvers.properties,
 		purchases: tableObjectResolvers.purchases
 	},

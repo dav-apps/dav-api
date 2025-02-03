@@ -1,4 +1,4 @@
-import { User, TableObject, Purchase } from "@prisma/client"
+import { User, TableObject, Purchase, Table } from "@prisma/client"
 import {
 	validatePropertyNameLength,
 	validateExtLength
@@ -308,6 +308,16 @@ export async function user(
 ): Promise<User> {
 	return await context.prisma.user.findFirst({
 		where: { id: tableObject.userId }
+	})
+}
+
+export async function table(
+	tableObject: TableObject,
+	args: any,
+	context: ResolverContext
+): Promise<Table> {
+	return await context.prisma.table.findFirst({
+		where: { id: tableObject.tableId }
 	})
 }
 

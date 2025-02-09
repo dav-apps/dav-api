@@ -134,6 +134,9 @@ export const typeDefs = `#graphql
 			tableObjectUuid: String!
 			tableAlias: Int
 		): TableObjectUserAccess!
+		deleteTableObjectUserAccess(
+			tableObjectUuid: String!
+		): TableObjectUserAccess!
 		createNotification(
 			uuid: String
 			time: Int!

@@ -74,3 +74,64 @@ export async function createTableObjectUserAccess(
 
 	return tableObjectUserAccess
 }
+
+export async function deleteTableObjectUserAccess(
+	parent: any,
+	args: {
+		tableObjectUuid: string
+	},
+	context: ResolverContext
+): Promise<TableObjectUserAccess> {
+	const accessToken = context.authorization
+
+	if (accessToken == null) {
+		throwApiError(apiErrors.notAuthenticated)
+	}
+
+	// Get the session
+	const session = await getSessionFromToken({
+		token: accessToken,
+		prisma: context.prisma
+	})
+
+	// Get the table object
+	const tableObject = await context.prisma.tableObject.findFirst({
+		where: {
+			uuid: args.tableObjectUuid
+		},
+		include: { table: true }
+	})
+
+	if (tableObject == null) {
+		throwApiError(apiErrors.tableObjectDoesNotExist)
+	}
+
+	if (tableObject.table.appId != session.appId) {
+		throwApiError(apiErrors.actionNotAllowed)
+	}
+
+	// Check if the table object user access exists
+	const tableObjectUserAccess =
+		await context.prisma.tableObjectUserAccess.findFirst({
+			where: {
+				tableObjectId: tableObject.id,
+				userId: session.userId
+			}
+		})
+
+	if (tableObjectUserAccess == null) {
+		throwApiError(apiErrors.tableObjectUserAccessDoesNotExist)
+	}
+
+	// Delete the table object user access
+	await context.prisma.tableObjectUserAccess.delete({
+		where: {
+			id: tableObjectUserAccess.id
+		}
+	})
+
+	// TODO Save that the user was active
+	// TODO Update the etag of the table
+
+	return tableObjectUserAccess
+}

@@ -61,6 +61,8 @@ export const resolvers = {
 		setTableObjectPrice: tableObjectPriceResolvers.setTableObjectPrice,
 		createTableObjectUserAccess:
 			tableObjectUserAccessResolvers.createTableObjectUserAccess,
+		deleteTableObjectUserAccess:
+			tableObjectUserAccessResolvers.deleteTableObjectUserAccess,
 		createNotification: notificationResolvers.createNotification,
 		createNotificationForUser:
 			notificationResolvers.createNotificationForUser,

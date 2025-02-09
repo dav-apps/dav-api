@@ -104,6 +104,11 @@ export const apiErrors = {
 		message: "TableObject does not exist",
 		status: 404
 	},
+	tableObjectUserAccessDoesNotExist: {
+		code: "TABLE_OBJECT_USER_ACCESS_DOES_NOT_EXIST",
+		message: "TableObjectUserAccess does not exist",
+		status: 404
+	},
 	notificationDoesNotExist: {
 		code: "NOTIFICATION_DOES_NOT_EXIST",
 		message: "Notification does not exist",

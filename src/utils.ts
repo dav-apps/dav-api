@@ -254,6 +254,42 @@ export async function createTablePropertyType(
 	})
 }
 
+export async function updateTableEtag(
+	prisma: PrismaClient,
+	userId: bigint,
+	tableId: bigint
+): Promise<string> {
+	let tableEtag = await prisma.tableEtag.findFirst({
+		where: {
+			userId,
+			tableId
+		}
+	})
+
+	const newEtag = generateHex(10)
+
+	if (tableEtag == null) {
+		await prisma.tableEtag.create({
+			data: {
+				userId,
+				tableId,
+				etag: newEtag
+			}
+		})
+	} else {
+		await prisma.tableEtag.update({
+			where: {
+				id: tableEtag.id
+			},
+			data: {
+				etag: newEtag
+			}
+		})
+	}
+
+	return newEtag
+}
+
 export async function updateEmailOfStripeCustomer(user: User, stripe: Stripe) {
 	if (user.stripeCustomerId == null) return
 

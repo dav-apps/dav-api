@@ -3,7 +3,8 @@ import cors from "cors"
 import {
 	getSessionFromToken,
 	throwEndpointError,
-	handleEndpointError
+	handleEndpointError,
+	updateTableEtag
 } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import {
@@ -154,10 +155,24 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		// TODO: Update the etag of the table object
 		// TODO: Update the table object in redis
 		// TODO: Save that the user was active
-		// TODO: Update the etag of the table
+
+		// Update the etag of the table
+		const tableEtag = await updateTableEtag(
+			prisma,
+			tableObject.userId,
+			tableObject.tableId
+		)
+
 		// TODO: Notify connected clients
 
-		res.status(200).json({})
+		res.status(200).json({
+			uuid: tableObject.uuid,
+			table: {
+				name: tableObject.table.name,
+				etag: tableEtag
+			},
+			etag: etag
+		})
 	} catch (error) {
 		handleEndpointError(res, error)
 	}

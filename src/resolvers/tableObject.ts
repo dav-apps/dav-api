@@ -11,7 +11,8 @@ import {
 	getDevByAuthToken,
 	getSessionFromToken,
 	throwValidationError,
-	createTablePropertyType
+	createTablePropertyType,
+	updateTableEtag
 } from "../utils.js"
 
 export async function retrieveTableObject(
@@ -250,7 +251,14 @@ export async function createTableObject(
 	// TODO: Save the table object in redis
 	// TODO: Save that the user was active
 	// TODO: Save that the user uses the app
-	// TODO: Update the etag of the table
+
+	// Update the etag of the table
+	await updateTableEtag(
+		context.prisma,
+		tableObject.userId,
+		tableObject.tableId
+	)
+
 	// TODO: Notify connected clients
 
 	return tableObject
@@ -378,7 +386,14 @@ export async function updateTableObject(
 	// TODO: Calculate the etag of the table object
 	// TODO: Save the table object in redis
 	// TODO: Save that the user was active
-	// TODO: Update the etag of the table
+
+	// Update the etag of the table
+	await updateTableEtag(
+		context.prisma,
+		tableObject.userId,
+		tableObject.tableId
+	)
+
 	// TODO: Notify connected clients
 
 	return tableObject
@@ -420,7 +435,14 @@ export async function deleteTableObject(
 	// TODO: Save that the user was active
 	// TODO: Delete the file if the table object has one
 	// TODO: Remove the table object from redis
-	// TODO: Update the etag of the table
+
+	// Update the etag of the table
+	await updateTableEtag(
+		context.prisma,
+		tableObject.userId,
+		tableObject.tableId
+	)
+
 	// TODO: Notify connected clients
 
 	// Delete the table object

@@ -3,6 +3,7 @@ import {
 	validatePropertyNameLength,
 	validateExtLength
 } from "../services/validationService.js"
+import { getFileUrl } from "../services/fileService.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { extPropertyName } from "../constants.js"
@@ -469,6 +470,10 @@ export async function table(
 	return await context.prisma.table.findFirst({
 		where: { id: tableObject.tableId }
 	})
+}
+
+export async function fileUrl(tableObject: TableObject): Promise<string> {
+	return await getFileUrl(tableObject.uuid)
 }
 
 export async function properties(

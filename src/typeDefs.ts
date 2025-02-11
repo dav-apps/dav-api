@@ -303,6 +303,7 @@ export const typeDefs = `#graphql
 		uuid: String!
 		user: User!
 		table: Table!
+		fileUrl: String
 		etag: String
 		properties: JSONObject!
 		purchases: PurchaseList!

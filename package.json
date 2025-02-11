@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@apollo/server": "^4.10.0",
 		"@aws-sdk/client-s3": "^3.723.0",
+		"@aws-sdk/s3-request-presigner": "^3.744.0",
 		"@graphql-tools/schema": "^10.0.2",
 		"@graphql-tools/utils": "^10.0.12",
 		"@paralleldrive/cuid2": "^2.2.2",

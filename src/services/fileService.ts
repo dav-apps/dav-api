@@ -1,4 +1,10 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import {
+	HeadObjectCommand,
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client
+} from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { getSpacesBucketName } from "../utils.js"
 
 const s3Client = new S3Client({
@@ -10,6 +16,21 @@ const s3Client = new S3Client({
 		secretAccessKey: process.env.SPACES_SECRET_KEY
 	}
 })
+
+export async function check(key: string): Promise<boolean> {
+	try {
+		await s3Client.send(
+			new HeadObjectCommand({
+				Bucket: getSpacesBucketName(),
+				Key: key
+			})
+		)
+
+		return true
+	} catch (error) {
+		return false
+	}
+}
 
 export async function upload(
 	key: string,
@@ -32,4 +53,17 @@ export async function upload(
 		console.log("Error", err)
 		return null
 	}
+}
+
+export async function getFileUrl(key: string): Promise<string> {
+	if (!(await check(key))) return null
+
+	return await getSignedUrl(
+		s3Client,
+		new GetObjectCommand({
+			Bucket: getSpacesBucketName(),
+			Key: key
+		}),
+		{ expiresIn: 43200 }
+	)
 }

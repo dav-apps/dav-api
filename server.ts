@@ -25,9 +25,14 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 export const resend = new Resend(process.env.RESEND_API_KEY)
 
 //#region Redis config
+let redisDatabase = 2 // production: 1, staging: 2, test: 3
+
+if (process.env.ENV == "production") redisDatabase = 1
+else if (process.env.ENV == "test") redisDatabase = 3
+
 export const redis = createClient({
 	url: process.env.REDIS_URL,
-	database: process.env.ENV == "production" ? 1 : 2 // production: 1, staging: 2
+	database: redisDatabase
 })
 
 redis.on("error", err => console.log("Redis Client Error", err))

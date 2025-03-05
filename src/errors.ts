@@ -109,6 +109,10 @@ export const apiErrors = {
 		message: "TableObjectUserAccess does not exist",
 		status: 404
 	},
+	webPushSubscriptionDoesNotExist: {
+		code: "WEB_PUSH_SUBSCRIPTION_DOES_NOT_EXIST",
+		message: "WebPushSubscription does not exist"
+	},
 	notificationDoesNotExist: {
 		code: "NOTIFICATION_DOES_NOT_EXIST",
 		message: "Notification does not exist",

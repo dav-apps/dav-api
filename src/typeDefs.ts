@@ -176,6 +176,7 @@ export const typeDefs = `#graphql
 			p256dh: String!
 			auth: String!
 		): WebPushSubscription!
+		deleteWebPushSubscription(uuid: String!): WebPushSubscription!
 		createWebsocketConnection: WebsocketConnection!
 		createSubscriptionCheckoutSession(
 			plan: Plan!

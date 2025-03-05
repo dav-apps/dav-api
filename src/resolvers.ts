@@ -70,6 +70,8 @@ export const resolvers = {
 		deleteNotification: notificationResolvers.deleteNotification,
 		createWebPushSubscription:
 			webPushSubscriptionResolvers.createWebPushSubscription,
+		deleteWebPushSubscription:
+			webPushSubscriptionResolvers.deleteWebPushSubscription,
 		createWebsocketConnection:
 			websocketConnectionResolvers.createWebsocketConnection,
 		createSubscriptionCheckoutSession:

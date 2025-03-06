@@ -121,6 +121,9 @@ export const resolvers = {
 		properties: tableObjectResolvers.properties,
 		purchases: tableObjectResolvers.purchases
 	},
+	Notification: {
+		time: notificationResolvers.time
+	},
 	Order: {
 		user: orderResolvers.user,
 		tableObject: orderResolvers.tableObject,

@@ -373,3 +373,7 @@ export async function deleteNotification(
 		where: { uuid: args.uuid }
 	})
 }
+
+export function time(notification: Notification): string {
+	return notification.time.toISOString()
+}

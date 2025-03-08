@@ -3,6 +3,7 @@ import * as appResolvers from "./resolvers/app.js"
 import * as appUserSnapshotResolvers from "./resolvers/appUserSnapshot.js"
 import * as userSnapshotResolvers from "./resolvers/userSnapshot.js"
 import * as devResolvers from "./resolvers/dev.js"
+import * as providerResolvers from "./resolvers/provider.js"
 import * as userResolvers from "./resolvers/user.js"
 import * as sessionResolvers from "./resolvers/session.js"
 import * as tableResolvers from "./resolvers/table.js"
@@ -108,6 +109,9 @@ export const resolvers = {
 	Dev: {
 		id: devResolvers.id,
 		apps: devResolvers.apps
+	},
+	Provider: {
+		id: providerResolvers.id
 	},
 	Table: {
 		id: tableResolvers.id,

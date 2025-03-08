@@ -219,19 +219,21 @@ export async function createTableObject(
 		}
 	})
 
-	// Create the table object properties
-	for (let key of Object.keys(args.properties)) {
-		const value = args.properties[key]
+	if (args.properties != null && !args.file) {
+		// Create the table object properties
+		for (let key of Object.keys(args.properties)) {
+			const value = args.properties[key]
 
-		await createTablePropertyType(context.prisma, table.id, key, value)
+			await createTablePropertyType(context.prisma, table.id, key, value)
 
-		await context.prisma.tableObjectProperty.create({
-			data: {
-				tableObjectId: tableObject.id,
-				name: key,
-				value: value.toString()
-			}
-		})
+			let bla = await context.prisma.tableObjectProperty.create({
+				data: {
+					tableObjectId: tableObject.id,
+					name: key,
+					value: value.toString()
+				}
+			})
+		}
 	}
 
 	if (args.file && args.ext != null) {

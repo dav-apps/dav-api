@@ -116,6 +116,7 @@ export const typeDefs = `#graphql
 			uuid: String
 			tableId: Int!
 			file: Boolean
+			ext: String
 			properties: JSONObject
 		): TableObject!
 		updateTableObject(

@@ -310,7 +310,7 @@ model TableObjectProperty {
   tableObjectId BigInt      @map("table_object_id")
   name          String?     @db.VarChar
   value         String?
-  tableObject   TableObject @relation(fields: [tableObjectId], references: [id])
+  tableObject   TableObject @relation(fields: [tableObjectId], references: [id], onDelete: Cascade)
 
   @@map("table_object_properties")
 }

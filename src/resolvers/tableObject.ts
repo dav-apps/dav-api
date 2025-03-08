@@ -13,6 +13,7 @@ import {
 	getSessionFromToken,
 	throwValidationError,
 	createTablePropertyType,
+	updateTableObjectEtag,
 	updateTableEtag
 } from "../utils.js"
 
@@ -250,7 +251,9 @@ export async function createTableObject(
 		})
 	}
 
-	// TODO: Calculate the etag of the table object
+	// Update the etag of the table object
+	await updateTableObjectEtag(context.prisma, tableObject)
+
 	// TODO: Save the table object in redis
 	// TODO: Save that the user was active
 	// TODO: Save that the user uses the app
@@ -386,7 +389,9 @@ export async function updateTableObject(
 		}
 	}
 
-	// TODO: Calculate the etag of the table object
+	// Update the etag of the table object
+	await updateTableObjectEtag(context.prisma, tableObject)
+
 	// TODO: Save the table object in redis
 	// TODO: Save that the user was active
 

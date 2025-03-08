@@ -254,6 +254,33 @@ export async function createTablePropertyType(
 	})
 }
 
+export async function updateTableObjectEtag(
+	prisma: PrismaClient,
+	tableObject: TableObject
+): Promise<string> {
+	// uuid,property1Name:property1Value,property2Name:property2Value,...
+	let etagString = tableObject.uuid
+
+	let tableObjectProperties = await prisma.tableObjectProperty.findMany({
+		where: { tableObjectId: tableObject.id }
+	})
+
+	for (let prop of tableObjectProperties) {
+		etagString += `,${prop.name}:${prop.value}`
+	}
+
+	const etag = crypto.createHash("sha256").update(etagString).digest("hex")
+
+	await prisma.tableObject.update({
+		where: { id: tableObject.id },
+		data: {
+			etag
+		}
+	})
+
+	return etag
+}
+
 export async function updateTableEtag(
 	prisma: PrismaClient,
 	userId: bigint,

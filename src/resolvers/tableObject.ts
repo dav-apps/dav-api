@@ -432,6 +432,10 @@ export async function deleteTableObject(
 		include: { table: true }
 	})
 
+	if (tableObject == null) {
+		throwApiError(apiErrors.tableObjectDoesNotExist)
+	}
+
 	// Make sure the table object belongs to the user and app of the session
 	if (
 		tableObject.userId != session.userId ||

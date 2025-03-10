@@ -16,7 +16,7 @@ import {
 	typePropertyName,
 	etagPropertyName
 } from "../constants.js"
-import { prisma } from "../../server.js"
+import { prisma, redis } from "../../server.js"
 import { validateContentType } from "../services/validationService.js"
 import { upload } from "../services/fileService.js"
 
@@ -179,7 +179,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		await updateTableObjectEtag(prisma, tableObject)
 
 		// Update the table object in redis
-		await saveTableObjectInRedis(tableObject)
+		await saveTableObjectInRedis(prisma, redis, tableObject)
 
 		// Save that the user was active
 		await prisma.user.update({

@@ -6,7 +6,7 @@ import { Resend } from "resend"
 export interface ResolverContext {
 	authorization: string
 	prisma: PrismaClient
-	redis: RedisClientType<any, any, any>
+	redis: RedisClientType
 	stripe: Stripe
 	resend: Resend
 }

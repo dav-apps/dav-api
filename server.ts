@@ -6,7 +6,7 @@ import express from "express"
 import http from "http"
 import cors from "cors"
 import { PrismaClient } from "@prisma/client"
-import { createClient } from "redis"
+import { createClient, RedisClientType } from "redis"
 import Stripe from "stripe"
 import { Resend } from "resend"
 import { typeDefs } from "./src/typeDefs.js"
@@ -30,7 +30,7 @@ let redisDatabase = 2 // production: 1, staging: 2, test: 3
 if (process.env.ENV == "production") redisDatabase = 1
 else if (process.env.ENV == "test") redisDatabase = 3
 
-export const redis = createClient({
+export const redis: RedisClientType = createClient({
 	url: process.env.REDIS_URL,
 	database: redisDatabase
 })

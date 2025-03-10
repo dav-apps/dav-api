@@ -48,7 +48,7 @@ async function updateRedisCaches() {
 
 			if (tableObject != null) {
 				// Update the table object in redis
-				await saveTableObjectInRedis(tableObject)
+				await saveTableObjectInRedis(prisma, redis, tableObject)
 			}
 
 			await prisma.redisTableObjectOperation.delete({

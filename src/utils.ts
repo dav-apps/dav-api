@@ -4,7 +4,7 @@ import { Response } from "express"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
 import Stripe from "stripe"
-import { prisma, redis } from "../server.js"
+import { RedisClientType } from "redis"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 import {
@@ -105,13 +105,13 @@ export async function getSessionFromToken(params: {
 	let checkRenew = params.checkRenew ?? true
 	let context = params.context ?? "graphql"
 
-	let session = await prisma.session.findFirst({
+	let session = await params.prisma.session.findFirst({
 		where: { token: params.token }
 	})
 
 	if (session == null) {
 		// Check if there is a session with old_token = token
-		session = await prisma.session.findFirst({
+		session = await params.prisma.session.findFirst({
 			where: { oldToken: params.token }
 		})
 
@@ -125,7 +125,7 @@ export async function getSessionFromToken(params: {
 		} else {
 			// The old token was used
 			// Delete the session, as the token may be stolen
-			prisma.session.delete({ where: { id: session.id } })
+			params.prisma.session.delete({ where: { id: session.id } })
 
 			if (context == "endpoint") {
 				throwEndpointError(apiErrors.oldAccessTokenUsed)
@@ -174,7 +174,11 @@ export function userWasActive(
 	return DateTime.fromJSDate(lastActive) > DateTime.now().minus(duration)
 }
 
-export async function saveTableObjectInRedis(obj: TableObject) {
+export async function saveTableObjectInRedis(
+	prisma: PrismaClient,
+	redis: RedisClientType,
+	obj: TableObject
+) {
 	try {
 		let objData = {
 			id: obj.id,
@@ -231,6 +235,57 @@ export async function saveTableObjectInRedis(obj: TableObject) {
 		// Create a new RedisTableObjectOperation
 		await prisma.redisTableObjectOperation.create({
 			data: { tableObjectUuid: obj.uuid, operation: "save" }
+		})
+	}
+}
+
+export async function removeTableObjectFromRedis(
+	prisma: PrismaClient,
+	redis: RedisClientType,
+	tableObject: TableObject
+) {
+	try {
+		await redis.del(`table_object:${tableObject.uuid}`)
+
+		let propertyKeys = await redis.keys(
+			`table_object_property:${tableObject.userId}:${tableObject.tableId}:${tableObject.uuid}:*`
+		)
+
+		for (let key of propertyKeys) {
+			await redis.del(key)
+		}
+	} catch (error) {
+		// Create a new RedisTableObjectOperation
+		await prisma.redisTableObjectOperation.create({
+			data: { tableObjectUuid: tableObject.uuid, operation: "delete" }
+		})
+	}
+}
+
+export async function updateAppUser(
+	prisma: PrismaClient,
+	userId: bigint,
+	appId: bigint
+) {
+	let appUser = await prisma.appUser.findFirst({
+		where: { userId: userId, appId: appId }
+	})
+
+	if (appUser == null) {
+		await prisma.appUser.create({
+			data: {
+				userId: userId,
+				appId: appId,
+				usedStorage: BigInt(0),
+				lastActive: new Date()
+			}
+		})
+	} else {
+		await prisma.appUser.update({
+			where: { id: appUser.id },
+			data: {
+				lastActive: new Date()
+			}
 		})
 	}
 }

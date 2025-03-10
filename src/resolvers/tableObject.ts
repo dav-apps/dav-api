@@ -13,6 +13,8 @@ import {
 	getSessionFromToken,
 	throwValidationError,
 	saveTableObjectInRedis,
+	removeTableObjectFromRedis,
+	updateAppUser,
 	createTablePropertyType,
 	updateTableObjectEtag,
 	updateTableEtag
@@ -256,7 +258,7 @@ export async function createTableObject(
 	await updateTableObjectEtag(context.prisma, tableObject)
 
 	// Save the table object in redis
-	await saveTableObjectInRedis(tableObject)
+	await saveTableObjectInRedis(context.prisma, context.redis, tableObject)
 
 	// Save that the user was active
 	await context.prisma.user.update({
@@ -266,7 +268,8 @@ export async function createTableObject(
 		}
 	})
 
-	// TODO: Save that the user uses the app
+	// Save that the user uses the app
+	await updateAppUser(context.prisma, session.userId, session.appId)
 
 	// Update the etag of the table
 	await updateTableEtag(
@@ -403,7 +406,7 @@ export async function updateTableObject(
 	await updateTableObjectEtag(context.prisma, tableObject)
 
 	// Save the table object in redis
-	await saveTableObjectInRedis(tableObject)
+	await saveTableObjectInRedis(context.prisma, context.redis, tableObject)
 
 	// Save that the user was active
 	await context.prisma.user.update({
@@ -471,7 +474,8 @@ export async function deleteTableObject(
 	})
 
 	// TODO: Delete the file if the table object has one
-	// TODO: Remove the table object from redis
+	// Remove the table object from redis
+	await removeTableObjectFromRedis(context.prisma, context.redis, tableObject)
 
 	// Update the etag of the table
 	await updateTableEtag(

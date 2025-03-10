@@ -4,6 +4,7 @@ import {
 	getSessionFromToken,
 	throwEndpointError,
 	handleEndpointError,
+	getTotalStorageOfUser,
 	updateTableObjectEtag,
 	updateTableEtag,
 	updateUsedStorage
@@ -64,9 +65,19 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		})
 
 		const oldSize = Number(sizeProperty?.value) ?? 0
-
-		// TODO: Check if the user has enough storage space
 		let newSize = req.body.length
+
+		// Check if the user has enough storage space
+		if (!tableObject.table.ignoreFileSize) {
+			const user = await prisma.user.findFirst({
+				where: { id: session.userId }
+			})
+			const freeStorage = getTotalStorageOfUser(user) - user.usedStorage
+
+			if (freeStorage < newSize - oldSize) {
+				throwEndpointError(apiErrors.notEnoughStorageSpace)
+			}
+		}
 
 		// Upload the file
 		let etag = await upload(

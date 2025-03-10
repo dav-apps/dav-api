@@ -74,6 +74,11 @@ export const apiErrors = {
 		message: "TableObject is not a file",
 		status: 422
 	},
+	notEnoughStorageSpace: {
+		code: "NOT_ENOUGH_STORAGE_SPACE",
+		message: "Not enough storage space",
+		status: 400
+	},
 	appDoesNotExist: {
 		code: "APP_DOES_NOT_EXIST",
 		message: "App does not exist",

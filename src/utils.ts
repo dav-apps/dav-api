@@ -10,7 +10,11 @@ import { apiErrors } from "./errors.js"
 import {
 	websiteBaseUrlDevelopment,
 	websiteBaseUrlStaging,
-	websiteBaseUrlProduction
+	websiteBaseUrlProduction,
+	unconfirmedStorage,
+	freePlanStorage,
+	plusPlanStorage,
+	proPlanStorage
 } from "./constants.js"
 
 export function throwApiError(error: ApiError) {
@@ -228,6 +232,21 @@ export async function saveTableObjectInRedis(obj: TableObject) {
 		await prisma.redisTableObjectOperation.create({
 			data: { tableObjectUuid: obj.uuid, operation: "save" }
 		})
+	}
+}
+
+export function getTotalStorageOfUser(user: User): bigint {
+	if (!user.confirmed) {
+		return BigInt(unconfirmedStorage)
+	}
+
+	switch (user.plan) {
+		case 1:
+			return BigInt(plusPlanStorage)
+		case 2:
+			return BigInt(proPlanStorage)
+		default:
+			return BigInt(freePlanStorage)
 	}
 }
 

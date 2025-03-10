@@ -1,7 +1,11 @@
 import { TableObjectUserAccess } from "@prisma/client"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { throwApiError, getSessionFromToken } from "../utils.js"
+import {
+	throwApiError,
+	getSessionFromToken,
+	updateTableEtag
+} from "../utils.js"
 
 export async function createTableObjectUserAccess(
 	parent: any,
@@ -72,6 +76,21 @@ export async function createTableObjectUserAccess(
 		)
 	}
 
+	// Save that the user was active
+	await context.prisma.user.update({
+		where: { id: session.userId },
+		data: {
+			lastActive: new Date()
+		}
+	})
+
+	// Update the etag of the table
+	await updateTableEtag(
+		context.prisma,
+		tableObject.userId,
+		tableObject.tableId
+	)
+
 	return tableObjectUserAccess
 }
 
@@ -130,8 +149,20 @@ export async function deleteTableObjectUserAccess(
 		}
 	})
 
-	// TODO Save that the user was active
-	// TODO Update the etag of the table
+	// Save that the user was active
+	await context.prisma.user.update({
+		where: { id: session.userId },
+		data: {
+			lastActive: new Date()
+		}
+	})
+
+	// Update the etag of the table
+	await updateTableEtag(
+		context.prisma,
+		tableObject.userId,
+		tableObject.tableId
+	)
 
 	return tableObjectUserAccess
 }

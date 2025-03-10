@@ -38,7 +38,13 @@ export async function retrieveTable(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// TODO: Save that the user was active
+	// Save that the user was active
+	await context.prisma.user.update({
+		where: { id: session.userId },
+		data: {
+			lastActive: new Date()
+		}
+	})
 
 	return table
 }

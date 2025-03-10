@@ -4,6 +4,7 @@ import {
 	getSessionFromToken,
 	throwEndpointError,
 	handleEndpointError,
+	saveTableObjectInRedis,
 	getTotalStorageOfUser,
 	updateTableObjectEtag,
 	updateTableEtag,
@@ -177,8 +178,16 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		// Update the etag of the table object
 		await updateTableObjectEtag(prisma, tableObject)
 
-		// TODO: Update the table object in redis
-		// TODO: Save that the user was active
+		// Update the table object in redis
+		await saveTableObjectInRedis(tableObject)
+
+		// Save that the user was active
+		await prisma.user.update({
+			where: { id: session.userId },
+			data: {
+				lastActive: new Date()
+			}
+		})
 
 		// Update the etag of the table
 		const tableEtag = await updateTableEtag(

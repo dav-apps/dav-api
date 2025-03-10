@@ -2,6 +2,7 @@ import {
 	HeadObjectCommand,
 	GetObjectCommand,
 	PutObjectCommand,
+	DeleteObjectCommand,
 	S3Client
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
@@ -52,6 +53,19 @@ export async function upload(
 	} catch (err) {
 		console.log("Error", err)
 		return null
+	}
+}
+
+export async function remove(key: string) {
+	try {
+		await s3Client.send(
+			new DeleteObjectCommand({
+				Bucket: getSpacesBucketName(),
+				Key: key
+			})
+		)
+	} catch (error) {
+		console.error(error)
 	}
 }
 

@@ -3,7 +3,7 @@ import {
 	validatePropertyNameLength,
 	validateExtLength
 } from "../services/validationService.js"
-import { getFileUrl } from "../services/fileService.js"
+import { remove, getFileUrl } from "../services/fileService.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { extPropertyName } from "../constants.js"
@@ -473,7 +473,11 @@ export async function deleteTableObject(
 		}
 	})
 
-	// TODO: Delete the file if the table object has one
+	if (tableObject.file) {
+		//  Delete the file
+		await remove(tableObject.uuid)
+	}
+
 	// Remove the table object from redis
 	await removeTableObjectFromRedis(context.prisma, context.redis, tableObject)
 

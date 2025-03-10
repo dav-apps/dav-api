@@ -81,11 +81,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Upload the file
-		let etag = await upload(
-			`profileImages/${session.userId}`,
-			req.body,
-			contentType
-		)
+		let etag = await upload(tableObject.uuid, req.body, contentType)
 
 		if (etag == null) {
 			throwEndpointError(apiErrors.unexpectedError)

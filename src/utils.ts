@@ -317,6 +317,41 @@ export async function updateTableEtag(
 	return newEtag
 }
 
+export async function updateUsedStorage(
+	prisma: PrismaClient,
+	userId: bigint,
+	appId: bigint,
+	fileSizeDiff: number
+) {
+	// Update the used storage of the user
+	const user = await prisma.user.findFirst({
+		where: { id: userId }
+	})
+
+	if (user != null) {
+		await prisma.user.update({
+			where: { id: userId },
+			data: {
+				usedStorage: user.usedStorage + BigInt(fileSizeDiff)
+			}
+		})
+	}
+
+	// Update the used storage of the app user
+	const appUser = await prisma.appUser.findFirst({
+		where: { userId, appId }
+	})
+
+	if (appUser != null) {
+		await prisma.appUser.update({
+			where: { id: appUser.id },
+			data: {
+				usedStorage: appUser.usedStorage + BigInt(fileSizeDiff)
+			}
+		})
+	}
+}
+
 export async function updateEmailOfStripeCustomer(user: User, stripe: Stripe) {
 	if (user.stripeCustomerId == null) return
 

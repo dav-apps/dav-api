@@ -4,7 +4,9 @@ import {
 	getSessionFromToken,
 	throwEndpointError,
 	handleEndpointError,
-	updateTableEtag
+	updateTableObjectEtag,
+	updateTableEtag,
+	updateUsedStorage
 } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import {
@@ -151,8 +153,19 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 			})
 		}
 
-		// TODO: Update the used storage of the user
-		// TODO: Update the etag of the table object
+		if (!tableObject.table.ignoreFileSize) {
+			// Update the used storage of the user
+			await updateUsedStorage(
+				prisma,
+				session.userId,
+				session.appId,
+				newSize - oldSize
+			)
+		}
+
+		// Update the etag of the table object
+		await updateTableObjectEtag(prisma, tableObject)
+
 		// TODO: Update the table object in redis
 		// TODO: Save that the user was active
 

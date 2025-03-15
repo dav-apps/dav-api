@@ -1,6 +1,6 @@
 export const websiteBaseUrlDevelopment = "http://localhost:3000"
 export const websiteBaseUrlStaging =
-	"https://dav-website-staging-o3oot.ondigitalocean.app"
+	"https://dav-website-staging-knsy9.ondigitalocean.app"
 export const websiteBaseUrlProduction = "https://dav-apps.tech"
 export const noReplyEmailAddress = "no-reply@dav-apps.tech"
 export const unconfirmedStorage = 1000000000 // 1 GB

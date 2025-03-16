@@ -111,7 +111,7 @@ model AppUser {
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   app         App       @relation(fields: [appId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("app_users")
 }
@@ -181,7 +181,7 @@ model Dev {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   apps      App[]
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("devs")
 }
@@ -201,7 +201,7 @@ model Notification {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   app       App       @relation(fields: [appId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
@@ -212,7 +212,7 @@ model Provider {
   stripeAccountId String?  @map("stripe_account_id") @db.VarChar
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  user            User     @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("providers")
 }
@@ -231,7 +231,7 @@ model Purchase {
   createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   uuid                 String?               @unique(map: "index_purchases_on_uuid") @db.VarChar
-  user                 User                  @relation(fields: [userId], references: [id])
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   tableObjectPurchases TableObjectPurchase[]
 
   @@map("purchases")
@@ -264,7 +264,7 @@ model Session {
   createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt            DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   app                  App                   @relation(fields: [appId], references: [id])
-  user                 User                  @relation(fields: [userId], references: [id])
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   webPushSubscriptions WebPushSubscription[]
 
   @@map("sessions")
@@ -278,7 +278,7 @@ model TableEtag {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   table     Table    @relation(fields: [tableId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("table_etags")
 }
@@ -334,7 +334,7 @@ model TableObjectUserAccess {
   createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
   table         Table?      @relation(fields: [tableAlias], references: [id])
   tableObject   TableObject @relation(fields: [tableObjectId], references: [id])
-  user          User        @relation(fields: [userId], references: [id])
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("table_object_user_accesses")
 }
@@ -354,7 +354,7 @@ model TableObject {
   tableObjectPurchases    TableObjectPurchase[]
   tableObjectUserAccesses TableObjectUserAccess[]
   table                   Table                   @relation(fields: [tableId], references: [id])
-  user                    User                    @relation(fields: [userId], references: [id])
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders                  Order[]
 
   @@map("table_objects")
@@ -396,7 +396,7 @@ model UserProfileImage {
   etag      String?  @db.VarChar
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profile_images")
 }
@@ -473,7 +473,7 @@ model WebsocketConnection {
   token     String   @db.VarChar
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   app       App      @relation(fields: [appId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("websocket_connections")
 }
@@ -490,7 +490,7 @@ model Order {
   status            String?          @default("CREATED")
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  user              User             @relation(fields: [userId], references: [id])
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   tableObject       TableObject      @relation(fields: [tableObjectId], references: [id])
   shippingAddress   ShippingAddress? @relation(fields: [shippingAddressId], references: [id])
 
@@ -512,7 +512,7 @@ model ShippingAddress {
   state      String?  @db.VarChar
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders     Order[]
 
   @@map("shipping_addresses")

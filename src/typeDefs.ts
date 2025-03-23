@@ -34,6 +34,7 @@ export const typeDefs = `#graphql
 			offset: Int
 		): TableObjectList!
 		listNotifications: NotificationList!
+		listPurchasesOfTableObject(uuid: String!): PurchaseList!
 		retrieveOrder(uuid: String!): Order
 		listOrders(
 			status: [OrderStatus!]
@@ -308,7 +309,6 @@ export const typeDefs = `#graphql
 		fileUrl: String
 		etag: String
 		properties: JSONObject!
-		purchases: PurchaseList!
 	}
 
 	type TableObjectList {

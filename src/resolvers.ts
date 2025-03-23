@@ -33,6 +33,7 @@ export const resolvers = {
 		listTableObjectsByProperty:
 			tableObjectResolvers.listTableObjectsByProperty,
 		listNotifications: notificationResolvers.listNotifications,
+		listPurchasesOfTableObject: purchaseResolvers.listPurchasesOfTableObject,
 		retrieveOrder: orderResolvers.retrieveOrder,
 		listOrders: orderResolvers.listOrders,
 		listShippingAddresses: shippingAddressResolvers.listShippingAddresses,
@@ -122,8 +123,10 @@ export const resolvers = {
 		user: tableObjectResolvers.user,
 		table: tableObjectResolvers.table,
 		fileUrl: tableObjectResolvers.fileUrl,
-		properties: tableObjectResolvers.properties,
-		purchases: tableObjectResolvers.purchases
+		properties: tableObjectResolvers.properties
+	},
+	TableObjectUserAccess: {
+		tableAlias: tableObjectUserAccessResolvers.tableAlias
 	},
 	Notification: {
 		time: notificationResolvers.time

@@ -1,4 +1,4 @@
-import { User, TableObject, Purchase, Table } from "@prisma/client"
+import { User, TableObject, Table } from "@prisma/client"
 import {
 	validatePropertyNameLength,
 	validateExtLength
@@ -538,20 +538,4 @@ export async function properties(
 	}
 
 	return result
-}
-
-export async function purchases(
-	tableObject: TableObject,
-	args: any,
-	context: ResolverContext
-): Promise<List<Purchase>> {
-	const purchases = await context.prisma.tableObjectPurchase.findMany({
-		where: { tableObjectId: tableObject.id },
-		include: { purchase: true }
-	})
-
-	return {
-		total: purchases.length,
-		items: purchases.map(tableObjectPurchase => tableObjectPurchase.purchase)
-	}
 }

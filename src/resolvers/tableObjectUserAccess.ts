@@ -166,3 +166,9 @@ export async function deleteTableObjectUserAccess(
 
 	return tableObjectUserAccess
 }
+
+export function tableAlias(
+	tableObjectUserAccess: TableObjectUserAccess
+): number {
+	return Number(tableObjectUserAccess.tableAlias)
+}

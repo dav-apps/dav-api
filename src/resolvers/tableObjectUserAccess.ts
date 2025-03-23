@@ -70,7 +70,7 @@ export async function createTableObjectUserAccess(
 				data: {
 					tableObjectId: tableObject.id,
 					userId: session.userId,
-					tableAlias: table.id
+					tableAlias: args.tableAlias
 				}
 			}
 		)
@@ -170,5 +170,7 @@ export async function deleteTableObjectUserAccess(
 export function tableAlias(
 	tableObjectUserAccess: TableObjectUserAccess
 ): number {
-	return Number(tableObjectUserAccess.tableAlias)
+	return tableObjectUserAccess.tableAlias
+		? Number(tableObjectUserAccess.tableAlias)
+		: null
 }

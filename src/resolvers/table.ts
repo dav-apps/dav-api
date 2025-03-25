@@ -104,8 +104,17 @@ export async function tableObjects(
 	})
 
 	const where = {
-		tableId: table.id,
-		userId: session.userId
+		OR: [
+			{ tableId: table.id, userId: session.userId },
+			{
+				tableObjectUserAccesses: {
+					some: {
+						tableAlias: table.id,
+						userId: session.userId
+					}
+				}
+			}
+		]
 	}
 
 	const [total, items] = await context.prisma.$transaction([

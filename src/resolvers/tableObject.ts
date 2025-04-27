@@ -12,6 +12,7 @@ import {
 	getDevByAuthToken,
 	getSessionFromToken,
 	throwValidationError,
+	getPropertiesOfTableObject,
 	saveTableObjectInRedis,
 	removeTableObjectFromRedis,
 	updateAppUser,
@@ -522,20 +523,8 @@ export async function fileUrl(tableObject: TableObject): Promise<string> {
 
 export async function properties(
 	tableObject: TableObject,
-	args: any,
+	args: {},
 	context: ResolverContext
 ): Promise<{ [key: string]: string | number | boolean }> {
-	let properties = await context.prisma.tableObjectProperty.findMany({
-		where: {
-			tableObjectId: tableObject.id
-		}
-	})
-
-	let result = {}
-
-	for (let property of properties) {
-		result[property.name] = property.value
-	}
-
-	return result
+	return await getPropertiesOfTableObject(context.prisma, tableObject.id)
 }

@@ -8,7 +8,8 @@ import {
 	getTotalStorageOfUser,
 	updateTableObjectEtag,
 	updateTableEtag,
-	updateUsedStorage
+	updateUsedStorage,
+	getPropertiesOfTableObject
 } from "../utils.js"
 import { apiErrors } from "../errors.js"
 import {
@@ -37,7 +38,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		// Get the table object
 		let tableObject = await prisma.tableObject.findFirst({
 			where: { uuid },
-			include: { table: true, tableObjectProperties: true }
+			include: { table: true }
 		})
 
 		if (tableObject == null) {
@@ -200,7 +201,8 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 				name: tableObject.table.name,
 				etag: tableEtag
 			},
-			etag: etag
+			etag,
+			properties: await getPropertiesOfTableObject(prisma, tableObject.id)
 		})
 	} catch (error) {
 		handleEndpointError(res, error)

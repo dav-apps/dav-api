@@ -174,6 +174,25 @@ export function userWasActive(
 	return DateTime.fromJSDate(lastActive) > DateTime.now().minus(duration)
 }
 
+export async function getPropertiesOfTableObject(
+	prisma: PrismaClient,
+	tableObjectId: bigint
+): Promise<{ [key: string]: string | number | boolean }> {
+	let properties = await prisma.tableObjectProperty.findMany({
+		where: {
+			tableObjectId: tableObjectId
+		}
+	})
+
+	let result = {}
+
+	for (let property of properties) {
+		result[property.name] = property.value
+	}
+
+	return result
+}
+
 export async function saveTableObjectInRedis(
 	prisma: PrismaClient,
 	redis: RedisClientType,

@@ -161,6 +161,8 @@ async function handleCheckoutSessionCompletedEvent(
 
 async function handleInvoicePaymentSucceededEvent(event: any): Promise<number> {
 	const invoice = event.data.object as Stripe.Invoice
+
+	if (invoice.billing_reason == "manual") return 200 // Ignore one-time payments
 	if (invoice.lines.data.length == 0) return 500
 
 	const productId = invoice.lines.data[0].plan?.product as string

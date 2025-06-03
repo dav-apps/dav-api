@@ -74,19 +74,30 @@ async function handleCheckoutSessionCompletedEvent(
 		})
 
 		if (order.shippingAddressId == null) {
+			const name = checkoutSession.shipping_details.name
+			const email = checkoutSession.customer_details.email
+			const phone = checkoutSession.customer_details.phone
+			const city = checkoutSession.shipping_details.address?.city
+			const country = checkoutSession.shipping_details.address?.country
+			const line1 = checkoutSession.shipping_details.address?.line1
+			const line2 = checkoutSession.shipping_details.address?.line2
+			const postalCode =
+				checkoutSession.shipping_details.address?.postal_code
+			const state = checkoutSession.shipping_details.address?.state
+
 			// Try to find an existing shipping address with these values
 			let shippingAddress = await prisma.shippingAddress.findFirst({
 				where: {
 					userId: order.userId,
-					name: checkoutSession.customer_details.name,
-					email: checkoutSession.customer_details.email,
-					phone: checkoutSession.customer_details.phone,
-					city: checkoutSession.customer_details.address.city,
-					country: checkoutSession.customer_details.address.country,
-					line1: checkoutSession.customer_details.address.line1,
-					line2: checkoutSession.customer_details.address.line2,
-					postalCode: checkoutSession.customer_details.address.postal_code,
-					state: checkoutSession.customer_details.address.state
+					name,
+					email,
+					phone,
+					city,
+					country,
+					line1,
+					line2,
+					postalCode,
+					state
 				}
 			})
 
@@ -95,16 +106,15 @@ async function handleCheckoutSessionCompletedEvent(
 				shippingAddress = await prisma.shippingAddress.create({
 					data: {
 						user: { connect: { id: order.userId } },
-						name: checkoutSession.customer_details.name,
-						email: checkoutSession.customer_details.email,
-						phone: checkoutSession.customer_details.phone,
-						city: checkoutSession.customer_details.address.city,
-						country: checkoutSession.customer_details.address.country,
-						line1: checkoutSession.customer_details.address.line1,
-						line2: checkoutSession.customer_details.address.line2,
-						postalCode:
-							checkoutSession.customer_details.address.postal_code,
-						state: checkoutSession.customer_details.address.state
+						name,
+						email,
+						phone,
+						city,
+						country,
+						line1,
+						line2,
+						postalCode,
+						state
 					}
 				})
 			}

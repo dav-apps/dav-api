@@ -2,10 +2,12 @@ import { TableObject, Order, ShippingAddress, User } from "@prisma/client"
 import {
 	throwApiError,
 	getDevByAuthToken,
-	getSessionFromToken
+	getSessionFromToken,
+	throwValidationError
 } from "../utils.js"
 import { ResolverContext, OrderStatus, List } from "../types.js"
 import { apiErrors } from "../errors.js"
+import { validateDhlTrackingCode } from "../services/validationService.js"
 
 export async function retrieveOrder(
 	parent: any,
@@ -85,7 +87,7 @@ export async function listOrders(
 
 export async function updateOrder(
 	parent: any,
-	args: { uuid: string; status?: OrderStatus },
+	args: { uuid: string; status?: OrderStatus; dhlTrackingCode?: string },
 	context: ResolverContext
 ): Promise<Order> {
 	const authToken = context.authorization
@@ -114,11 +116,25 @@ export async function updateOrder(
 		throwApiError(apiErrors.orderDoesNotExist)
 	}
 
-	if (args.status == null) return order
+	if (args.status == null && args.dhlTrackingCode == null) {
+		return order
+	}
+
+	const data: any = {}
+
+	if (args.status != null) {
+		data.status = args.status
+	}
+
+	// Validate the dhlTrackingCode
+	if (args.dhlTrackingCode != null) {
+		throwValidationError(validateDhlTrackingCode(args.dhlTrackingCode))
+		data.dhlTrackingCode = args.dhlTrackingCode
+	}
 
 	return await context.prisma.order.update({
-		where: { uuid: order.uuid },
-		data: { status: args.status }
+		where: { id: order.id },
+		data
 	})
 }
 

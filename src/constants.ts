@@ -17,4 +17,5 @@ export const extPropertyName = "ext"
 export const urlRegex =
 	/^(https?:\/\/)?(([\w.-]+(\.[\w.-]{2,4})+)|(localhost:[0-9]{3,4}))/
 export const urlPathRegex = /\/.+\/?/
+export const dhlTrackingCodeRegex = /^[0-9]{14,22}$/
 //#endregion

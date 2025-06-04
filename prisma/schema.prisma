@@ -488,6 +488,7 @@ model Order {
   price             Int?
   currency          String?          @db.VarChar
   status            String?          @default("CREATED")
+  dhlTrackingCode   String?          @db.VarChar
   createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,6 +1,6 @@
 import validator from "validator"
 import { apiErrors, validationErrors } from "../errors.js"
-import { urlRegex, urlPathRegex } from "../constants.js"
+import { urlRegex, urlPathRegex, dhlTrackingCodeRegex } from "../constants.js"
 
 //#region Endpoint validations
 export function validateImageContentType(contentType: string) {
@@ -197,6 +197,15 @@ export function validateImage(image: string) {
 export function validateHref(href: string) {
 	if (href.length > 0 && !urlRegex.test(href) && !urlPathRegex.test(href)) {
 		return validationErrors.hrefInvalid
+	}
+}
+
+export function validateDhlTrackingCode(dhlTrackingCode: string) {
+	if (
+		dhlTrackingCode.length > 0 &&
+		!dhlTrackingCodeRegex.test(dhlTrackingCode)
+	) {
+		return validationErrors.dhlTrackingCodeInvalid
 	}
 }
 //#endregion

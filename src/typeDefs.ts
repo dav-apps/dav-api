@@ -201,6 +201,7 @@ export const typeDefs = `#graphql
 		updateOrder(
 			uuid: String!
 			status: OrderStatus
+			dhlTrackingCode: String
 		): Order
 	}
 
@@ -360,6 +361,7 @@ export const typeDefs = `#graphql
 		price: Int!
 		currency: Currency!
 		status: OrderStatus!
+		dhlTrackingCode: String
 	}
 
 	type OrderList {

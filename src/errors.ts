@@ -205,5 +205,6 @@ export const validationErrors = {
 	iconInvalid: "ICON_INVALID",
 	imageInvalid: "IMAGE_INVALID",
 	hrefInvalid: "HREF_INVALID",
+	dhlTrackingCodeInvalid: "DHL_TRACKING_CODE_INVALID",
 	emailAlreadyInUse: "EMAIL_ALREADY_IN_USE"
 }

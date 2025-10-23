@@ -125,6 +125,15 @@ export async function updateApp(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
+	// Get the app
+	const app = await context.prisma.app.findFirst({
+		where: { id: args.id }
+	})
+
+	if (app == null) {
+		throwApiError(apiErrors.appDoesNotExist)
+	}
+
 	if (
 		args.name == null &&
 		args.description == null &&
@@ -133,16 +142,7 @@ export async function updateApp(
 		args.googlePlayLink == null &&
 		args.microsoftStoreLink == null
 	) {
-		return null
-	}
-
-	// Get the app
-	const app = await context.prisma.app.findFirst({
-		where: { id: args.id }
-	})
-
-	if (app == null) {
-		throwApiError(apiErrors.appDoesNotExist)
+		return app
 	}
 
 	// Check if the app belongs to the dev of the user
@@ -180,30 +180,30 @@ export async function updateApp(
 	throwValidationError(...errors)
 
 	// Update the app
-	let data = {}
+	let data: any = {}
 
 	if (args.name != null) {
-		data["name"] = args.name
+		data.name = args.name
 	}
 
 	if (args.description != null) {
-		data["description"] = args.description
+		data.description = args.description
 	}
 
 	if (args.published != null) {
-		data["published"] = args.published
+		data.published = args.published
 	}
 
 	if (args.webLink != null) {
-		data["webLink"] = args.webLink
+		data.webLink = args.webLink
 	}
 
 	if (args.googlePlayLink != null) {
-		data["googlePlayLink"] = args.googlePlayLink
+		data.googlePlayLink = args.googlePlayLink
 	}
 
 	if (args.microsoftStoreLink != null) {
-		data["microsoftStoreLink"] = args.microsoftStoreLink
+		data.microsoftStoreLink = args.microsoftStoreLink
 	}
 
 	return await context.prisma.app.update({

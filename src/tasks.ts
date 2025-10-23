@@ -197,14 +197,14 @@ async function createAppUserSnapshots() {
 }
 
 async function deleteSessions() {
-	// Delete sessions which were not used in the last 3 months
-	let minDate = DateTime.now().minus({ months: 4 }).toJSDate()
+	// Delete sessions which were not used in the last 4 months
+	const minDate = DateTime.now().minus({ months: 4 }).toJSDate()
 
-	let sessions = await prisma.session.findMany({
+	const sessions = await prisma.session.findMany({
 		where: { updatedAt: { lt: minDate } }
 	})
 
-	for (let session of sessions) {
+	for (const session of sessions) {
 		await prisma.session.delete({ where: { id: session.id } })
 	}
 }

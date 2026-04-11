@@ -82,7 +82,12 @@ export async function createSession(
 
 	// Get and validate the user
 	const user = await context.prisma.user.findFirst({
-		where: { email: args.email }
+		where: {
+			email: {
+				equals: args.email,
+				mode: "insensitive"
+			}
+		}
 	})
 
 	if (user == null) {

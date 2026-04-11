@@ -133,8 +133,9 @@ export async function createUser(
 
 	// Check if the email is already in use
 	if (
-		(await context.prisma.user.findFirst({ where: { email: args.email } })) !=
-		null
+		(await context.prisma.user.findFirst({
+			where: { email: { equals: args.email, mode: "insensitive" } }
+		})) != null
 	) {
 		errors.push(validationErrors.emailAlreadyInUse)
 	}
@@ -295,7 +296,7 @@ export async function updateUser(
 		// Check if the email is already in use
 		if (
 			(await context.prisma.user.findFirst({
-				where: { email: args.email }
+				where: { email: { equals: args.email, mode: "insensitive" } }
 			})) != null
 		) {
 			errors.push(validationErrors.emailAlreadyInUse)
@@ -457,7 +458,10 @@ export async function sendPasswordResetEmailForUser(
 	// Get the user
 	let user = await context.prisma.user.findFirst({
 		where: {
-			email: args.email
+			email: {
+				equals: args.email,
+				mode: "insensitive"
+			}
 		}
 	})
 

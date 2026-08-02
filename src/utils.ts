@@ -1,4 +1,4 @@
-import { PrismaClient, User, Dev, TableObject } from "@prisma/client"
+import { Prisma, PrismaClient, User, Dev, TableObject } from "@prisma/client"
 import * as crypto from "crypto"
 import { Response } from "express"
 import { GraphQLError } from "graphql"
@@ -97,7 +97,7 @@ export async function getDevByAuthToken(
 }
 
 export async function getSessionFromToken(params: {
-	prisma: PrismaClient
+	prisma: PrismaClient | Prisma.TransactionClient
 	token: string
 	checkRenew?: boolean
 	context?: "graphql" | "endpoint"
@@ -194,7 +194,7 @@ export async function getPropertiesOfTableObject(
 }
 
 export async function saveTableObjectInRedis(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	redis: RedisClientType,
 	obj: TableObject
 ) {
@@ -282,7 +282,7 @@ export async function removeTableObjectFromRedis(
 }
 
 export async function updateAppUser(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	userId: bigint,
 	appId: bigint
 ) {
@@ -325,7 +325,7 @@ export function getTotalStorageOfUser(user: User): bigint {
 }
 
 export async function createTablePropertyType(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	tableId: bigint,
 	name: string,
 	value: string | number | boolean
@@ -348,7 +348,7 @@ export async function createTablePropertyType(
 }
 
 export async function updateTableObjectEtag(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	tableObject: TableObject
 ): Promise<string> {
 	// uuid,property1Name:property1Value,property2Name:property2Value,...
@@ -375,7 +375,7 @@ export async function updateTableObjectEtag(
 }
 
 export async function updateTableEtag(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	userId: bigint,
 	tableId: bigint
 ): Promise<string> {

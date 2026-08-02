@@ -226,20 +226,22 @@ export async function createTableObject(
 	})
 
 	if (args.properties != null && !args.file) {
-		// Create the table object properties
-		for (let key of Object.keys(args.properties)) {
-			const value = args.properties[key]
+		await context.prisma.$transaction(async tx => {
+			// Create the table object properties
+			for (const key of Object.keys(args.properties)) {
+				const value = args.properties[key]
 
-			await createTablePropertyType(context.prisma, table.id, key, value)
+				await createTablePropertyType(tx, table.id, key, value)
 
-			let bla = await context.prisma.tableObjectProperty.create({
-				data: {
-					tableObjectId: tableObject.id,
-					name: key,
-					value: value.toString()
-				}
-			})
-		}
+				await tx.tableObjectProperty.create({
+					data: {
+						tableObjectId: tableObject.id,
+						name: key,
+						value: value.toString()
+					}
+				})
+			}
+		})
 	}
 
 	if (args.file && args.ext != null) {
@@ -352,10 +354,10 @@ export async function updateTableObject(
 
 	if (args.properties != null) {
 		// Validate the properties
-		for (let key of Object.keys(args.properties)) {
+		for (const key of Object.keys(args.properties)) {
 			const value = args.properties[key]
 
-			let errors: string[] = [validatePropertyNameLength(key)]
+			const errors: string[] = [validatePropertyNameLength(key)]
 
 			if (typeof value == "string") {
 				errors.push(validatePropertyValueLength(value))
@@ -364,44 +366,46 @@ export async function updateTableObject(
 			throwValidationError(...errors)
 		}
 
-		// Update the table object properties
-		for (let key of Object.keys(args.properties)) {
-			const value = args.properties[key]
+		await context.prisma.$transaction(async tx => {
+			// Update the table object properties
+			for (const key of Object.keys(args.properties)) {
+				const value = args.properties[key]
 
-			// Try to find the table object property
-			const property = await context.prisma.tableObjectProperty.findFirst({
-				where: { tableObjectId: tableObject.id, name: key }
-			})
+				// Try to find the table object property
+				const property = await tx.tableObjectProperty.findFirst({
+					where: { tableObjectId: tableObject.id, name: key }
+				})
 
-			if (property == null && value != null) {
-				await createTablePropertyType(
-					context.prisma,
-					tableObject.table.id,
-					key,
-					value
-				)
+				if (property == null && value != null) {
+					await createTablePropertyType(
+						tx,
+						tableObject.table.id,
+						key,
+						value
+					)
 
-				// Create the table object property
-				await context.prisma.tableObjectProperty.create({
-					data: {
-						tableObjectId: tableObject.id,
-						name: key,
-						value: value.toString()
-					}
-				})
-			} else if (property != null && value == null) {
-				// Delete the table object property
-				await context.prisma.tableObjectProperty.delete({
-					where: { id: property.id }
-				})
-			} else if (property != null && value != null) {
-				// Update the table object property
-				await context.prisma.tableObjectProperty.update({
-					where: { id: property.id },
-					data: { value: value.toString() }
-				})
+					// Create the table object property
+					await tx.tableObjectProperty.create({
+						data: {
+							tableObjectId: tableObject.id,
+							name: key,
+							value: value.toString()
+						}
+					})
+				} else if (property != null && value == null) {
+					// Delete the table object property
+					await tx.tableObjectProperty.delete({
+						where: { id: property.id }
+					})
+				} else if (property != null && value != null) {
+					// Update the table object property
+					await tx.tableObjectProperty.update({
+						where: { id: property.id },
+						data: { value: value.toString() }
+					})
+				}
 			}
-		}
+		})
 	}
 
 	// Update the etag of the table object

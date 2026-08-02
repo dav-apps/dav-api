@@ -53,7 +53,7 @@ export function validateDescriptionLength(description: string) {
 }
 
 export function validatePropertyNameLength(name: string) {
-	if (name.length < 2) {
+	if (name.length < 1) {
 		return validationErrors.propertyNameTooShort
 	} else if (name.length > 100) {
 		return validationErrors.propertyNameTooLong

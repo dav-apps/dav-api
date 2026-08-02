@@ -24,7 +24,7 @@ import { upload } from "../services/fileService.js"
 export async function uploadTableObjectFile(req: Request, res: Response) {
 	try {
 		const uuid = req.params.uuid
-		const accessToken = req.headers.authorization
+		const accessToken = req.headers.authorization?.replace("Bearer ", "")
 		const session = await getSessionFromToken({
 			prisma,
 			token: accessToken,

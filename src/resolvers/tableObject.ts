@@ -1,7 +1,8 @@
 import { User, TableObject, Table } from "@prisma/client"
 import {
 	validatePropertyNameLength,
-	validateExtLength
+	validateExtLength,
+	validatePropertyValueLength
 } from "../services/validationService.js"
 import { remove, getFileUrl } from "../services/fileService.js"
 import { ResolverContext, List } from "../types.js"
@@ -196,7 +197,7 @@ export async function createTableObject(
 			let errors: string[] = [validatePropertyNameLength(key)]
 
 			if (typeof value == "string") {
-				errors.push(validatePropertyNameLength(value))
+				errors.push(validatePropertyValueLength(value))
 			}
 
 			throwValidationError(...errors)
@@ -357,7 +358,7 @@ export async function updateTableObject(
 			let errors: string[] = [validatePropertyNameLength(key)]
 
 			if (typeof value == "string") {
-				errors.push(validatePropertyNameLength(value))
+				errors.push(validatePropertyValueLength(value))
 			}
 
 			throwValidationError(...errors)

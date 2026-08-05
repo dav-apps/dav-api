@@ -5,7 +5,8 @@
 		"outDir": "./dist",
 		"moduleResolution": "Node16",
 		"allowSyntheticDefaultImports": true,
-		"jsx": "react-jsx"
+		"jsx": "react-jsx",
+		"strictNullChecks": false
 	},
 	"include": ["server.ts", "src/**/*.ts"]
 }

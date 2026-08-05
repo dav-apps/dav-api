@@ -1,4 +1,5 @@
 import { User, TableObject, Table, Prisma } from "@prisma/client"
+import { DefaultArgs } from "@prisma/client/runtime/library.js"
 import {
 	validatePropertyNameLength,
 	validateExtLength,
@@ -21,7 +22,6 @@ import {
 	updateTableObjectEtag,
 	updateTableEtag
 } from "../utils.js"
-import { DefaultArgs } from "@prisma/client/runtime/library.js"
 
 export async function retrieveTableObject(
 	parent: any,

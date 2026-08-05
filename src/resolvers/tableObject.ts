@@ -1,4 +1,4 @@
-import { User, TableObject, Table } from "@prisma/client"
+import { User, TableObject, Table, Prisma } from "@prisma/client"
 import {
 	validatePropertyNameLength,
 	validateExtLength,
@@ -21,6 +21,7 @@ import {
 	updateTableObjectEtag,
 	updateTableEtag
 } from "../utils.js"
+import { DefaultArgs } from "@prisma/client/runtime/library.js"
 
 export async function retrieveTableObject(
 	parent: any,
@@ -366,45 +367,95 @@ export async function updateTableObject(
 			throwValidationError(...errors)
 		}
 
-		await context.prisma.$transaction(async tx => {
-			// Update the table object properties
-			for (const key of Object.keys(args.properties)) {
-				const value = args.properties[key]
+		// Create missing table property types first
+		const existingTablePropertyTypes =
+			await context.prisma.tablePropertyType.findMany({
+				where: {
+					tableId: tableObject.table.id
+				}
+			})
 
-				// Try to find the table object property
-				const property = await tx.tableObjectProperty.findFirst({
-					where: { tableObjectId: tableObject.id, name: key }
+		const tablePropertyTypeCreates: Prisma.TablePropertyTypeCreateManyInput[] =
+			[]
+
+		for (const key of Object.keys(args.properties)) {
+			const value = args.properties[key]
+			if (value == null) continue
+
+			// Check if a property type with the name already exists
+			const existingPropertyType = existingTablePropertyTypes.find(
+				pt => pt.name === key
+			)
+
+			if (existingPropertyType) continue
+			let dataType = 0
+
+			if (typeof value == "boolean") dataType = 1
+			else if (typeof value == "number") dataType = 2
+
+			tablePropertyTypeCreates.push({
+				tableId: tableObject.table.id,
+				name: key,
+				dataType
+			})
+		}
+
+		await context.prisma.tablePropertyType.createMany({
+			data: tablePropertyTypeCreates
+		})
+
+		// Update the table object properties
+		const oldProperties = await context.prisma.tableObjectProperty.findMany({
+			where: { tableObjectId: tableObject.id }
+		})
+
+		const tableObjectPropertyCreates: Prisma.TableObjectPropertyCreateManyInput[] =
+			[]
+		const tableObjectPropertyUpdateOperations: Prisma.Prisma__TableObjectPropertyClient<
+			{
+				id: bigint
+				tableObjectId: bigint
+				name: string | null
+				value: string | null
+			},
+			never,
+			DefaultArgs
+		>[] = []
+		const tableObjectPropertyIdsToDelete: bigint[] = []
+
+		for (const key of Object.keys(args.properties)) {
+			const value = args.properties[key]
+
+			// Try to find the table object property
+			const property = oldProperties.find(p => p.name === key)
+
+			if (property == null && value != null) {
+				// Create the table object property
+				tableObjectPropertyCreates.push({
+					tableObjectId: tableObject.id,
+					name: key,
+					value: value.toString()
 				})
-
-				if (property == null && value != null) {
-					await createTablePropertyType(
-						tx,
-						tableObject.table.id,
-						key,
-						value
-					)
-
-					// Create the table object property
-					await tx.tableObjectProperty.create({
-						data: {
-							tableObjectId: tableObject.id,
-							name: key,
-							value: value.toString()
-						}
-					})
-				} else if (property != null && value == null) {
-					// Delete the table object property
-					await tx.tableObjectProperty.delete({
-						where: { id: property.id }
-					})
-				} else if (property != null && value != null) {
-					// Update the table object property
-					await tx.tableObjectProperty.update({
+			} else if (property != null && value == null) {
+				// Delete the table object property
+				tableObjectPropertyIdsToDelete.push(property.id)
+			} else if (property != null && value != null) {
+				// Update the table object property
+				tableObjectPropertyUpdateOperations.push(
+					context.prisma.tableObjectProperty.update({
 						where: { id: property.id },
 						data: { value: value.toString() }
 					})
-				}
+				)
 			}
+		}
+
+		await context.prisma.tableObjectProperty.createMany({
+			data: tableObjectPropertyCreates
+		})
+		await context.prisma.$transaction(tableObjectPropertyUpdateOperations)
+		await context.prisma.tableObjectProperty.deleteMany({
+			where: { id: { in: tableObjectPropertyIdsToDelete } }
 		})
 	}
 

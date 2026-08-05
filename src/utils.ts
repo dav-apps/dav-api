@@ -330,6 +330,8 @@ export async function createTablePropertyType(
 	name: string,
 	value: string | number | boolean
 ) {
+	if (name == null || value == null) return
+
 	// Check if a property type with the name already exists
 	let existingPropertyTypeCount = await prisma.tablePropertyType.count({
 		where: { tableId, name }

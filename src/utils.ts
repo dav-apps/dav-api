@@ -324,29 +324,43 @@ export function getTotalStorageOfUser(user: User): bigint {
 	}
 }
 
-export async function createTablePropertyType(
-	prisma: PrismaClient | Prisma.TransactionClient,
-	tableId: bigint,
-	name: string,
-	value: string | number | boolean
+export async function getTablePropertyTypeCreateInputsForProperties(
+	prisma: PrismaClient,
+	properties: { [key: string]: string | number | boolean },
+	tableId: bigint
 ) {
-	if (name == null || value == null) return
-
-	// Check if a property type with the name already exists
-	let existingPropertyTypeCount = await prisma.tablePropertyType.count({
-		where: { tableId, name }
+	const existingTablePropertyTypes = await prisma.tablePropertyType.findMany({
+		where: {
+			tableId: tableId
+		}
 	})
 
-	if (existingPropertyTypeCount > 0) return
+	const tablePropertyTypeCreates: Prisma.TablePropertyTypeCreateManyInput[] =
+		[]
 
-	let dataType = 0
+	for (const key of Object.keys(properties)) {
+		const value = properties[key]
+		if (value == null) continue
 
-	if (typeof value == "boolean") dataType = 1
-	else if (typeof value == "number") dataType = 2
+		// Check if a property type with the name already exists
+		const existingPropertyType = existingTablePropertyTypes.find(
+			pt => pt.name === key
+		)
 
-	await prisma.tablePropertyType.create({
-		data: { tableId, name, dataType }
-	})
+		if (existingPropertyType) continue
+		let dataType = 0
+
+		if (typeof value == "boolean") dataType = 1
+		else if (typeof value == "number") dataType = 2
+
+		tablePropertyTypeCreates.push({
+			tableId: tableId,
+			name: key,
+			dataType
+		})
+	}
+
+	return tablePropertyTypeCreates
 }
 
 export async function updateTableObjectEtag(

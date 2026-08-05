@@ -18,9 +18,9 @@ import {
 	saveTableObjectInRedis,
 	removeTableObjectFromRedis,
 	updateAppUser,
-	createTablePropertyType,
 	updateTableObjectEtag,
-	updateTableEtag
+	updateTableEtag,
+	getTablePropertyTypeCreateInputsForProperties
 } from "../utils.js"
 
 export async function retrieveTableObject(
@@ -227,21 +227,33 @@ export async function createTableObject(
 	})
 
 	if (args.properties != null && !args.file) {
-		await context.prisma.$transaction(async tx => {
-			// Create the table object properties
-			for (const key of Object.keys(args.properties)) {
+		// Create the table property types
+		const tablePropertyTypeCreates =
+			await getTablePropertyTypeCreateInputsForProperties(
+				context.prisma,
+				args.properties,
+				table.id
+			)
+
+		await context.prisma.tablePropertyType.createMany({
+			data: tablePropertyTypeCreates
+		})
+
+		// Create the table object properties
+		const tableObjectPropertyCreates = Object.keys(args.properties).map(
+			key => {
 				const value = args.properties[key]
 
-				await createTablePropertyType(tx, table.id, key, value)
-
-				await tx.tableObjectProperty.create({
-					data: {
-						tableObjectId: tableObject.id,
-						name: key,
-						value: value.toString()
-					}
-				})
+				return {
+					tableObjectId: tableObject.id,
+					name: key,
+					value: value.toString()
+				}
 			}
+		)
+
+		await context.prisma.tableObjectProperty.createMany({
+			data: tableObjectPropertyCreates
 		})
 	}
 
@@ -368,37 +380,12 @@ export async function updateTableObject(
 		}
 
 		// Create missing table property types first
-		const existingTablePropertyTypes =
-			await context.prisma.tablePropertyType.findMany({
-				where: {
-					tableId: tableObject.table.id
-				}
-			})
-
-		const tablePropertyTypeCreates: Prisma.TablePropertyTypeCreateManyInput[] =
-			[]
-
-		for (const key of Object.keys(args.properties)) {
-			const value = args.properties[key]
-			if (value == null) continue
-
-			// Check if a property type with the name already exists
-			const existingPropertyType = existingTablePropertyTypes.find(
-				pt => pt.name === key
+		const tablePropertyTypeCreates =
+			await getTablePropertyTypeCreateInputsForProperties(
+				context.prisma,
+				args.properties,
+				tableObject.table.id
 			)
-
-			if (existingPropertyType) continue
-			let dataType = 0
-
-			if (typeof value == "boolean") dataType = 1
-			else if (typeof value == "number") dataType = 2
-
-			tablePropertyTypeCreates.push({
-				tableId: tableObject.table.id,
-				name: key,
-				dataType
-			})
-		}
 
 		await context.prisma.tablePropertyType.createMany({
 			data: tablePropertyTypeCreates

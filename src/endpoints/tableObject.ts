@@ -59,15 +59,16 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Get the size property
-		let sizeProperty = await prisma.tableObjectProperty.findFirst({
+		const sizeProperty = await prisma.tableObjectProperty.findFirst({
 			where: {
 				tableObjectId: tableObject.id,
 				name: sizePropertyName
 			}
 		})
 
-		const oldSize = Number(sizeProperty?.value) ?? 0
-		let newSize = req.body.length
+		const newSize = Number(req.body.length)
+		let oldSize = Number(sizeProperty?.value ?? 0)
+		if (isNaN(oldSize)) oldSize = 0
 
 		// Check if the user has enough storage space
 		if (!tableObject.table.ignoreFileSize) {
@@ -82,7 +83,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Upload the file
-		let etag = await upload(tableObject.uuid, req.body, contentType)
+		const etag = await upload(tableObject.uuid, req.body, contentType)
 
 		if (etag == null) {
 			throwEndpointError(apiErrors.unexpectedError)
@@ -109,7 +110,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Update the type property
-		let typeProperty = await prisma.tableObjectProperty.findFirst({
+		const typeProperty = await prisma.tableObjectProperty.findFirst({
 			where: {
 				tableObjectId: tableObject.id,
 				name: typePropertyName
@@ -136,7 +137,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Update the etag property
-		let etagProperty = await prisma.tableObjectProperty.findFirst({
+		const etagProperty = await prisma.tableObjectProperty.findFirst({
 			where: {
 				tableObjectId: tableObject.id,
 				name: etagPropertyName

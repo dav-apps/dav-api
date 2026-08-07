@@ -102,17 +102,18 @@ export async function getSessionFromToken(params: {
 	checkRenew?: boolean
 	context?: "graphql" | "endpoint"
 }) {
-	let checkRenew = params.checkRenew ?? true
-	let context = params.context ?? "graphql"
+	const checkRenew = params.checkRenew ?? true
+	const context = params.context ?? "graphql"
+	const accessToken = params.token.replace("Bearer ", "").trim()
 
 	let session = await params.prisma.session.findFirst({
-		where: { token: params.token }
+		where: { token: accessToken }
 	})
 
 	if (session == null) {
 		// Check if there is a session with old_token = token
 		session = await params.prisma.session.findFirst({
-			where: { oldToken: params.token }
+			where: { oldToken: accessToken }
 		})
 
 		if (session == null) {

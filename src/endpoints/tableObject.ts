@@ -205,6 +205,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 			properties: await getPropertiesOfTableObject(prisma, tableObject.id)
 		})
 	} catch (error) {
+		console.error("Error in uploadTableObjectFile:", error)
 		handleEndpointError(res, error)
 	}
 }

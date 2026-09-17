@@ -229,6 +229,7 @@ export function createTasks({ prisma, redis, webPush }: TaskDependencies) {
 			}
 
 			// Send the notification to all web push subscriptions of the user
+			let retryNeeded = false
 			for (let session of notification.user.sessions) {
 				if (session.appId != notification.appId) continue
 
@@ -251,14 +252,18 @@ export function createTasks({ prisma, redis, webPush }: TaskDependencies) {
 							})
 						)
 					} catch (error) {
-						// Delete the web push subscription
-						await prisma.webPushSubscription.delete({
-							where: { id: webPushSubscription.id }
-						})
+						if (error.statusCode === 404 || error.statusCode === 410) {
+							await prisma.webPushSubscription.delete({
+								where: { id: webPushSubscription.id }
+							})
+						} else {
+							retryNeeded = true
+						}
 					}
 				}
 			}
 
+			if (retryNeeded) continue
 			if (notification.interval > 0) {
 				// Update the notification time
 				let newNotificationTime = DateTime.fromJSDate(notification.time)

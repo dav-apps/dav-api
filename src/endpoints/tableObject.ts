@@ -39,176 +39,195 @@ export async function uploadTableObjectFile(
 		const contentType = req.headers["content-type"]
 		throwEndpointError(validateContentType(contentType))
 
-		// Get the table object
-		let tableObject = await prisma.tableObject.findFirst({
-			where: { uuid },
-			include: { table: true }
-		})
+		const result = await prisma.$transaction(
+			async prisma => {
+				// Serialize quota checks and metadata writes for this user, including concurrent files.
+				await prisma.$executeRaw`SELECT id FROM users WHERE id = ${session.userId} FOR UPDATE`
 
-		if (tableObject == null) {
-			throwEndpointError(apiErrors.tableObjectDoesNotExist)
-		}
+				// Get the table object
+				let tableObject = await prisma.tableObject.findFirst({
+					where: { uuid },
+					include: { table: true }
+				})
 
-		// Make sure the table object belongs to the user and app of the session
-		if (
-			tableObject.userId != session.userId ||
-			tableObject.table.appId != session.appId
-		) {
-			throwEndpointError(apiErrors.actionNotAllowed)
-		}
-
-		// Check if the table object is a file
-		if (!tableObject.file) {
-			throwEndpointError(apiErrors.tableObjectIsNotFile)
-		}
-
-		// Get the size property
-		const sizeProperty = await prisma.tableObjectProperty.findFirst({
-			where: {
-				tableObjectId: tableObject.id,
-				name: sizePropertyName
-			}
-		})
-
-		const newSize = Number(req.body.length)
-		let oldSize = Number(sizeProperty?.value ?? 0)
-		if (isNaN(oldSize)) oldSize = 0
-
-		// Check if the user has enough storage space
-		if (!tableObject.table.ignoreFileSize) {
-			const user = await prisma.user.findFirst({
-				where: { id: session.userId }
-			})
-			const freeStorage = getTotalStorageOfUser(user) - user.usedStorage
-
-			if (freeStorage < newSize - oldSize) {
-				throwEndpointError(apiErrors.notEnoughStorageSpace)
-			}
-		}
-
-		// Upload the file
-		const etag = await files.upload(tableObject.uuid, req.body, contentType)
-
-		if (etag == null) {
-			throwEndpointError(apiErrors.unexpectedError)
-		}
-
-		// Update the size property
-		if (sizeProperty != null) {
-			await prisma.tableObjectProperty.update({
-				where: {
-					id: sizeProperty.id
-				},
-				data: {
-					value: newSize.toString()
+				if (tableObject == null) {
+					throwEndpointError(apiErrors.tableObjectDoesNotExist)
 				}
-			})
-		} else {
-			await prisma.tableObjectProperty.create({
-				data: {
-					tableObjectId: tableObject.id,
-					name: sizePropertyName,
-					value: newSize.toString()
+
+				// Make sure the table object belongs to the user and app of the session
+				if (
+					tableObject.userId != session.userId ||
+					tableObject.table.appId != session.appId
+				) {
+					throwEndpointError(apiErrors.actionNotAllowed)
 				}
-			})
-		}
 
-		// Update the type property
-		const typeProperty = await prisma.tableObjectProperty.findFirst({
-			where: {
-				tableObjectId: tableObject.id,
-				name: typePropertyName
-			}
-		})
-
-		if (typeProperty != null) {
-			await prisma.tableObjectProperty.update({
-				where: {
-					id: typeProperty.id
-				},
-				data: {
-					value: contentType
+				// Check if the table object is a file
+				if (!tableObject.file) {
+					throwEndpointError(apiErrors.tableObjectIsNotFile)
 				}
-			})
-		} else {
-			await prisma.tableObjectProperty.create({
-				data: {
-					tableObjectId: tableObject.id,
-					name: typePropertyName,
-					value: contentType
+
+				// Get the size property
+				const sizeProperty = await prisma.tableObjectProperty.findFirst({
+					where: {
+						tableObjectId: tableObject.id,
+						name: sizePropertyName
+					}
+				})
+
+				const newSize = Number(req.body.length)
+				let oldSize = Number(sizeProperty?.value ?? 0)
+				if (isNaN(oldSize)) oldSize = 0
+
+				// Check if the user has enough storage space
+				if (!tableObject.table.ignoreFileSize) {
+					const user = await prisma.user.findFirst({
+						where: { id: session.userId }
+					})
+					const freeStorage =
+						getTotalStorageOfUser(user) - user.usedStorage
+
+					if (freeStorage < newSize - oldSize) {
+						throwEndpointError(apiErrors.notEnoughStorageSpace)
+					}
 				}
-			})
-		}
 
-		// Update the etag property
-		const etagProperty = await prisma.tableObjectProperty.findFirst({
-			where: {
-				tableObjectId: tableObject.id,
-				name: etagPropertyName
-			}
-		})
+				// Upload the file
+				const etag = await files.upload(
+					tableObject.uuid,
+					req.body,
+					contentType
+				)
 
-		if (etagProperty != null) {
-			await prisma.tableObjectProperty.update({
-				where: {
-					id: etagProperty.id
-				},
-				data: {
-					value: etag
+				if (etag == null) {
+					throwEndpointError(apiErrors.unexpectedError)
 				}
-			})
-		} else {
-			await prisma.tableObjectProperty.create({
-				data: {
-					tableObjectId: tableObject.id,
-					name: etagPropertyName,
-					value: etag
+
+				// Update the size property
+				if (sizeProperty != null) {
+					await prisma.tableObjectProperty.update({
+						where: {
+							id: sizeProperty.id
+						},
+						data: {
+							value: newSize.toString()
+						}
+					})
+				} else {
+					await prisma.tableObjectProperty.create({
+						data: {
+							tableObjectId: tableObject.id,
+							name: sizePropertyName,
+							value: newSize.toString()
+						}
+					})
 				}
-			})
-		}
 
-		if (!tableObject.table.ignoreFileSize) {
-			// Update the used storage of the user
-			await updateUsedStorage(
-				prisma,
-				session.userId,
-				session.appId,
-				newSize - oldSize
-			)
-		}
+				// Update the type property
+				const typeProperty = await prisma.tableObjectProperty.findFirst({
+					where: {
+						tableObjectId: tableObject.id,
+						name: typePropertyName
+					}
+				})
 
-		// Update the etag of the table object
-		await updateTableObjectEtag(prisma, tableObject)
+				if (typeProperty != null) {
+					await prisma.tableObjectProperty.update({
+						where: {
+							id: typeProperty.id
+						},
+						data: {
+							value: contentType
+						}
+					})
+				} else {
+					await prisma.tableObjectProperty.create({
+						data: {
+							tableObjectId: tableObject.id,
+							name: typePropertyName,
+							value: contentType
+						}
+					})
+				}
 
-		// Update the table object in redis
-		await saveTableObjectInRedis(prisma, redis, tableObject)
+				// Update the etag property
+				const etagProperty = await prisma.tableObjectProperty.findFirst({
+					where: {
+						tableObjectId: tableObject.id,
+						name: etagPropertyName
+					}
+				})
 
-		// Save that the user was active
-		await prisma.user.update({
-			where: { id: session.userId },
-			data: {
-				lastActive: new Date()
-			}
-		})
+				if (etagProperty != null) {
+					await prisma.tableObjectProperty.update({
+						where: {
+							id: etagProperty.id
+						},
+						data: {
+							value: etag
+						}
+					})
+				} else {
+					await prisma.tableObjectProperty.create({
+						data: {
+							tableObjectId: tableObject.id,
+							name: etagPropertyName,
+							value: etag
+						}
+					})
+				}
 
-		// Update the etag of the table
-		const tableEtag = await updateTableEtag(
-			prisma,
-			tableObject.userId,
-			tableObject.tableId
-		)
+				if (!tableObject.table.ignoreFileSize) {
+					// Update the used storage of the user
+					await updateUsedStorage(
+						prisma,
+						session.userId,
+						session.appId,
+						newSize - oldSize
+					)
+				}
 
-		// TODO: Notify connected clients
+				// Update the etag of the table object
+				await updateTableObjectEtag(prisma, tableObject)
 
-		res.status(200).json({
-			uuid: tableObject.uuid,
-			table: {
-				name: tableObject.table.name,
-				etag: tableEtag
+				// Save that the user was active
+				await prisma.user.update({
+					where: { id: session.userId },
+					data: {
+						lastActive: new Date()
+					}
+				})
+
+				// Update the etag of the table
+				const tableEtag = await updateTableEtag(
+					prisma,
+					tableObject.userId,
+					tableObject.tableId
+				)
+
+				// TODO: Notify connected clients
+
+				return {
+					tableObject,
+					body: {
+						uuid: tableObject.uuid,
+						table: {
+							name: tableObject.table.name,
+							etag: tableEtag
+						},
+						etag,
+						properties: await getPropertiesOfTableObject(
+							prisma,
+							tableObject.id
+						)
+					}
+				}
 			},
-			etag,
-			properties: await getPropertiesOfTableObject(prisma, tableObject.id)
-		})
+			{ maxWait: 5000, timeout: 30000 }
+		)
+		// Publish cache changes only after the database transaction commits.
+		await saveTableObjectInRedis(prisma, redis, result.tableObject)
+		res.status(200).json(result.body)
 	} catch (error) {
 		console.error("Error in uploadTableObjectFile:", error)
 		handleEndpointError(res, error)

@@ -43,7 +43,7 @@ export async function createTableObjectUserAccess(
 
 	if (args.tableAlias != null) {
 		// Get the table
-		const table = await context.prisma.table.findFirst({
+		table = await context.prisma.table.findFirst({
 			where: {
 				id: args.tableAlias
 			}
@@ -53,6 +53,8 @@ export async function createTableObjectUserAccess(
 			throwApiError(apiErrors.tableDoesNotExist)
 		}
 	}
+
+	if (table.appId != session.appId) throwApiError(apiErrors.actionNotAllowed)
 
 	// Check if the table object user access already exists
 	let tableObjectUserAccess =
@@ -87,8 +89,8 @@ export async function createTableObjectUserAccess(
 	// Update the etag of the table
 	await updateTableEtag(
 		context.prisma,
-		tableObject.userId,
-		tableObject.tableId
+		session.userId,
+		tableObjectUserAccess.tableAlias ?? tableObject.tableId
 	)
 
 	return tableObjectUserAccess
@@ -125,10 +127,6 @@ export async function deleteTableObjectUserAccess(
 		throwApiError(apiErrors.tableObjectDoesNotExist)
 	}
 
-	if (tableObject.table.appId != session.appId) {
-		throwApiError(apiErrors.actionNotAllowed)
-	}
-
 	// Check if the table object user access exists
 	const tableObjectUserAccess =
 		await context.prisma.tableObjectUserAccess.findFirst({
@@ -141,6 +139,14 @@ export async function deleteTableObjectUserAccess(
 	if (tableObjectUserAccess == null) {
 		throwApiError(apiErrors.tableObjectUserAccessDoesNotExist)
 	}
+	const effectiveTable =
+		tableObjectUserAccess.tableAlias == null
+			? tableObject.table
+			: await context.prisma.table.findUnique({
+					where: { id: tableObjectUserAccess.tableAlias }
+				})
+	if (effectiveTable?.appId != session.appId)
+		throwApiError(apiErrors.actionNotAllowed)
 
 	// Delete the table object user access
 	await context.prisma.tableObjectUserAccess.delete({
@@ -160,8 +166,8 @@ export async function deleteTableObjectUserAccess(
 	// Update the etag of the table
 	await updateTableEtag(
 		context.prisma,
-		tableObject.userId,
-		tableObject.tableId
+		session.userId,
+		tableObjectUserAccess.tableAlias ?? tableObject.tableId
 	)
 
 	return tableObjectUserAccess

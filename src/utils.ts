@@ -104,6 +104,10 @@ export async function getSessionFromToken(params: {
 }) {
 	const checkRenew = params.checkRenew ?? true
 	const context = params.context ?? "graphql"
+	if (!params.token?.trim()) {
+		if (context === "endpoint") throwEndpointError(apiErrors.notAuthenticated)
+		else throwApiError(apiErrors.notAuthenticated)
+	}
 	const accessToken = params.token.replace("Bearer ", "").trim()
 
 	let session = await params.prisma.session.findFirst({
@@ -176,7 +180,7 @@ export function userWasActive(
 }
 
 export async function getPropertiesOfTableObject(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	tableObjectId: bigint
 ): Promise<{ [key: string]: string | number | boolean }> {
 	let properties = await prisma.tableObjectProperty.findMany({
@@ -432,7 +436,7 @@ export async function updateTableEtag(
 }
 
 export async function updateUsedStorage(
-	prisma: PrismaClient,
+	prisma: PrismaClient | Prisma.TransactionClient,
 	userId: bigint,
 	appId: bigint,
 	fileSizeDiff: number

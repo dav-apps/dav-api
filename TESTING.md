@@ -126,7 +126,8 @@ vor dem Schemaaufbau und erneut vor dem Verbindungsaufbau geprüft.
 
 Diese Dienste müssen ausschließlich für Tests reserviert sein. Vor und nach
 jedem Integrationstest werden Benutzer, Entwickler, Apps, Tabellen,
-Redis-Wiederholungsoperationen und Benutzer-Snapshots inklusive abhängiger
+Redis-Wiederholungsoperationen, Benutzer-Snapshots sowie Webhook-Ereignisse und
+Webhook-Nebenwirkungen inklusive abhängiger
 Datensätze zurückgesetzt (`TRUNCATE ... RESTART IDENTITY CASCADE`). Vor diesem
 Reset werden zusätzlich der tatsächliche PostgreSQL-Datenbankname und Benutzer
 geprüft. Redis-Datenbank 14 wird vollständig geleert. Keine Entwicklungsdaten
@@ -148,18 +149,125 @@ Fallback auf produktive Clients.
    Die Luxon-Uhr wird für Zeitgrenzen kontrolliert, ohne Datenbank-Timer anzuhalten.
 -  `permissions.test.ts`: Benutzer-/App-Isolation, verschachtelte Tabellenabfragen,
    vorhandene Lesefreigaben und Aliase, abgelehnte Änderungen ohne Auswirkungen
-   auf Datenbank, Cache oder Dateien. Die Vergabe neuer Freigaben ist noch nicht
-   Gegenstand dieser Suite.
+   auf Datenbank, Cache oder Dateien. Vergabe und Widerruf werden zusätzlich in
+   `access-flows.test.ts` geprüft.
 -  `redis.test.ts`: GraphQL-CRUD mit Property-Typen, BigInt-Serialisierung und
    konsistenten ETags, entfernte/aktualisierte Schlüssel sowie persistierte
    Wiederholungen nach einem ausgefallenen Redis-Client und Wiederverbindung.
 
-Die Regressionstests sichern vier dabei behobene Fehler: Session-Löschung wird
+Die Regressionstests aus Schritt 2 sichern vier behobene Fehler: Session-Löschung wird
 abgewartet; neu berechnete ETags werden auch im zurückgegebenen Objekt aktualisiert;
 Redis-Property-Werte werden als Strings übertragen; beim Abgleich werden nur
 tatsächlich obsolete Property-Schlüssel gelöscht. Dafür sind keine Schemaänderungen
 oder Datenmigrationen erforderlich.
 
-Weitere Kontoabläufe, Upload-Konsistenz, Zahlungen und Webhook-Wiederholungen
-folgen in der nächsten fachlichen Teststufe. Das bisherige Verhalten bei fehlendem
-Stripe-Webhook-Secret ist in diesem Schritt nicht geändert worden.
+## Fachliche Teststufe (Schritt 3)
+
+Die Integrationstests umfassen zusätzlich:
+
+-  `accounts.test.ts`: Registrierung mit echtem Passwort-Hash, doppelte E-Mail,
+   Validierung, Entwicklerrechte, Bestätigung mit Einmaltoken, Passwort-Reset,
+   bestätigter Passwortwechsel, E-Mail-Wechsel mit Stripe-Abgleich und Rücknahme,
+   E-Mail-Providerfehler und erneuter Versand.
+-  `access-flows.test.ts`: Website-/App-Tokenwechsel, falscher Entwickler/API-Key,
+   Anlegen und Widerrufen von Lesefreigaben, App-Prüfung von Alias-Tabellen und
+   Aktualisierung des Empfänger-ETags. Der bestehende, von Pocketlib verwendete
+   Zugriff über eine bekannte Objekt-UUID bleibt erhalten; dies ist keine neue
+   Einladungssystematik. Eine Freigabe erlaubt weiterhin keine Schreibzugriffe.
+-  `uploads.test.ts`: tatsächliche PNG-Daten, ungültige Bilddaten, abweichender
+   MIME-Typ, fehlende Authentifizierung, Benutzer-/App-Isolation, Speichergrenzen,
+   parallele Uploads, Ersetzung mit Größen-Differenz, `ignoreFileSize`, Remote-
+   Fehler, Datenbank-Rollback nach Remote-Upload, Dateilöschung und Quotenfreigabe.
+-  `checkout.test.ts`: Centbeträge, Versandkosten und Währung, Stripe-Kunden- und
+   Bestellzuordnung, Validierungsfehler ohne Bestellanlage, Stripe-Ausfall,
+   Tarifauswahl sowie kostenlose Käufe und deren Sichtbarkeit.
+-  `webhooks.test.ts`: HTTP mit tatsächlich signierten Stripe-Payloads,
+   ungültige Signaturen/Payloads, fehlendes Secret, doppelte und parallele
+   Zustellung über getrennte App-/Datenbankclients, App-Neustart, Teilausfälle
+   beim Benachrichtigen mehrerer Empfänger, Resend-Fehler, Tarif-/Laufzeitwechsel,
+   verspätete Abonnementereignisse und Schutz versendeter Bestellungen vor
+   Rückstufung. Ausgehende Providerzugriffe bleiben simuliert.
+-  `jobs.test.ts`: App-Zuordnung und Fälligkeit von Push-Nachrichten,
+   Wiederholungsintervalle, dauerhafte vs. vorübergehende Versandfehler,
+   globale und App-Aktivitätsstatistik, UTC-Tagesgrenze, Session-Bereinigung
+   nach vier Kalendermonaten sowie partielle Notification-Updates.
+-  `queries.test.ts`: App-Isolation der Property-Suche, exakte/Teilstring-Filter,
+   nicht vorhandene Filterziele, gleichnamige Tabellen verschiedener Apps,
+   Bestellstatus und Pagination, Adressberechtigungen, App-Filter und
+   Zeitraum-/Rollenprüfung für Statistikabfragen.
+
+`tests/adapters/emails.test.ts` ergänzt die schnelle Suite: Das tatsächliche
+Resend-SDK rendert die Bestätigungs-E-Mail, überträgt den Link und behandelt
+API-Fehlerantworten bei gesperrtem externem Netzwerk.
+
+Die neuen Regressionstests haben unter anderem fehlende Tokenprüfung beim
+Passwort-Reset, offene Requests für ungültige Profilbilder, zu frühe Anlage von
+Profilbild-/Dateidatensätzen, fehlende Versandwährung, negative Versandkosten,
+App-übergreifende Suchergebnisse, falsche Alias-ETags, unvollständige
+Notification-Updates und das Löschen gültiger Push-Abonnements bei temporären
+Fehlern aufgedeckt. Diese Fälle sind korrigiert.
+
+Datei-Uploads sperren den Benutzer während Quotenprüfung und Metadatenänderungen
+in PostgreSQL. Die lokalen Änderungen werden gemeinsam committed; Redis wird
+erst danach aktualisiert. Beim Löschen werden Dateidatensatz und Quotenänderung
+ebenfalls gemeinsam committed. Remote-Dateispeicher, PostgreSQL und Redis bilden
+keine gemeinsame Transaktion: Ein Datenbankfehler nach erfolgreichem Upload kann
+eine bereits hochgeladene Datei zurücklassen. Ein Remote-Löschen kann bei späterem
+Datenbank-Rollback ebenfalls nicht rückgängig gemacht werden; der bestehende
+S3-Adapter protokolliert Löschfehler weiterhin. Diese Tests behaupten keine
+verteilte Atomizität.
+
+Temporäre Push-Fehler behalten Nachricht und Abonnement für den nächsten Lauf.
+Nur HTTP 404/410 entfernt das Abonnement. Bei Teilerfolg können bereits erreichte
+Geräte beim nächsten Versuch dieselbe Nachricht erneut erhalten. Kontoänderungen
+und E-Mail-/Stripe-Aufrufe sind ebenfalls keine gemeinsame Transaktion: Ein
+Versandfehler wird jetzt als Fehler gemeldet, bereits gespeicherte ausstehende
+Kontoänderungen bleiben aber erhalten und erlauben erneuten Versand.
+
+## Deployment der Webhook-Korrekturen
+
+Vor dem Deployment müssen die additiven Tabellen `webhook_events` und
+`webhook_effects` angelegt werden. Ohne Prisma-Migrationshistorie liegt dafür
+`prisma/changes/20260918_webhook_delivery.sql` bei. Die Datei muss im bestehenden
+Deployment-Prozess gegen die beabsichtigte Datenbank angewendet werden;
+anschließend `npx prisma generate` und `npm run build` ausführen. Hier wurde
+ausschließlich die isolierte Testdatenbank über `test:db:prepare` aktualisiert.
+
+`STRIPE_WEBHOOKS_SECRET` ist nun erforderlich: Ohne Secret antwortet der Endpoint
+mit HTTP 503, bei ungültiger Signatur mit HTTP 400. Die Prüfung verwendet die
+unveränderten Request-Bytes. Stripe beschreibt Wiederholungen und fehlende
+Reihenfolgegarantien in seiner [Webhook-Dokumentation](https://docs.stripe.com/webhooks).
+
+PostgreSQL-Advisory-Locks serialisieren die Verarbeitung pro Bestellung, Kauf
+oder Stripe-Kunde. Erfolgreich verarbeitete Event-IDs werden dauerhaft gespeichert.
+Externe Effekte werden einzeln nach Erfolg vermerkt, damit bei Teilausfällen
+nur noch fehlende Benachrichtigungen ausgeführt werden. Fehler liefern HTTP 502
+und lassen fehlende Benachrichtigungen wiederholbar. Fachliche Änderungen werden
+vor den externen Aufrufen in einer eigenen Transaktion committed, damit Empfänger
+die aktuellen Bestelldaten sofort lesen können. Nur Fehler innerhalb dieser
+fachlichen Transaktion rollen deren Änderungen zurück; ein späterer Versandfehler
+nicht. Der Verbindungspool benötigt dafür mindestens zwei freie Verbindungen pro
+aktivem Handler (zusätzliche wartende Handler belegen ebenfalls Verbindungen).
+Die Verarbeitung hat ein Transaktionslimit von 30 Sekunden; ausgehende App-Webhooks
+ein Limit von 10 Sekunden.
+
+Diese Tabellen sind keine Caches und dürfen im Betrieb nicht routinemäßig geleert
+werden. Historische Ereignisse werden nicht automatisch nachgeliefert. Werden
+bereits vor diesem Deployment abgeschlossene Käufe erneut zugestellt, können
+Benachrichtigungen mangels damaliger Erfolgsvermerke erneut versendet werden.
+
+Verspätete Abonnementereignisse mit kleinerem `event.created` als ein bereits
+verarbeitetes Ereignis desselben Kunden ändern den Tarif nicht erneut. Bei gleichen
+Sekundenwerten kann daraus keine Reihenfolge abgeleitet werden. Bereits versendete
+Bestellungen werden durch erneute Checkout-Ereignisse nicht zurückgestuft.
+
+Es gibt keine absolute Exactly-once-Garantie für externe Effekte: Bei einem Absturz
+nach erfolgreichem Versand und vor Speicherung der Bestätigung bleibt ein
+Unsicherheitsfenster. Das bestehende Resend-4-SDK bietet in dieser Anbindung keinen
+Idempotenzschlüssel; ausgehende App-Webhooks benötigen für eine stärkere Garantie
+ebenfalls Unterstützung der Empfänger. Bei solchen unklaren Zuständen ist ein
+Abgleich mit dem Empfänger nötig. Die neue Verarbeitung deckt bestätigte Erfolge,
+reguläre Wiederholungen, Parallelität und die getesteten Teilausfälle ab.
+
+Offen bleibt Schritt 4: CI und ein Smoke-Test des gebauten Servers als separater
+Prozess. Live-Anbieter- und Lasttests sind nicht Bestandteil dieser Suite.

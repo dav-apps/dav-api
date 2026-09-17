@@ -37,7 +37,7 @@ export async function uploadUserProfileImage(
 		const imageTypeResult = await imageType(req.body)
 
 		if (imageTypeResult == null || imageTypeResult.mime != contentType) {
-			return apiErrors.imageDataInvalid
+			throwEndpointError(apiErrors.imageDataInvalid)
 		}
 
 		// Get the profile image of the user
@@ -46,16 +46,6 @@ export async function uploadUserProfileImage(
 				userId: session.userId
 			}
 		})
-
-		if (userProfileImage == null) {
-			userProfileImage = await prisma.userProfileImage.create({
-				data: {
-					userId: session.userId,
-					ext: imageTypeResult.ext,
-					mimeType: imageTypeResult.mime
-				}
-			})
-		}
 
 		// Upload the file
 		let etag = await files.upload(
@@ -69,14 +59,26 @@ export async function uploadUserProfileImage(
 		}
 
 		// Update the profile image with the etag
-		userProfileImage = await prisma.userProfileImage.update({
-			where: {
-				id: userProfileImage.id
-			},
-			data: {
-				etag
-			}
-		})
+		if (userProfileImage == null) {
+			await prisma.userProfileImage.create({
+				data: {
+					userId: session.userId,
+					ext: imageTypeResult.ext,
+					mimeType: imageTypeResult.mime,
+					etag
+				}
+			})
+		} else
+			await prisma.userProfileImage.update({
+				where: {
+					id: userProfileImage.id
+				},
+				data: {
+					etag,
+					ext: imageTypeResult.ext,
+					mimeType: imageTypeResult.mime
+				}
+			})
 
 		res.status(200).json({})
 	} catch (error) {

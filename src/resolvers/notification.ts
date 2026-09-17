@@ -277,11 +277,9 @@ export async function updateNotification(
 	// Validate the args
 	let errors = []
 
-	errors.push(
-		validateTitleLength(args.title),
-		validateBodyLength(args.body),
-		validateInterval(args.interval)
-	)
+	if (args.title != null) errors.push(validateTitleLength(args.title))
+	if (args.body != null) errors.push(validateBodyLength(args.body))
+	if (args.interval != null) errors.push(validateInterval(args.interval))
 
 	if (args.icon != null) {
 		errors.push(validateIcon(args.icon))

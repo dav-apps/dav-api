@@ -1,5 +1,6 @@
 import { User, Dev, Provider, App } from "@prisma/client"
 import bcrypt from "bcrypt"
+import { sendEmail } from "../services/emailService.js"
 import { createId } from "@paralleldrive/cuid2"
 import EmailConfirmationEmail from "../emails/emailConfirmation.js"
 import ChangeEmailEmail from "../emails/changeEmail.js"
@@ -231,7 +232,7 @@ export async function createUser(
 	}
 
 	// Send user confirmation email
-	await context.resend.emails.send({
+	await sendEmail(context.resend, {
 		from: noReplyEmailAddress,
 		to: user.email,
 		subject: "Welcome to dav",
@@ -339,7 +340,7 @@ export async function updateUser(
 
 	if (args.email != null) {
 		// Send change email email
-		await context.resend.emails.send({
+		await sendEmail(context.resend, {
 			from: noReplyEmailAddress,
 			to: user.newEmail,
 			subject: "Confirm your new email address - dav",
@@ -354,7 +355,7 @@ export async function updateUser(
 
 	if (args.password != null) {
 		// Send change password email
-		await context.resend.emails.send({
+		await sendEmail(context.resend, {
 			from: noReplyEmailAddress,
 			to: user.email,
 			subject: "Confirm your new password - dav",
@@ -416,7 +417,7 @@ export async function sendConfirmationEmailForUser(
 	})
 
 	// Send the confirmation email
-	await context.resend.emails.send({
+	await sendEmail(context.resend, {
 		from: noReplyEmailAddress,
 		to: user.email,
 		subject: "Confirm your email address - dav",
@@ -480,7 +481,7 @@ export async function sendPasswordResetEmailForUser(
 	})
 
 	// Send the password reset email
-	await context.resend.emails.send({
+	await sendEmail(context.resend, {
 		from: noReplyEmailAddress,
 		to: user.email,
 		subject: "Reset your password - dav",
@@ -615,7 +616,7 @@ export async function saveNewEmailOfUser(
 	await updateEmailOfStripeCustomer(user, context.stripe)
 
 	// Send reset email email
-	await context.resend.emails.send({
+	await sendEmail(context.resend, {
 		from: noReplyEmailAddress,
 		to: user.oldEmail,
 		subject: "Your email address has changed - dav",
@@ -673,7 +674,11 @@ export async function saveNewPasswordOfUser(
 	}
 
 	// Check the password confirmation token
-	if (user.passwordConfirmationToken != args.passwordConfirmationToken) {
+	if (
+		!args.passwordConfirmationToken ||
+		!user.passwordConfirmationToken ||
+		user.passwordConfirmationToken != args.passwordConfirmationToken
+	) {
 		throwApiError(apiErrors.passwordConfirmationTokenIncorrect)
 	}
 
@@ -794,7 +799,11 @@ export async function setPasswordOfUser(
 	throwValidationError(validatePasswordLength(args.password))
 
 	// Check the password confirmation token
-	if (user.passwordConfirmationToken != args.passwordConfirmationToken) {
+	if (
+		!args.passwordConfirmationToken ||
+		!user.passwordConfirmationToken ||
+		user.passwordConfirmationToken != args.passwordConfirmationToken
+	) {
 		throwApiError(apiErrors.passwordConfirmationTokenIncorrect)
 	}
 

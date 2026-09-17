@@ -7,7 +7,7 @@ import {
 } from "../services/validationService.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
-import { extPropertyName } from "../constants.js"
+import { extPropertyName, sizePropertyName } from "../constants.js"
 import {
 	throwApiError,
 	getDevByAuthToken,
@@ -19,6 +19,7 @@ import {
 	updateAppUser,
 	updateTableObjectEtag,
 	updateTableEtag,
+	updateUsedStorage,
 	getTablePropertyTypeCreateInputsForProperties
 } from "../utils.js"
 
@@ -67,6 +68,11 @@ export async function retrieveTableObject(
 		if (userAccess.tableAlias != null) {
 			tableId = userAccess.tableAlias
 		}
+		const effectiveTable = await context.prisma.table.findUnique({
+			where: { id: tableId }
+		})
+		if (effectiveTable?.appId != session.appId)
+			throwApiError(apiErrors.actionNotAllowed)
 
 		tableObject.tableId = tableId
 	}
@@ -126,10 +132,17 @@ export async function listTableObjectsByProperty(
 	if (args.userId != null) {
 		user = await context.prisma.user.findFirst({ where: { id: args.userId } })
 	}
+	if (
+		(args.tableName != null && table == null) ||
+		(args.userId != null && user == null)
+	) {
+		return { total: 0, items: [] }
+	}
 
 	let exact = args.exact ?? true
 
 	let where = {
+		table: { appId: args.appId },
 		tableId: table?.id,
 		userId: user?.id,
 		tableObjectProperties: {
@@ -204,6 +217,9 @@ export async function createTableObject(
 		}
 	}
 
+	if (args.file && args.ext != null)
+		throwValidationError(validateExtLength(args.ext))
+
 	// Create the table object
 	let uuid = args.uuid ?? crypto.randomUUID()
 
@@ -257,9 +273,6 @@ export async function createTableObject(
 	}
 
 	if (args.file && args.ext != null) {
-		// Validate the ext
-		throwValidationError(validateExtLength(args.ext))
-
 		// Create the ext property
 		await context.prisma.tableObjectProperty.create({
 			data: {
@@ -508,35 +521,35 @@ export async function deleteTableObject(
 		throwApiError(apiErrors.actionNotAllowed)
 	}
 
-	// Save that the user was active
-	await context.prisma.user.update({
-		where: { id: session.userId },
-		data: {
-			lastActive: new Date()
-		}
-	})
-
-	if (tableObject.file) {
-		//  Delete the file
-		await context.files.remove(tableObject.uuid)
-	}
-
-	// Remove the table object from redis
-	await removeTableObjectFromRedis(context.prisma, context.redis, tableObject)
-
-	// Update the etag of the table
-	await updateTableEtag(
-		context.prisma,
-		tableObject.userId,
-		tableObject.tableId
+	const deleted = await context.prisma.$transaction(
+		async tx => {
+			await tx.$executeRaw`SELECT id FROM users WHERE id = ${session.userId} FOR UPDATE`
+			const properties = await getPropertiesOfTableObject(tx, tableObject.id)
+			const size = Number(properties[sizePropertyName] ?? 0)
+			const result = await tx.tableObject.delete({
+				where: { id: tableObject.id }
+			})
+			if (tableObject.file) {
+				await context.files.remove(tableObject.uuid)
+				if (
+					!tableObject.table.ignoreFileSize &&
+					Number.isFinite(size) &&
+					size > 0
+				) {
+					await updateUsedStorage(tx, session.userId, session.appId, -size)
+				}
+			}
+			await tx.user.update({
+				where: { id: session.userId },
+				data: { lastActive: new Date() }
+			})
+			await updateTableEtag(tx, session.userId, tableObject.tableId)
+			return result
+		},
+		{ maxWait: 5000, timeout: 30000 }
 	)
-
-	// TODO: Notify connected clients
-
-	// Delete the table object
-	return await context.prisma.tableObject.delete({
-		where: { id: tableObject.id }
-	})
+	await removeTableObjectFromRedis(context.prisma, context.redis, deleted)
+	return deleted
 }
 
 export async function user(

@@ -1,10 +1,17 @@
 import { Express, Request, Response, raw } from "express"
 import cors from "cors"
 import Stripe from "stripe"
+import type { Prisma } from "@prisma/client"
+import {
+	processWebhook,
+	webhookEffectOnce
+} from "../services/webhookService.js"
 import type { AppDependencies } from "../appDependencies.js"
 import PaymentAttemptFailedEmail from "../emails/paymentAttemptFailed.js"
 import PaymentFailedEmail from "../emails/paymentFailed.js"
 import { noReplyEmailAddress } from "../constants.js"
+
+type QueueEffect = (key: string, work: () => Promise<unknown>) => Promise<void>
 
 export function createStripeWebhook(dependencies: AppDependencies) {
 	const {
@@ -16,62 +23,93 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 	} = dependencies
 
 	async function stripeWebhook(req: Request, res: Response) {
-		let event = req.body
-
-		if (endpointSecret) {
-			// Get the signature sent by Stripe
-			const signature = req.headers["stripe-signature"]
-
-			try {
-				event = stripe.webhooks.constructEvent(
-					req.body,
-					signature,
-					endpointSecret
-				)
-			} catch (error) {
-				console.log(
-					`⚠️ Webhook signature verification failed.`,
-					error.message
-				)
+		if (!endpointSecret) return res.sendStatus(503)
+		let event: Stripe.Event
+		try {
+			event = stripe.webhooks.constructEvent(
+				req.body,
+				req.headers["stripe-signature"],
+				endpointSecret
+			)
+		} catch {
+			return res.sendStatus(400)
+		}
+		const handlers = {
+			"checkout.session.completed": handleCheckoutSessionCompletedEvent,
+			"invoice.payment_succeeded": handleInvoicePaymentSucceededEvent,
+			"invoice.payment_failed": handleInvoicePaymentFailedEvent,
+			"payment_intent.succeeded": handlePaymentIntentSucceededEvent,
+			"customer.subscription.created":
+				handleCustomerSubscriptionCreatedEvent,
+			"customer.subscription.updated":
+				handleCustomerSubscriptionUpdatedEvent,
+			"customer.subscription.deleted": handleCustomerSubscriptionDeletedEvent
+		}
+		const handler = handlers[event.type]
+		if (!handler) return res.sendStatus(200)
+		const object = event.data?.object as any
+		if (!event.id || !Number.isInteger(event.created) || !object?.id)
+			return res.sendStatus(400)
+		let resource: string
+		if (event.type === "checkout.session.completed") {
+			if (object.mode === "subscription") return res.sendStatus(200)
+			if (!object.metadata?.order) return res.sendStatus(400)
+			resource = `order:${object.metadata.order}`
+		} else if (event.type === "payment_intent.succeeded") {
+			resource = `purchase:${object.id}`
+		} else {
+			if (typeof object.customer !== "string" || !object.customer)
 				return res.sendStatus(400)
-			}
+			resource = `customer:${object.customer}`
 		}
-
-		// Handle the event
-		let status = 200
-
-		switch (event.type) {
-			case "checkout.session.completed":
-				status = await handleCheckoutSessionCompletedEvent(event)
-				break
-			case "invoice.payment_succeeded":
-				status = await handleInvoicePaymentSucceededEvent(event)
-				break
-			case "invoice.payment_failed":
-				status = await handleInvoicePaymentFailedEvent(event)
-				break
-			case "payment_intent.succeeded":
-				status = await handlePaymentIntentSucceededEvent(event)
-				break
-			case "customer.subscription.created":
-				status = await handleCustomerSubscriptionCreatedEvent(event)
-				break
-			case "customer.subscription.updated":
-				status = await handleCustomerSubscriptionUpdatedEvent(event)
-				break
-			case "customer.subscription.deleted":
-				status = await handleCustomerSubscriptionDeletedEvent(event)
-				break
+		try {
+			await processWebhook(
+				prisma,
+				event,
+				resource,
+				event.type.startsWith("customer.subscription."),
+				async () => {
+					const effects: Array<() => Promise<void>> = []
+					// Commit domain data before notifying apps that may read it back.
+					await prisma.$transaction(
+						async tx => {
+							const status = await handler(
+								event,
+								tx,
+								async (key, work) => {
+									effects.push(() =>
+										webhookEffectOnce(prisma, key, work)
+									)
+								}
+							)
+							if (status !== 200)
+								throw new Error("Webhook domain update failed")
+						},
+						{ maxWait: 5000, timeout: 15000 }
+					)
+					for (const effect of effects) await effect()
+					return 200
+				}
+			)
+			return res.sendStatus(200)
+		} catch (error) {
+			console.error("Stripe webhook failed", error)
+			return res.sendStatus(502)
 		}
-
-		res.status(status).send()
 	}
 
 	async function handleCheckoutSessionCompletedEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const checkoutSession = event.data.object as Stripe.Checkout.Session
-		if (checkoutSession.payment_status == "unpaid") return 500
+		if (
+			!["paid", "no_payment_required"].includes(
+				checkoutSession.payment_status
+			)
+		)
+			return 500
 
 		// Get the order id from the payment intent
 		const orderUuid = checkoutSession.metadata.order
@@ -82,17 +120,19 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 				where: { uuid: orderUuid }
 			})
 
+			if (!order || !checkoutSession.payment_intent) return 500
+
 			if (order.shippingAddressId == null) {
-				const name = checkoutSession.shipping_details.name
-				const email = checkoutSession.customer_details.email
-				const phone = checkoutSession.customer_details.phone
-				const city = checkoutSession.shipping_details.address?.city
-				const country = checkoutSession.shipping_details.address?.country
-				const line1 = checkoutSession.shipping_details.address?.line1
-				const line2 = checkoutSession.shipping_details.address?.line2
+				const name = checkoutSession.shipping_details?.name
+				const email = checkoutSession.customer_details?.email
+				const phone = checkoutSession.customer_details?.phone
+				const city = checkoutSession.shipping_details?.address?.city
+				const country = checkoutSession.shipping_details?.address?.country
+				const line1 = checkoutSession.shipping_details?.address?.line1
+				const line2 = checkoutSession.shipping_details?.address?.line2
 				const postalCode =
-					checkoutSession.shipping_details.address?.postal_code
-				const state = checkoutSession.shipping_details.address?.state
+					checkoutSession.shipping_details?.address?.postal_code
+				const state = checkoutSession.shipping_details?.address?.state
 
 				// Try to find an existing shipping address with these values
 				let shippingAddress = await prisma.shippingAddress.findFirst({
@@ -142,7 +182,7 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 				where: { id: order.id },
 				data: {
 					paymentIntentId: checkoutSession.payment_intent as string,
-					status: "PREPARATION"
+					status: order.status === "SHIPPED" ? "SHIPPED" : "PREPARATION"
 				}
 			})
 
@@ -156,18 +196,21 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 
 			if (webhookUrl != null) {
 				try {
-					await webhookHttp.request({
-						method: "post",
-						url: webhookUrl,
-						headers: {
-							"Content-Type": "application/json",
-							Authorization: process.env.WEBHOOK_KEY
-						},
-						data: {
-							type: "order.completed",
-							uuid: order.uuid
-						}
-					})
+					await effect(`order:${order.uuid}:completed`, () =>
+						webhookHttp.request({
+							method: "post",
+							url: webhookUrl,
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: process.env.WEBHOOK_KEY
+							},
+							data: {
+								type: "order.completed",
+								uuid: order.uuid
+							},
+							timeout: 10000
+						})
+					)
 				} catch (error) {
 					console.error(error)
 					return 500
@@ -179,7 +222,9 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 	}
 
 	async function handleInvoicePaymentSucceededEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const invoice = event.data.object as Stripe.Invoice
 
@@ -219,7 +264,11 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		return 200
 	}
 
-	async function handleInvoicePaymentFailedEvent(event: any): Promise<number> {
+	async function handleInvoicePaymentFailedEvent(
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
+	): Promise<number> {
 		const invoice = event.data.object as Stripe.Invoice
 		if (invoice.paid) return 500
 
@@ -243,7 +292,7 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 			})
 
 			// Send payment failed email
-			resend.emails.send({
+			await sendPaymentEmail(effect, `invoice:${invoice.id}:failed`, {
 				from: noReplyEmailAddress,
 				to: user.email,
 				subject: "Subscription renewal failed - dav",
@@ -251,24 +300,30 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 			})
 		} else if (invoice.attempt_count == 2) {
 			// Send payment attempt failed email
-			resend.emails.send({
-				from: noReplyEmailAddress,
-				to: user.email,
-				subject: "Subscription renewal failed - dav",
-				react: (
-					<PaymentAttemptFailedEmail
-						name={user.firstName}
-						plan={user.plan}
-					/>
-				)
-			})
+			await sendPaymentEmail(
+				effect,
+				`invoice:${invoice.id}:attempt:${invoice.attempt_count}`,
+				{
+					from: noReplyEmailAddress,
+					to: user.email,
+					subject: "Subscription renewal failed - dav",
+					react: (
+						<PaymentAttemptFailedEmail
+							name={user.firstName}
+							plan={user.plan}
+						/>
+					)
+				}
+			)
 		}
 
 		return 200
 	}
 
 	async function handlePaymentIntentSucceededEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const paymentIntent = event.data.object as Stripe.PaymentIntent
 
@@ -288,7 +343,7 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 			}
 		})
 
-		if (purchase == null || purchase.completed) return 200
+		if (purchase == null) return 200
 
 		await prisma.purchase.update({
 			where: { id: purchase.id },
@@ -302,18 +357,23 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 			if (webhookUrl == null) continue
 
 			try {
-				await webhookHttp.request({
-					method: "put",
-					url: webhookUrl,
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: process.env.WEBHOOK_KEY
-					},
-					data: {
-						type: "payment_intent_succeeded",
-						uuid: tableObjectPurchase.tableObject.uuid
-					}
-				})
+				await effect(
+					`purchase:${purchase.id}:object:${tableObjectPurchase.tableObjectId}`,
+					() =>
+						webhookHttp.request({
+							method: "put",
+							url: webhookUrl,
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: process.env.WEBHOOK_KEY
+							},
+							data: {
+								type: "payment_intent_succeeded",
+								uuid: tableObjectPurchase.tableObject.uuid
+							},
+							timeout: 10000
+						})
+				)
 			} catch (error) {
 				console.error(error)
 				return 500
@@ -324,7 +384,9 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 	}
 
 	async function handleCustomerSubscriptionCreatedEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const subscription = event.data.object as Stripe.Subscription
 		if (subscription.items.data.length == 0) return 500
@@ -363,7 +425,9 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 	}
 
 	async function handleCustomerSubscriptionUpdatedEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const subscription = event.data.object as Stripe.Subscription
 		if (subscription.items.data.length == 0) return 500
@@ -414,7 +478,9 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 	}
 
 	async function handleCustomerSubscriptionDeletedEvent(
-		event: any
+		event: any,
+		prisma: Prisma.TransactionClient,
+		effect: QueueEffect
 	): Promise<number> {
 		const subscription = event.data.object as Stripe.Subscription
 		if (subscription.items.data.length == 0) return 500
@@ -438,6 +504,18 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		})
 
 		return 200
+	}
+
+	async function sendPaymentEmail(
+		effect: QueueEffect,
+		key: string,
+		payload: Parameters<typeof resend.emails.send>[0]
+	) {
+		await effect(key, async () => {
+			const result = await resend.emails.send(payload)
+			if (result.error || !result.data)
+				throw new Error("Payment email failed")
+		})
 	}
 
 	return stripeWebhook

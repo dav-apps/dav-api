@@ -7,11 +7,15 @@ import {
 	handleEndpointError
 } from "../utils.js"
 import { apiErrors } from "../errors.js"
-import { prisma } from "../../server.js"
+import type { AppDependencies } from "../appDependencies.js"
 import { validateImageContentType } from "../services/validationService.js"
-import { upload } from "../services/fileService.js"
 
-export async function uploadUserProfileImage(req: Request, res: Response) {
+export async function uploadUserProfileImage(
+	req: Request,
+	res: Response,
+	dependencies: AppDependencies
+) {
+	const { prisma, files } = dependencies
 	try {
 		const accessToken = req.headers.authorization
 		const session = await getSessionFromToken({
@@ -54,7 +58,7 @@ export async function uploadUserProfileImage(req: Request, res: Response) {
 		}
 
 		// Upload the file
-		let etag = await upload(
+		let etag = await files.upload(
 			`profileImages/${session.userId}`,
 			req.body,
 			imageTypeResult.mime
@@ -80,11 +84,11 @@ export async function uploadUserProfileImage(req: Request, res: Response) {
 	}
 }
 
-export function setup(app: Express) {
+export function setup(app: Express, dependencies: AppDependencies) {
 	app.put(
 		"/user/profileImage",
 		raw({ type: "*/*", limit: "10mb" }),
 		cors(),
-		uploadUserProfileImage
+		(req, res) => uploadUserProfileImage(req, res, dependencies)
 	)
 }

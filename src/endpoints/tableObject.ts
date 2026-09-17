@@ -17,11 +17,15 @@ import {
 	typePropertyName,
 	etagPropertyName
 } from "../constants.js"
-import { prisma, redis } from "../../server.js"
+import type { AppDependencies } from "../appDependencies.js"
 import { validateContentType } from "../services/validationService.js"
-import { upload } from "../services/fileService.js"
 
-export async function uploadTableObjectFile(req: Request, res: Response) {
+export async function uploadTableObjectFile(
+	req: Request,
+	res: Response,
+	dependencies: AppDependencies
+) {
+	const { prisma, redis, files } = dependencies
 	try {
 		const uuid = req.params.uuid
 		const accessToken = req.headers.authorization?.replace("Bearer ", "")
@@ -83,7 +87,7 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 		}
 
 		// Upload the file
-		const etag = await upload(tableObject.uuid, req.body, contentType)
+		const etag = await files.upload(tableObject.uuid, req.body, contentType)
 
 		if (etag == null) {
 			throwEndpointError(apiErrors.unexpectedError)
@@ -211,11 +215,11 @@ export async function uploadTableObjectFile(req: Request, res: Response) {
 	}
 }
 
-export function setup(app: Express) {
+export function setup(app: Express, dependencies: AppDependencies) {
 	app.put(
 		"/tableObject/:uuid/file",
 		raw({ type: "*/*", limit: "100mb" }),
 		cors(),
-		uploadTableObjectFile
+		(req, res) => uploadTableObjectFile(req, res, dependencies)
 	)
 }

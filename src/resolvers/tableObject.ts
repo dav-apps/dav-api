@@ -5,7 +5,6 @@ import {
 	validateExtLength,
 	validatePropertyValueLength
 } from "../services/validationService.js"
-import { remove, getFileUrl } from "../services/fileService.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { extPropertyName } from "../constants.js"
@@ -519,7 +518,7 @@ export async function deleteTableObject(
 
 	if (tableObject.file) {
 		//  Delete the file
-		await remove(tableObject.uuid)
+		await context.files.remove(tableObject.uuid)
 	}
 
 	// Remove the table object from redis
@@ -560,8 +559,12 @@ export async function table(
 	})
 }
 
-export async function fileUrl(tableObject: TableObject): Promise<string> {
-	return await getFileUrl(tableObject.uuid)
+export async function fileUrl(
+	tableObject: TableObject,
+	args: {},
+	context: ResolverContext
+): Promise<string> {
+	return await context.files.getFileUrl(tableObject.uuid)
 }
 
 export async function properties(

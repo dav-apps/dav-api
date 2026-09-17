@@ -1,14 +1,8 @@
-import { PrismaClient, User } from "@prisma/client"
-import { RedisClientType } from "redis"
-import Stripe from "stripe"
-import { Resend } from "resend"
+import { User } from "@prisma/client"
+import type { AppDependencies } from "./appDependencies.js"
 
-export interface ResolverContext {
+export interface ResolverContext extends AppDependencies {
 	authorization: string
-	prisma: PrismaClient
-	redis: RedisClientType
-	stripe: Stripe
-	resend: Resend
 }
 
 export interface List<T> {

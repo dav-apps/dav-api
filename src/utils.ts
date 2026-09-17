@@ -126,7 +126,7 @@ export async function getSessionFromToken(params: {
 		} else {
 			// The old token was used
 			// Delete the session, as the token may be stolen
-			params.prisma.session.delete({ where: { id: session.id } })
+			await params.prisma.session.delete({ where: { id: session.id } })
 
 			if (context == "endpoint") {
 				throwEndpointError(apiErrors.oldAccessTokenUsed)
@@ -210,8 +210,10 @@ export async function saveTableObjectInRedis(
 		}
 
 		// Find the existing properties
-		let propertyKeys = await redis.keys(
-			`table_object_property:${obj.userId}:${obj.tableId}:${obj.uuid}:*`
+		const propertyKeys = new Set(
+			await redis.keys(
+				`table_object_property:${obj.userId}:${obj.tableId}:${obj.uuid}:*`
+			)
 		)
 
 		let tableObjectProperties = await prisma.tableObjectProperty.findMany({
@@ -241,8 +243,8 @@ export async function saveTableObjectInRedis(
 
 			// Save the property
 			let key = `table_object_property:${obj.userId}:${obj.tableId}:${obj.uuid}:${prop.name}:${type}`
-			await redis.set(key, value)
-			delete propertyKeys[key]
+			await redis.set(key, String(value))
+			propertyKeys.delete(key)
 		}
 
 		await redis.set(`table_object:${obj.uuid}`, JSON.stringify(objData))
@@ -387,6 +389,8 @@ export async function updateTableObjectEtag(
 			etag
 		}
 	})
+	// Callers reuse this object for Redis and the GraphQL response.
+	tableObject.etag = etag
 
 	return etag
 }

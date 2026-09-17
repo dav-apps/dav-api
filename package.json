@@ -13,7 +13,12 @@
 		"typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"test:coverage": "vitest run --coverage"
+		"test:coverage": "vitest run --coverage",
+		"test:services:up": "docker compose -f compose.test.yml up -d --wait",
+		"test:services:down": "docker compose -f compose.test.yml down",
+		"test:db:prepare": "node scripts/prepare-test-database.mjs",
+		"test:integration": "npm run test:db:prepare && vitest run --config vitest.integration.config.ts",
+		"test:all": "npm run typecheck && npm test && npm run test:integration && npm run build"
 	},
 	"license": "MIT",
 	"dependencies": {

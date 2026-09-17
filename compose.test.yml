@@ -1,0 +1,36 @@
+name: dav-api-tests
+services:
+   postgres-test:
+      image: postgres:16-alpine
+      environment:
+         POSTGRES_USER: dav_test
+         POSTGRES_PASSWORD: dav_test
+         POSTGRES_DB: dav_test
+      ports:
+         - "127.0.0.1:55434:5432"
+      tmpfs:
+         - /var/lib/postgresql/data
+      healthcheck:
+         test: ["CMD-SHELL", "pg_isready -U dav_test -d dav_test"]
+         interval: 2s
+         timeout: 3s
+         retries: 30
+   redis-test:
+      image: redis:7-alpine
+      command:
+         [
+            "redis-server",
+            "--requirepass",
+            "dav_test",
+            "--save",
+            "",
+            "--appendonly",
+            "no"
+         ]
+      ports:
+         - "127.0.0.1:56381:6379"
+      healthcheck:
+         test: ["CMD", "redis-cli", "-a", "dav_test", "ping"]
+         interval: 2s
+         timeout: 3s
+         retries: 30

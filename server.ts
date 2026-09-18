@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import "dotenv/config"
 import { createClient, RedisClientType } from "redis"
 import { S3Client } from "@aws-sdk/client-s3"
 import Stripe from "stripe"
@@ -10,12 +10,14 @@ import { createApp } from "./src/app.js"
 import { createFileService } from "./src/services/fileService.js"
 import { getSpacesBucketName } from "./src/utils.js"
 import { setupTasks } from "./src/tasks.js"
+import { createPrismaClient } from "./src/prisma.js"
 
 const port = Number(process.env.PORT ?? 4000)
 if (!Number.isInteger(port) || port < 0 || port > 65535)
 	throw new Error("PORT must be an integer between 0 and 65535")
 
-const prisma = new PrismaClient()
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL must be set")
+const prisma = createPrismaClient(process.env.DATABASE_URL)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const resend = new Resend(process.env.RESEND_API_KEY)
 const s3 = new S3Client({

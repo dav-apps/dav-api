@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, User, Dev, TableObject } from "@prisma/client"
+import { Prisma, PrismaClient, User, Dev, TableObject } from "./prisma.js"
 import * as crypto from "crypto"
 import { Response } from "express"
 import { GraphQLError } from "graphql"

@@ -1,4 +1,4 @@
-import { UserSnapshot } from "@prisma/client"
+import { UserSnapshot } from "../prisma.js"
 import { DateTime } from "luxon"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"

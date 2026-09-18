@@ -1,4 +1,4 @@
-import { Purchase } from "@prisma/client"
+import { Purchase } from "../prisma.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"

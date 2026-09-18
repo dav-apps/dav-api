@@ -1,5 +1,4 @@
-import { User, TableObject, Table, Prisma } from "@prisma/client"
-import { DefaultArgs } from "@prisma/client/runtime/library.js"
+import { User, TableObject, Table, Prisma } from "../prisma.js"
 import {
 	validatePropertyNameLength,
 	validateExtLength,
@@ -417,8 +416,7 @@ export async function updateTableObject(
 				name: string | null
 				value: string | null
 			},
-			never,
-			DefaultArgs
+			never
 		>[] = []
 		const tableObjectPropertyIdsToDelete: bigint[] = []
 

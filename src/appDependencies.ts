@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client"
+import type { PrismaClient } from "./prisma.js"
 import type { RedisClientType } from "redis"
 import type Stripe from "stripe"
 import type { Resend } from "resend"

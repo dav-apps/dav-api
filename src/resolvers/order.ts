@@ -1,4 +1,4 @@
-import { TableObject, Order, ShippingAddress, User } from "@prisma/client"
+import { TableObject, Order, ShippingAddress, User } from "../prisma.js"
 import {
 	throwApiError,
 	getDevByAuthToken,

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, createPrismaClient } from "../../src/prisma.js"
 import { createClient, RedisClientType } from "redis"
 import { createApp } from "../../src/app.js"
 import { createTestDependencies } from "./dependencies.js"
@@ -26,9 +26,7 @@ export async function createIntegrationApp(
 	// unlike wrapping a delegate method, it also covers queries a $transaction
 	// callback issues through its own client.
 	const interceptors = new Set<QueryInterceptor>()
-	const prisma = new PrismaClient({
-		datasources: { db: { url: databaseUrl } }
-	}).$extends({
+	const prisma = createPrismaClient(databaseUrl).$extends({
 		query: {
 			$allModels: {
 				$allOperations({ model, operation, args, query }) {

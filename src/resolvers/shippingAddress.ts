@@ -1,4 +1,4 @@
-import { ShippingAddress } from "@prisma/client"
+import { ShippingAddress } from "../prisma.js"
 import { throwApiError, getDevByAuthToken } from "../utils.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"

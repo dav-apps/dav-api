@@ -1,7 +1,7 @@
 import { Express, Request, Response, raw } from "express"
 import cors from "cors"
 import Stripe from "stripe"
-import type { Prisma } from "@prisma/client"
+import type { Prisma } from "../prisma.js"
 import {
 	processWebhook,
 	webhookEffectOnce

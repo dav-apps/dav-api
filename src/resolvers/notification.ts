@@ -1,4 +1,4 @@
-import { Notification } from "@prisma/client"
+import { Notification } from "../prisma.js"
 import * as crypto from "crypto"
 import { DateTime } from "luxon"
 import {

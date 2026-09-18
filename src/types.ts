@@ -1,4 +1,4 @@
-import { User } from "@prisma/client"
+import { User } from "./prisma.js"
 import type { AppDependencies } from "./appDependencies.js"
 
 export interface ResolverContext extends AppDependencies {

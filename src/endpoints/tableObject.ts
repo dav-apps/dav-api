@@ -20,8 +20,10 @@ import {
 import type { AppDependencies } from "../appDependencies.js"
 import { validateContentType } from "../services/validationService.js"
 
+// The route has a single literal parameter, so Express never fills it with the
+// array its default parameter type allows.
 export async function uploadTableObjectFile(
-	req: Request,
+	req: Request<{ uuid: string }>,
 	res: Response,
 	dependencies: AppDependencies
 ) {
@@ -235,7 +237,7 @@ export async function uploadTableObjectFile(
 }
 
 export function setup(app: Express, dependencies: AppDependencies) {
-	app.put(
+	app.put<{ uuid: string }>(
 		"/tableObject/:uuid/file",
 		raw({ type: "*/*", limit: "100mb" }),
 		cors(),

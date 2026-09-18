@@ -9,13 +9,13 @@ Kompatibilität mit TypeScript 5.3 explizit festgeschrieben.
 
 ```sh
 npm ci
-npx prisma generate
+npm run build
 npm run typecheck
 npm test
-npm run build
 ```
 
-Die Prisma-Generierung benötigt keine Verbindung zur Datenbank. Die schnellen Tests (`npm test`)
+Der Build generiert zuerst den Prisma-Client; dafür ist keine Datenbankverbindung nötig.
+Die schnellen Tests (`npm test`)
 benötigen weder PostgreSQL noch Redis noch echte Zugangsdaten und laden keine
 `.env`. HTTP-Tests öffnen kurzlebige lokale Ports; eine Sandbox muss dies erlauben.
 Nock sperrt ausgehende externe HTTP-Anfragen. PostgreSQL-/Redis-Clients werden
@@ -47,6 +47,9 @@ Server-Watch, nicht automatisch den neuen Test-Watch.
    `setupTasks(dependencies)` registriert Cronjobs und liefert eine Stop-Funktion.
 -  `server.ts`: erstellt und verbindet die produktiven Clients, konfiguriert
    Web Push bei aktiviertem Produktions-Scheduler und öffnet den HTTP-Port.
+   SIGTERM/SIGINT stoppen nach erfolgreichem Start zunächst Scheduler und Apollo,
+   dann Prisma, Redis und S3. Der Shutdown ist auf zehn Sekunden begrenzt.
+   Startfehler nach Client-Erstellung schließen die Ressourcen und liefern Exitcode 1.
 
 Tests müssen `await server.stop()` aufrufen. Selbst erstellte Prisma-, Redis-
 und S3-Clients bleiben Eigentum des Aufrufers und müssen von diesem geschlossen
@@ -89,10 +92,9 @@ npm run test:integration
 npm run test:services:down
 ```
 
-`npm run test:all` führt Typecheck, schnelle Tests, Integrationstests und Build
+`npm run test:all` führt Build, Typecheck, schnelle Tests, Integrations- und Systemtests
 aus. Die Testdienste müssen dafür bereits laufen. Sie werden bewusst nicht
-automatisch durch `npm test` gestartet. CI und Tests des gebauten Servers als
-separater Prozess sind noch nicht eingerichtet.
+automatisch durch `npm test` gestartet.
 
 Compose verwendet das Projekt `dav-api-tests` und folgende ausschließlich lokale
 Dienste, getrennt von Pocketlib und den Entwicklungsdiensten:
@@ -269,5 +271,74 @@ ebenfalls Unterstützung der Empfänger. Bei solchen unklaren Zuständen ist ein
 Abgleich mit dem Empfänger nötig. Die neue Verarbeitung deckt bestätigte Erfolge,
 reguläre Wiederholungen, Parallelität und die getesteten Teilausfälle ab.
 
-Offen bleibt Schritt 4: CI und ein Smoke-Test des gebauten Servers als separater
-Prozess. Live-Anbieter- und Lasttests sind nicht Bestandteil dieser Suite.
+## CI und gebauter Server (Schritt 4)
+
+```sh
+npm run test:services:up
+npm run test:system
+# Alternativ alle Teststufen inklusive Build und Typecheck:
+npm run test:all
+npm run test:services:down
+```
+
+`test:system` baut inklusive Prisma-Generierung, bereitet ausschließlich die
+validierte Testdatenbank vor und startet `dist/server.js` als echten Node-Prozess.
+Die fünf Systemtests prüfen:
+
+- HTTP/GraphQL-Authentifizierung und eine Mutation mit tatsächlichen PostgreSQL-
+  und Redis-Schreibzugriffen, einschließlich Datenbank 14 und Cache-Inhalt;
+- Raw-Upload-Routing und echte Stripe-Signaturen ohne Stripe-Netzwerkzugriffe;
+- sauberen Prozessabschluss mit Exitcode 0 bei SIGTERM und SIGINT;
+- Startabbruch mit Exitcode 1 bei belegtem Port sowie ungültigem `PORT`.
+
+Der Kindprozess erhält nur eine explizite Umgebungs-Allowlist mit Test-URLs und
+Dummy-Schlüsseln, keine geerbten Anbieterzugangsdaten oder `NODE_OPTIONS`.
+Ein eigener Nock-Preload sperrt externe HTTP-Zugriffe auch im Kindprozess.
+`ENV=test` aktiviert keine Cronjobs. Der Server bindet im Test an Loopback und
+einen automatisch vergebenen Port (`HOST=127.0.0.1`, `PORT=0`). Zeitlimits,
+Prozessdiagnosen und erzwungenes Beenden im Fehlerfall verhindern verwaiste Tests.
+Die produktive Cron-Ausführung und bereits laufende Jobs während eines Shutdowns
+sind damit nicht Ende-zu-Ende geprüft; Jobfunktionen und Scheduler haben separate Tests.
+
+Eine ausdrücklich in `REDIS_URL` angegebene Datenbank hat beim Serverstart nun
+Vorrang. Ohne Datenbankpfad bleiben die bisherigen ENV-Defaults erhalten:
+Produktion 1, Test 3, sonst 2. Bestehende Deployment-URLs vor dem Rollout darauf
+prüfen, ob ihr Pfad die tatsächlich gewünschte Datenbank angibt.
+
+`.github/workflows/tests.yml` verwendet wie Pocketlib einen Ubuntu-24.04-Runner
+mit Node 24, `npm ci`, Build, Typecheck, schneller Suite mit Coverage,
+isolierten Compose-Diensten, Integrations- und Systemtests. Der Workflow startet
+bei Pull Requests, Pushes nach `dev`, `main`, `master`, `test/**` sowie manuell.
+Er benötigt keine Deployment-Secrets und führt kein Deployment durch.
+Parallele Läufe desselben Refs werden abgebrochen; Dienste werden über `always()`
+aufgeräumt, Coverage wird als Artefakt hochgeladen und bei Fehlern werden
+Containerlogs ausgegeben. Grundlage: [GitHub: Node.js bauen und testen](https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs).
+
+Coverage umfasst weiterhin nur die schnelle Suite, nicht die gesamte
+Integrationstestabdeckung; es wird keine irreführende Mindestquote gesetzt.
+Ein erfolgreicher lokaler Lauf ersetzt keinen GitHub-Runner-Lauf. Dieser ist nach
+Push der Workflow-Datei zu kontrollieren. Falls Branch Protection genutzt wird,
+kann der Check `test` anschließend als erforderlich eingerichtet werden.
+
+## Rollout-Checkliste und bewusste Grenzen
+
+1. Zielumgebung, Backup, PostgreSQL-Version und Redis-Datenbankpfad prüfen.
+2. Die additive SQL-Datei vor der neuen Anwendung ausführen, im freigegebenen
+   Deployment-Kontext zum Beispiel mit:
+
+   ```sh
+   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f prisma/changes/20260918_webhook_delivery.sql
+   ```
+
+   Das ist ein einmaliger Schritt, kein bei jedem Start ausgeführtes Skript.
+   Die Testskripte dürfen nicht gegen Deployment-Datenbanken verwendet werden.
+3. `STRIPE_WEBHOOKS_SECRET` für genau den jeweiligen Stripe-Endpoint setzen;
+   Anbieterzugangsdaten ausschließlich über die bestehende Secret-Verwaltung.
+4. Build und Tests prüfen, Anwendung ausrollen, Erreichbarkeit und Webhook-
+   Fehler überwachen. Bei App-Rollback die neuen Ledger-Tabellen nicht löschen.
+
+SQL-Rollout, Produktionskonfiguration und Branch-Protection wurden durch die
+lokale Implementierung nicht verändert. Live-Anbieter- und Lasttests benötigen
+separat vereinbarte Testkonten, Zielsysteme und Last-/Kostenlimits und gehören
+nicht zu dieser Suite. Stärkere Zustellgarantien benötigen zusätzlich die oben
+beschriebene Idempotenzunterstützung der externen Empfänger.

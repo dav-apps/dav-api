@@ -22,6 +22,8 @@ export async function createApp(dependencies: AppDependencies) {
 	const app = express()
 	const httpServer = http.createServer(app)
 	const server = new ApolloServer<ResolverContext>({
+		// The owning process closes Apollo together with its other resources.
+		stopOnTerminationSignals: false,
 		schema: createSchema(),
 		plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
 	})

@@ -7,7 +7,7 @@
 		"start": "node dist/server.js",
 		"dev": "concurrently \"npm:build:watch\" \"npm:serve:watch\"",
 		"dev:email": "email dev --dir src/emails",
-		"build": "tsc",
+		"build": "prisma generate && tsc",
 		"build:watch": "tsc -w",
 		"serve:watch": "nodemon dist/server.js",
 		"typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
@@ -18,7 +18,8 @@
 		"test:services:down": "docker compose -f compose.test.yml down",
 		"test:db:prepare": "node scripts/prepare-test-database.mjs",
 		"test:integration": "npm run test:db:prepare && vitest run --config vitest.integration.config.ts",
-		"test:all": "npm run typecheck && npm test && npm run test:integration && npm run build"
+		"test:system": "npm run build && npm run test:db:prepare && vitest run --config vitest.system.config.ts",
+		"test:all": "npm run build && npm run typecheck && npm test && npm run test:integration && npm run test:system"
 	},
 	"license": "MIT",
 	"dependencies": {

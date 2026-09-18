@@ -252,7 +252,13 @@ export function createTasks({ prisma, redis, webPush }: TaskDependencies) {
 							})
 						)
 					} catch (error) {
-						if (error.statusCode === 404 || error.statusCode === 410) {
+						const statusCode =
+							typeof error === "object" &&
+							error !== null &&
+							"statusCode" in error
+								? error.statusCode
+								: undefined
+						if (statusCode === 404 || statusCode === 410) {
 							await prisma.webPushSubscription.delete({
 								where: { id: webPushSubscription.id }
 							})

@@ -47,9 +47,10 @@ export function throwEndpointError(error?: ApiError) {
 	}
 }
 
-export function handleEndpointError(res: Response, e: Error) {
+export function handleEndpointError(res: Response, e: unknown) {
 	// Find the error by error code
-	let error = Object.values(apiErrors).find(err => err.code == e.message)
+	const message = e instanceof Error ? e.message : undefined
+	let error = Object.values(apiErrors).find(err => err.code == message)
 
 	if (error != null) {
 		sendEndpointError(res, error)
@@ -189,7 +190,7 @@ export async function getPropertiesOfTableObject(
 		}
 	})
 
-	let result = {}
+	let result: Record<string, string | number | boolean> = {}
 
 	for (let property of properties) {
 		result[property.name] = property.value
@@ -210,7 +211,7 @@ export async function saveTableObjectInRedis(
 			table_id: obj.tableId,
 			file: obj.file,
 			etag: obj.etag,
-			properties: {}
+			properties: {} as Record<string, string | number | boolean>
 		}
 
 		// Find the existing properties

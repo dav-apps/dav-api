@@ -12,6 +12,11 @@ import PaymentFailedEmail from "../emails/paymentFailed.js"
 import { noReplyEmailAddress } from "../constants.js"
 
 type QueueEffect = (key: string, work: () => Promise<unknown>) => Promise<void>
+type StripeWebhookHandler = (
+	event: Stripe.Event,
+	prisma: Prisma.TransactionClient,
+	effect: QueueEffect
+) => Promise<number>
 
 type ShippingDetails = NonNullable<
 	NonNullable<Stripe.Checkout.Session["collected_information"]>["shipping_details"]
@@ -42,7 +47,9 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		} catch {
 			return res.sendStatus(400)
 		}
-		const handlers = {
+		const handlers: Partial<
+			Record<Stripe.Event.Type, StripeWebhookHandler>
+		> = {
 			"checkout.session.completed": handleCheckoutSessionCompletedEvent,
 			"invoice.payment_succeeded": handleInvoicePaymentSucceededEvent,
 			"invoice.payment_failed": handleInvoicePaymentFailedEvent,

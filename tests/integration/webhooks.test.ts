@@ -209,7 +209,8 @@ it("awaits Resend errors and retries a payment failure email only until it succe
 	const send = vi.mocked(h.dependencies.resend.emails.send)
 	send.mockResolvedValueOnce({
 		data: null,
-		error: { name: "validation_error", message: "rejected" }
+		error: { name: "validation_error", message: "rejected", statusCode: 422 },
+		headers: null
 	})
 	const value = event("invoice.payment_failed", {
 		id: "in_test",

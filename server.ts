@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { createClient, RedisClientType } from "redis"
+import { createRedisClient } from "./src/redis.js"
 import { S3Client } from "@aws-sdk/client-s3"
 import Stripe from "stripe"
 import { Resend } from "resend"
@@ -39,7 +39,7 @@ let redisDatabase = 2 // production: 1, staging: 2, test: 3
 if (process.env.ENV == "production") redisDatabase = 1
 else if (process.env.ENV == "test") redisDatabase = 3
 
-const redis: RedisClientType = createClient({
+const redis = createRedisClient({
 	url: process.env.REDIS_URL,
 	// An explicit URL database takes precedence; preserve legacy defaults otherwise.
 	database:

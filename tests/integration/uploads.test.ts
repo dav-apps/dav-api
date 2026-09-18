@@ -146,7 +146,8 @@ it("uploads and replaces a file using the size delta and updates both storage co
 			where: { id: object.id }
 		})
 		expect(
-			JSON.parse(await h.redis.get(`table_object:${object.uuid}`)).etag
+			JSON.parse(String(await h.redis.get(`table_object:${object.uuid}`)))
+				.etag
 		).toBe(stored.etag)
 	}
 })

@@ -4,7 +4,7 @@ import { Response } from "express"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
 import Stripe from "stripe"
-import { RedisClientType } from "redis"
+import type { RedisClient } from "./redis.js"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 import {
@@ -200,7 +200,7 @@ export async function getPropertiesOfTableObject(
 
 export async function saveTableObjectInRedis(
 	prisma: PrismaClient | Prisma.TransactionClient,
-	redis: RedisClientType,
+	redis: RedisClient,
 	obj: TableObject
 ) {
 	try {
@@ -267,7 +267,7 @@ export async function saveTableObjectInRedis(
 
 export async function removeTableObjectFromRedis(
 	prisma: PrismaClient,
-	redis: RedisClientType,
+	redis: RedisClient,
 	tableObject: TableObject
 ) {
 	try {

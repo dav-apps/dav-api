@@ -158,7 +158,9 @@ it("serves the compiled API with real PostgreSQL/Redis, raw routes and authentic
 	expect(
 		await h.prisma.tableObject.findUnique({ where: { uuid } })
 	).toMatchObject({ etag, userId: t.owner.id })
-	expect(JSON.parse(await h.redis.get(`table_object:${uuid}`))).toMatchObject({
+	expect(
+		JSON.parse(String(await h.redis.get(`table_object:${uuid}`)))
+	).toMatchObject({
 		etag,
 		properties: { title: "Smoke" }
 	})

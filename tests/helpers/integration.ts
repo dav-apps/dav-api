@@ -1,5 +1,5 @@
 import { PrismaClient, createPrismaClient } from "../../src/prisma.js"
-import { createClient, RedisClientType } from "redis"
+import { createRedisClient } from "../../src/redis.js"
 import { createApp } from "../../src/app.js"
 import { createTestDependencies } from "./dependencies.js"
 import type { AppDependencies } from "../../src/appDependencies.js"
@@ -44,7 +44,7 @@ export async function createIntegrationApp(
 		interceptors.add(interceptor)
 		return () => interceptors.delete(interceptor)
 	}
-	const redis: RedisClientType = createClient({
+	const redis = createRedisClient({
 		url: redisUrl,
 		socket: { reconnectStrategy: false, connectTimeout: 3000 }
 	})

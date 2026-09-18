@@ -174,6 +174,9 @@ export async function createPaymentCheckoutSession(
 
 	let price = 0
 	let currency: Currency = "EUR"
+	if (args.shippingRate != null) {
+		throwValidationError(validatePrice(args.shippingRate.price))
+	}
 
 	if (args.price == null || args.currency == null) {
 		price = tableObject.tableObjectPrices[0].price
@@ -249,7 +252,7 @@ export async function createPaymentCheckoutSession(
 					type: "fixed_amount",
 					fixed_amount: {
 						amount: args.shippingRate.price,
-						currency: args.currency
+						currency
 					}
 				}
 			}

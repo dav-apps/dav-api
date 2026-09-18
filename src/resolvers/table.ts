@@ -25,7 +25,8 @@ export async function retrieveTable(
 	// Get the table
 	const table = await context.prisma.table.findFirst({
 		where: {
-			name: args.name
+			name: args.name,
+			appId: session.appId
 		}
 	})
 

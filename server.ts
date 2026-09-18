@@ -1,84 +1,114 @@
-import { ApolloServer } from "@apollo/server"
-import { expressMiddleware } from "@apollo/server/express4"
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
-import { makeExecutableSchema } from "@graphql-tools/schema"
-import express from "express"
-import http from "http"
-import cors from "cors"
 import { PrismaClient } from "@prisma/client"
 import { createClient, RedisClientType } from "redis"
+import { S3Client } from "@aws-sdk/client-s3"
 import Stripe from "stripe"
 import { Resend } from "resend"
-import { typeDefs } from "./src/typeDefs.js"
-import { resolvers } from "./src/resolvers.js"
-import { setup as stripeWebhookSetup } from "./src/endpoints/stripeWebhook.js"
-import { setup as userSetup } from "./src/endpoints/user.js"
-import { setup as tableObjectSetup } from "./src/endpoints/tableObject.js"
+import axios from "axios"
+import webPush from "web-push"
+import type { AddressInfo } from "node:net"
+import { createApp } from "./src/app.js"
+import { createFileService } from "./src/services/fileService.js"
+import { getSpacesBucketName } from "./src/utils.js"
 import { setupTasks } from "./src/tasks.js"
 
-const port = process.env.PORT || 4000
-const app = express()
-const httpServer = http.createServer(app)
+const port = Number(process.env.PORT ?? 4000)
+if (!Number.isInteger(port) || port < 0 || port > 65535)
+	throw new Error("PORT must be an integer between 0 and 65535")
 
-export const prisma = new PrismaClient()
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-export const resend = new Resend(process.env.RESEND_API_KEY)
+const prisma = new PrismaClient()
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+const resend = new Resend(process.env.RESEND_API_KEY)
+const s3 = new S3Client({
+	endpoint: "https://fra1.digitaloceanspaces.com",
+	forcePathStyle: false,
+	region: "fra1",
+	credentials: {
+		accessKeyId: process.env.SPACES_ACCESS_KEY,
+		secretAccessKey: process.env.SPACES_SECRET_KEY
+	}
+})
 
-//#region Redis config
 let redisDatabase = 2 // production: 1, staging: 2, test: 3
-
 if (process.env.ENV == "production") redisDatabase = 1
 else if (process.env.ENV == "test") redisDatabase = 3
 
-export const redis: RedisClientType = createClient({
+const redis: RedisClientType = createClient({
 	url: process.env.REDIS_URL,
-	database: redisDatabase
+	// An explicit URL database takes precedence; preserve legacy defaults otherwise.
+	database:
+		process.env.REDIS_URL &&
+		new URL(process.env.REDIS_URL).pathname.length > 1
+			? undefined
+			: redisDatabase
 })
-
 redis.on("error", err => console.log("Redis Client Error", err))
-await redis.connect()
-//#endregion
+let application: Awaited<ReturnType<typeof createApp>>
+let stopTasks: (() => void) | undefined
+let closing: Promise<void> | undefined
 
-let schema = makeExecutableSchema({
-	typeDefs,
-	resolvers
-})
-
-const server = new ApolloServer({
-	schema,
-	plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
-})
-
-await server.start()
-
-// Call setup function of each endpoint file
-stripeWebhookSetup(app)
-userSetup(app)
-tableObjectSetup(app)
-
-if (process.env.ENV == "production") {
-	// Setup cron jobs
-	setupTasks()
+function shutdown(failed = false) {
+	if (failed) process.exitCode = 1
+	if (closing) return closing
+	closing = (async () => {
+		const deadline = setTimeout(() => {
+			console.error("Server shutdown timed out")
+			process.exit(1)
+		}, 10000)
+		try {
+			stopTasks?.()
+			try {
+				await application?.server.stop()
+			} finally {
+				await Promise.all([
+					redis.isOpen ? redis.disconnect() : Promise.resolve(),
+					prisma.$disconnect()
+				])
+			}
+		} catch (error) {
+			console.error("Server shutdown failed", error)
+			process.exitCode = 1
+		} finally {
+			s3.destroy()
+			clearTimeout(deadline)
+		}
+	})()
+	return closing
 }
 
-app.use(
-	"/",
-	cors<cors.CorsRequest>(),
-	express.json({ type: "application/json", limit: "50mb" }),
-	expressMiddleware(server, {
-		context: async ({ req }) => ({
-			authorization: req.headers.authorization,
-			prisma,
-			redis,
-			stripe,
-			resend
+try {
+	await prisma.$connect()
+	await redis.connect()
+	application = await createApp({
+		prisma,
+		redis,
+		stripe,
+		resend,
+		files: createFileService(s3, getSpacesBucketName()),
+		webhookHttp: axios.create(),
+		stripeWebhookSecret: process.env.STRIPE_WEBHOOKS_SECRET
+	})
+	if (process.env.ENV == "production") {
+		webPush.setVapidDetails(
+			"mailto:support@dav-apps.tech",
+			process.env.WEBPUSH_PUBLIC_KEY,
+			process.env.WEBPUSH_PRIVATE_KEY
+		)
+		stopTasks = setupTasks({ prisma, redis, webPush })
+	}
+	const { httpServer } = application
+	await new Promise<void>((resolve, reject) => {
+		httpServer.once("error", reject)
+		httpServer.listen({ port, host: process.env.HOST }, () => {
+			httpServer.off("error", reject)
+			resolve()
 		})
 	})
-)
-
-await new Promise<void>(resolve => httpServer.listen({ port }, resolve))
-console.log(`🚀 Server ready at http://localhost:${port}/`)
-
-BigInt.prototype["toJSON"] = function () {
-	return this.toString()
+	process.on("SIGTERM", () => void shutdown())
+	process.on("SIGINT", () => void shutdown())
+	console.log(
+		`🚀 Server ready at http://localhost:${(httpServer.address() as AddressInfo).port}/`
+	)
+} catch (error) {
+	console.error("Server startup failed", error)
+	await shutdown(true)
 }

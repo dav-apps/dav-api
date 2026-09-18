@@ -13,6 +13,14 @@ import { noReplyEmailAddress } from "../constants.js"
 
 type QueueEffect = (key: string, work: () => Promise<unknown>) => Promise<void>
 
+type ShippingDetails = NonNullable<
+	NonNullable<Stripe.Checkout.Session["collected_information"]>["shipping_details"]
+>
+
+function stripeResourceId(resource: string | { id: string } | null | undefined) {
+	return typeof resource === "string" ? resource : resource?.id
+}
+
 export function createStripeWebhook(dependencies: AppDependencies) {
 	const {
 		prisma,
@@ -123,16 +131,22 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 			if (!order || !checkoutSession.payment_intent) return 500
 
 			if (order.shippingAddressId == null) {
-				const name = checkoutSession.shipping_details?.name
+				const shippingDetails =
+					checkoutSession.collected_information?.shipping_details ??
+					(
+						checkoutSession as Stripe.Checkout.Session & {
+							shipping_details?: ShippingDetails | null
+						}
+					).shipping_details
+				const name = shippingDetails?.name
 				const email = checkoutSession.customer_details?.email
 				const phone = checkoutSession.customer_details?.phone
-				const city = checkoutSession.shipping_details?.address?.city
-				const country = checkoutSession.shipping_details?.address?.country
-				const line1 = checkoutSession.shipping_details?.address?.line1
-				const line2 = checkoutSession.shipping_details?.address?.line2
-				const postalCode =
-					checkoutSession.shipping_details?.address?.postal_code
-				const state = checkoutSession.shipping_details?.address?.state
+				const city = shippingDetails?.address?.city
+				const country = shippingDetails?.address?.country
+				const line1 = shippingDetails?.address?.line1
+				const line2 = shippingDetails?.address?.line2
+				const postalCode = shippingDetails?.address?.postal_code
+				const state = shippingDetails?.address?.state
 
 				// Try to find an existing shipping address with these values
 				let shippingAddress = await prisma.shippingAddress.findFirst({
@@ -231,10 +245,18 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		if (invoice.billing_reason == "manual") return 200 // Ignore one-time payments
 		if (invoice.lines.data.length == 0) return 500
 
-		const productId = invoice.lines.data[0].plan?.product as string
+		const invoiceLine = invoice.lines.data[0]
+		const legacyPlan = (
+			invoiceLine as Stripe.InvoiceLineItem & {
+				plan?: { product?: string | { id: string } } | null
+			}
+		).plan
+		const productId = stripeResourceId(
+			invoiceLine.pricing?.price_details?.product ?? legacyPlan?.product
+		)
 		if (productId == null) return 500
 
-		const periodEnd = invoice.lines.data[0].period?.end
+		const periodEnd = invoiceLine.period?.end
 		if (periodEnd == null) return 500
 
 		const user = await prisma.user.findFirst({
@@ -270,7 +292,8 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		effect: QueueEffect
 	): Promise<number> {
 		const invoice = event.data.object as Stripe.Invoice
-		if (invoice.paid) return 500
+		const legacyPaid = (invoice as Stripe.Invoice & { paid?: boolean }).paid
+		if (invoice.status == "paid" || legacyPaid) return 500
 
 		const user = await prisma.user.findFirst({
 			where: {
@@ -391,10 +414,19 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		const subscription = event.data.object as Stripe.Subscription
 		if (subscription.items.data.length == 0) return 500
 
-		const productId = subscription.items.data[0].plan?.product as string
+		const subscriptionItem = subscription.items.data[0]
+		const productId = stripeResourceId(
+			subscriptionItem.price?.product ?? subscriptionItem.plan?.product
+		)
 		if (productId == null) return 500
 
-		const periodEnd = subscription.current_period_end
+		const periodEnd =
+			subscriptionItem.current_period_end ??
+			(
+				subscription as Stripe.Subscription & {
+					current_period_end?: number
+				}
+			).current_period_end
 		if (periodEnd == null) return 500
 
 		const user = await prisma.user.findFirst({
@@ -432,10 +464,19 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		const subscription = event.data.object as Stripe.Subscription
 		if (subscription.items.data.length == 0) return 500
 
-		const productId = subscription.items.data[0].plan?.product as string
+		const subscriptionItem = subscription.items.data[0]
+		const productId = stripeResourceId(
+			subscriptionItem.price?.product ?? subscriptionItem.plan?.product
+		)
 		if (productId == null) return 500
 
-		const periodEnd = subscription.current_period_end
+		const periodEnd =
+			subscriptionItem.current_period_end ??
+			(
+				subscription as Stripe.Subscription & {
+					current_period_end?: number
+				}
+			).current_period_end
 		if (periodEnd == null) return 500
 
 		const user = await prisma.user.findFirst({

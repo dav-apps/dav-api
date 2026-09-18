@@ -22,6 +22,11 @@ const s3 = new S3Client({
 	endpoint: "https://fra1.digitaloceanspaces.com",
 	forcePathStyle: false,
 	region: "fra1",
+	// DigitalOcean Spaces does not document support for the flexible checksum
+	// headers the SDK started sending by default in 3.729. Keep the pre-3.729
+	// behaviour until Spaces is confirmed to accept them.
+	requestChecksumCalculation: "WHEN_REQUIRED",
+	responseChecksumValidation: "WHEN_REQUIRED",
 	credentials: {
 		accessKeyId: process.env.SPACES_ACCESS_KEY,
 		secretAccessKey: process.env.SPACES_SECRET_KEY

@@ -1,5 +1,5 @@
 import { ApolloServer } from "@apollo/server"
-import { expressMiddleware } from "@apollo/server/express4"
+import { expressMiddleware } from "@as-integrations/express5"
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer"
 import express from "express"
 import http from "node:http"
@@ -11,11 +11,17 @@ import { setup as stripeWebhookSetup } from "./endpoints/stripeWebhook.js"
 import { setup as userSetup } from "./endpoints/user.js"
 import { setup as tableObjectSetup } from "./endpoints/tableObject.js"
 
+declare global {
+	interface BigInt {
+		toJSON(): string
+	}
+}
+
 // The caller owns the injected clients. Stop Apollo before closing those clients.
 // Creating an app neither connects clients nor listens on a port or starts tasks.
 export async function createApp(dependencies: AppDependencies) {
 	// Preserve the API's existing BigInt representation, including Redis payloads.
-	BigInt.prototype["toJSON"] = function () {
+	BigInt.prototype.toJSON = function () {
 		return this.toString()
 	}
 

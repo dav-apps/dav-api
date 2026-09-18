@@ -1,4 +1,4 @@
-import { Dev, App } from "@prisma/client"
+import { Dev, App } from "../prisma.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"

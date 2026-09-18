@@ -16,7 +16,8 @@ export function businessSuite() {
 		t = await seedTenants(h.prisma)
 		vi.mocked(h.dependencies.resend.emails.send).mockResolvedValue({
 			data: { id: "email_test" },
-			error: null
+			error: null,
+			headers: null
 		})
 	})
 	afterEach(async () => {

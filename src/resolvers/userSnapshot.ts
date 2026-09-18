@@ -1,4 +1,4 @@
-import { UserSnapshot } from "@prisma/client"
+import { UserSnapshot } from "../prisma.js"
 import { DateTime } from "luxon"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
@@ -35,8 +35,10 @@ export async function listUserSnapshots(
 	}
 
 	// Find the snapshots
-	let start = DateTime.now().minus({ months: 1 })
-	let end = DateTime.now()
+	// Typed wider than DateTime.now() infers: fromSeconds below may return an
+	// invalid DateTime for out of range input.
+	let start: DateTime = DateTime.now().minus({ months: 1 })
+	let end: DateTime = DateTime.now()
 
 	if (args.start != null) {
 		start = DateTime.fromSeconds(args.start)

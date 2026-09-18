@@ -46,7 +46,9 @@ it("keeps GraphQL writes, typed Redis properties and ETags consistent across cre
 		where: { uuid }
 	})
 	expect(etag).toBe(stored.etag)
-	const cached = JSON.parse(await harness.redis.get(`table_object:${uuid}`))
+	const cached = JSON.parse(
+		String(await harness.redis.get(`table_object:${uuid}`))
+	)
 	expect(cached).toMatchObject({
 		id: String(stored.id),
 		etag: stored.etag,
@@ -73,7 +75,7 @@ it("keeps GraphQL writes, typed Redis properties and ETags consistent across cre
 	expect(changed.etag).not.toBe(etag)
 	expect(updated.data.updateTableObject).toEqual({ uuid, etag: changed.etag })
 	expect(
-		JSON.parse(await harness.redis.get(`table_object:${uuid}`)).etag
+		JSON.parse(String(await harness.redis.get(`table_object:${uuid}`))).etag
 	).toBe(changed.etag)
 	const deleted = await harness.execute(
 		"mutation($uuid: String!) { deleteTableObject(uuid: $uuid) { uuid } }",
@@ -110,7 +112,7 @@ it("persists failed Redis writes and replays them after reconnecting", async () 
 		webPush: { sendNotification: vi.fn() }
 	}).updateRedisCaches()
 	expect(
-		JSON.parse(await harness.redis.get(`table_object:${object.uuid}`))
+		JSON.parse(String(await harness.redis.get(`table_object:${object.uuid}`)))
 	).toMatchObject({ etag: "etag", properties: { title: "Retry" } })
 	expect(await harness.prisma.redisTableObjectOperation.count()).toBe(0)
 })

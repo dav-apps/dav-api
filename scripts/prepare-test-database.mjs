@@ -12,10 +12,7 @@ const result = spawnSync(
 			new URL("../node_modules/prisma/build/index.js", import.meta.url)
 		),
 		"db",
-		"push",
-		"--skip-generate",
-		"--schema",
-		fileURLToPath(new URL("../prisma/schema.prisma", import.meta.url))
+		"push"
 	],
 	{
 		cwd: fileURLToPath(new URL("..", import.meta.url)),

@@ -1,4 +1,4 @@
-import { WebPushSubscription } from "@prisma/client"
+import { WebPushSubscription } from "../prisma.js"
 import {
 	validateUuid,
 	validateEndpointLength,

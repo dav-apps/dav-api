@@ -1,4 +1,4 @@
-import { TableObjectUserAccess } from "@prisma/client"
+import { TableObjectUserAccess } from "../prisma.js"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import {

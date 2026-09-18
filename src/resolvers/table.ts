@@ -1,4 +1,4 @@
-import { Table, TableObject } from "@prisma/client"
+import { Table, TableObject } from "../prisma.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken } from "../utils.js"

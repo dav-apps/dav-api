@@ -1,4 +1,4 @@
-import { App, Table } from "@prisma/client"
+import { App, Table } from "../prisma.js"
 import { ResolverContext, List } from "../types.js"
 import { apiErrors } from "../errors.js"
 import {

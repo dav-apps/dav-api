@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client"
-import { createClient, RedisClientType } from "redis"
+import { PrismaClient, createPrismaClient } from "../../src/prisma.js"
+import { createRedisClient } from "../../src/redis.js"
 import { createApp } from "../../src/app.js"
 import { createTestDependencies } from "./dependencies.js"
 import type { AppDependencies } from "../../src/appDependencies.js"
@@ -8,16 +8,43 @@ import {
 	getTestRedisUrl
 } from "../../scripts/test-services.mjs"
 
+// Mirrors what $use exposed: the model and operation of a query plus its
+// arguments. Throwing from an interceptor fails that query.
+export type QueryInterceptor = (operation: {
+	model?: string
+	operation: string
+	args: unknown
+}) => void
+
 export async function createIntegrationApp(
 	overrides: Partial<AppDependencies> = {}
 ) {
 	// Resolve and validate both URLs before opening either connection.
 	const databaseUrl = getTestDatabaseUrl()
 	const redisUrl = getTestRedisUrl()
-	const prisma = new PrismaClient({
-		datasources: { db: { url: databaseUrl } }
-	})
-	const redis: RedisClientType = createClient({
+	// Prisma 6 removed $use. A query extension is the supported replacement and,
+	// unlike wrapping a delegate method, it also covers queries a $transaction
+	// callback issues through its own client.
+	const interceptors = new Set<QueryInterceptor>()
+	const prisma = createPrismaClient(databaseUrl).$extends({
+		query: {
+			$allModels: {
+				$allOperations({ model, operation, args, query }) {
+					for (const intercept of interceptors) {
+						intercept({ model, operation, args })
+					}
+					return query(args)
+				}
+			}
+		}
+	}) as unknown as PrismaClient
+
+	// Returns a function that removes the interceptor again.
+	function intercept(interceptor: QueryInterceptor) {
+		interceptors.add(interceptor)
+		return () => interceptors.delete(interceptor)
+	}
+	const redis = createRedisClient({
 		url: redisUrl,
 		socket: { reconnectStrategy: false, connectTimeout: 3000 }
 	})
@@ -92,6 +119,7 @@ export async function createIntegrationApp(
 		redis,
 		files: doubles.files,
 		dependencies,
+		intercept,
 		execute,
 		reset,
 		close

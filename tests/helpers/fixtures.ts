@@ -1,6 +1,6 @@
 import { randomUUID, createHmac } from "node:crypto"
 import bcrypt from "bcrypt"
-import type { PrismaClient, Prisma, Dev } from "@prisma/client"
+import type { PrismaClient, Prisma, Dev } from "../../src/prisma.js"
 
 export const fixturePassword = "test-password-123"
 const passwordHash = bcrypt.hashSync(fixturePassword, 4)

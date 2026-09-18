@@ -6,7 +6,10 @@
 		"moduleResolution": "Node16",
 		"allowSyntheticDefaultImports": true,
 		"jsx": "react-jsx",
-		"strictNullChecks": false
+		"strictNullChecks": false,
+		// @react-email/tailwind ships .d.mts files that need css-tree types and a
+		// newer lib than this project targets. Only its declarations are affected.
+		"skipLibCheck": true
 	},
 	"include": ["server.ts", "src/**/*.ts", "src/**/*.tsx"]
 }

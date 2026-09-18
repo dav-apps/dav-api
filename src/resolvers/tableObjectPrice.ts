@@ -1,4 +1,4 @@
-import { TableObjectPrice } from "@prisma/client"
+import { TableObjectPrice } from "../prisma.js"
 import {
 	throwApiError,
 	throwValidationError,

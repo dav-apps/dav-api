@@ -1,4 +1,10 @@
-import { TableObject, Order, ShippingAddress, User } from "@prisma/client"
+import {
+	TableObject,
+	Order,
+	ShippingAddress,
+	User,
+	Prisma
+} from "../prisma.js"
 import {
 	throwApiError,
 	getDevByAuthToken,
@@ -57,7 +63,7 @@ export async function listOrders(
 		prisma: context.prisma
 	})
 
-	const where = { userId: session.userId }
+	const where: Prisma.OrderWhereInput = { userId: session.userId }
 
 	if (args.status != null) {
 		const or = []

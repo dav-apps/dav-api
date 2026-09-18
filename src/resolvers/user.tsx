@@ -1,4 +1,4 @@
-import { User, Dev, Provider, App } from "@prisma/client"
+import { User, Dev, Provider, App, Prisma } from "../prisma.js"
 import bcrypt from "bcrypt"
 import { sendEmail } from "../services/emailService.js"
 import { createId } from "@paralleldrive/cuid2"
@@ -315,7 +315,7 @@ export async function updateUser(
 	throwValidationError(...errors)
 
 	// Update the user
-	let data = {}
+	let data: Prisma.UserUpdateInput = {}
 
 	if (args.email != null) {
 		data["newEmail"] = args.email

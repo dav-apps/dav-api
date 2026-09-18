@@ -6,7 +6,7 @@ import {
 	validatePrice
 } from "../../src/services/validationService.js"
 import { getTotalStorageOfUser } from "../../src/utils.js"
-import type { User } from "@prisma/client"
+import type { User } from "../../src/prisma.js"
 
 it.each([
 	[validateFirstNameLength, 2, 20],

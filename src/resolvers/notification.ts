@@ -1,4 +1,4 @@
-import { Notification } from "@prisma/client"
+import { Notification, Prisma } from "../prisma.js"
 import * as crypto from "crypto"
 import { DateTime } from "luxon"
 import {
@@ -296,7 +296,7 @@ export async function updateNotification(
 	throwValidationError(...errors)
 
 	// Update the notification
-	let data = {}
+	let data: Prisma.NotificationUpdateInput = {}
 
 	if (args.time != null) {
 		data["time"] = DateTime.fromSeconds(args.time).toUTC().toString()

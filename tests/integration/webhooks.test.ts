@@ -50,13 +50,15 @@ async function orderEvent() {
 			payment_status: "paid",
 			payment_intent: "pi_test",
 			metadata: { order: order.uuid },
-			shipping_details: {
-				name: "Test",
-				address: {
-					city: "Berlin",
-					country: "DE",
-					line1: "Test 1",
-					postal_code: "12345"
+			collected_information: {
+				shipping_details: {
+					name: "Test",
+					address: {
+						city: "Berlin",
+						country: "DE",
+						line1: "Test 1",
+						postal_code: "12345"
+					}
 				}
 			},
 			customer_details: { email: t.owner.email, phone: null }
@@ -209,12 +211,13 @@ it("awaits Resend errors and retries a payment failure email only until it succe
 	const send = vi.mocked(h.dependencies.resend.emails.send)
 	send.mockResolvedValueOnce({
 		data: null,
-		error: { name: "validation_error", message: "rejected" }
+		error: { name: "validation_error", message: "rejected", statusCode: 422 },
+		headers: null
 	})
 	const value = event("invoice.payment_failed", {
 		id: "in_test",
 		customer: "cus_test",
-		paid: false,
+		status: "open",
 		next_payment_attempt: null
 	})
 	await deliver(value).expect(502)
@@ -239,8 +242,14 @@ it("does not restore a subscription from a delayed update after deletion", async
 		id: "sub_test",
 		customer: "cus_test",
 		status: "active",
-		current_period_end: 2000000000,
-		items: { data: [{ plan: { product: "plus" } }] }
+		items: {
+			data: [
+				{
+					current_period_end: 2000000000,
+					price: { product: "plus" }
+				}
+			]
+		}
 	}
 	await deliver(event("customer.subscription.deleted", object, 2000)).expect(
 		200
@@ -268,11 +277,22 @@ it.each([
 		id: "sub_invoice_test",
 		customer: "cus_test",
 		status: "active",
-		current_period_end: 2000000000,
 		cancel_at_period_end: true,
-		items: { data: [{ plan: { product: "pro" } }] },
+		items: {
+			data: [
+				{
+					current_period_end: 2000000000,
+					price: { product: "pro" }
+				}
+			]
+		},
 		lines: {
-			data: [{ plan: { product: "pro" }, period: { end: 2000000000 } }]
+			data: [
+				{
+					pricing: { price_details: { product: "pro" } },
+					period: { end: 2000000000 }
+				}
+			]
 		}
 	}
 	await deliver(event(type, object)).expect(200)

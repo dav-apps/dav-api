@@ -9,7 +9,8 @@ it("reports an email provider rejection and permits resending confirmation", asy
 	const send = vi.mocked(h.dependencies.resend.emails.send)
 	send.mockResolvedValueOnce({
 		data: null,
-		error: { name: "validation_error", message: "rejected" }
+		error: { name: "validation_error", message: "rejected", statusCode: 422 },
+		headers: null
 	})
 	const query =
 		"mutation($id: Int!) { sendConfirmationEmailForUser(id: $id) { id } }"

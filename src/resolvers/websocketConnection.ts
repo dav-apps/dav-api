@@ -1,4 +1,4 @@
-import { WebsocketConnection } from "@prisma/client"
+import { WebsocketConnection } from "../prisma.js"
 import { ResolverContext } from "../types.js"
 import { apiErrors } from "../errors.js"
 import { throwApiError, getSessionFromToken, generateHex } from "../utils.js"

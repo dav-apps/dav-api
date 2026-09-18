@@ -9,15 +9,14 @@ it("rolls back upload metadata and quota when a database operation fails after r
 	const object = await t.make.object(t.owner.id, t.table.id, { file: true })
 	h.files.upload.mockResolvedValue("etag")
 	let fail = true
-	h.prisma.$use(async (params, next) => {
+	const stopIntercepting = h.intercept(({ model, operation, args }) => {
 		if (
 			fail &&
-			params.model === "TableObjectProperty" &&
-			params.action === "create" &&
-			params.args.data.name === "type"
+			model === "TableObjectProperty" &&
+			operation === "create" &&
+			(args as { data: { name: string } }).data.name === "type"
 		)
 			throw new Error("Injected database failure")
-		return next(params)
 	})
 	try {
 		const r = await request(h.app)
@@ -36,6 +35,7 @@ it("rolls back upload metadata and quota when a database operation fails after r
 		expect(await h.redis.dbSize()).toBe(0)
 	} finally {
 		fail = false
+		stopIntercepting()
 	}
 })
 
@@ -146,7 +146,8 @@ it("uploads and replaces a file using the size delta and updates both storage co
 			where: { id: object.id }
 		})
 		expect(
-			JSON.parse(await h.redis.get(`table_object:${object.uuid}`)).etag
+			JSON.parse(String(await h.redis.get(`table_object:${object.uuid}`)))
+				.etag
 		).toBe(stored.etag)
 	}
 })

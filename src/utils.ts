@@ -1,10 +1,10 @@
-import { Prisma, PrismaClient, User, Dev, TableObject } from "@prisma/client"
+import { Prisma, PrismaClient, User, Dev, TableObject } from "./prisma.js"
 import * as crypto from "crypto"
 import { Response } from "express"
 import { GraphQLError } from "graphql"
 import { DateTime, DurationLike } from "luxon"
 import Stripe from "stripe"
-import { RedisClientType } from "redis"
+import type { RedisClient } from "./redis.js"
 import { ApiError } from "./types.js"
 import { apiErrors } from "./errors.js"
 import {
@@ -47,9 +47,10 @@ export function throwEndpointError(error?: ApiError) {
 	}
 }
 
-export function handleEndpointError(res: Response, e: Error) {
+export function handleEndpointError(res: Response, e: unknown) {
 	// Find the error by error code
-	let error = Object.values(apiErrors).find(err => err.code == e.message)
+	const message = e instanceof Error ? e.message : undefined
+	let error = Object.values(apiErrors).find(err => err.code == message)
 
 	if (error != null) {
 		sendEndpointError(res, error)
@@ -189,7 +190,7 @@ export async function getPropertiesOfTableObject(
 		}
 	})
 
-	let result = {}
+	let result: Record<string, string | number | boolean> = {}
 
 	for (let property of properties) {
 		result[property.name] = property.value
@@ -200,7 +201,7 @@ export async function getPropertiesOfTableObject(
 
 export async function saveTableObjectInRedis(
 	prisma: PrismaClient | Prisma.TransactionClient,
-	redis: RedisClientType,
+	redis: RedisClient,
 	obj: TableObject
 ) {
 	try {
@@ -210,7 +211,7 @@ export async function saveTableObjectInRedis(
 			table_id: obj.tableId,
 			file: obj.file,
 			etag: obj.etag,
-			properties: {}
+			properties: {} as Record<string, string | number | boolean>
 		}
 
 		// Find the existing properties
@@ -267,7 +268,7 @@ export async function saveTableObjectInRedis(
 
 export async function removeTableObjectFromRedis(
 	prisma: PrismaClient,
-	redis: RedisClientType,
+	redis: RedisClient,
 	tableObject: TableObject
 ) {
 	try {

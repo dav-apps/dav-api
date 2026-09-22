@@ -33,23 +33,23 @@ Server-Watch, nicht automatisch den neuen Test-Watch.
 
 ## Struktur und Lebenszyklus
 
--  `src/schema.ts`: `createSchema()` erstellt das tatsächliche Anwendungsschema.
--  `src/app.ts`: `createApp(dependencies)` liefert `app`, `server` und `httpServer`.
-   Die Factory startet Apollo, verbindet jedoch keine Clients, öffnet keinen Port
-   und registriert keine Cronjobs. Sie übernimmt die bestehende globale
-   BigInt-JSON-Serialisierung als String.
--  `src/appDependencies.ts`: explizite Abhängigkeiten für Prisma, Redis, Stripe,
-   Resend, Dateispeicher und ausgehende Webhook-Requests. Das Stripe-Webhook-Secret
-   gehört zur jeweiligen App-Instanz.
--  `src/services/fileService.ts`: `createFileService(s3Client, bucket)` kapselt
-   Dateizugriffe ohne einen S3-Client beim Import anzulegen.
--  `src/tasks.ts`: `createTasks(dependencies)` liefert einzeln aufrufbare Jobs.
-   `setupTasks(dependencies)` registriert Cronjobs und liefert eine Stop-Funktion.
--  `server.ts`: erstellt und verbindet die produktiven Clients, konfiguriert
-   Web Push bei aktiviertem Produktions-Scheduler und öffnet den HTTP-Port.
-   SIGTERM/SIGINT stoppen nach erfolgreichem Start zunächst Scheduler und Apollo,
-   dann Prisma, Redis und S3. Der Shutdown ist auf zehn Sekunden begrenzt.
-   Startfehler nach Client-Erstellung schließen die Ressourcen und liefern Exitcode 1.
+- `src/schema.ts`: `createSchema()` erstellt das tatsächliche Anwendungsschema.
+- `src/app.ts`: `createApp(dependencies)` liefert `app`, `server` und `httpServer`.
+  Die Factory startet Apollo, verbindet jedoch keine Clients, öffnet keinen Port
+  und registriert keine Cronjobs. Sie übernimmt die bestehende globale
+  BigInt-JSON-Serialisierung als String.
+- `src/appDependencies.ts`: explizite Abhängigkeiten für Prisma, Redis, Stripe,
+  Resend, Dateispeicher und ausgehende Webhook-Requests. Das Stripe-Webhook-Secret
+  gehört zur jeweiligen App-Instanz.
+- `src/services/fileService.ts`: `createFileService(s3Client, bucket)` kapselt
+  Dateizugriffe ohne einen S3-Client beim Import anzulegen.
+- `src/tasks.ts`: `createTasks(dependencies)` liefert einzeln aufrufbare Jobs.
+  `setupTasks(dependencies)` registriert Cronjobs und liefert eine Stop-Funktion.
+- `server.ts`: erstellt und verbindet die produktiven Clients, konfiguriert
+  Web Push bei aktiviertem Produktions-Scheduler und öffnet den HTTP-Port.
+  SIGTERM/SIGINT stoppen nach erfolgreichem Start zunächst Scheduler und Apollo,
+  dann Prisma, Redis und S3. Der Shutdown ist auf zehn Sekunden begrenzt.
+  Startfehler nach Client-Erstellung schließen die Ressourcen und liefern Exitcode 1.
 
 Tests müssen `await server.stop()` aufrufen. Selbst erstellte Prisma-, Redis-
 und S3-Clients bleiben Eigentum des Aufrufers und müssen von diesem geschlossen
@@ -64,19 +64,19 @@ können die App-Factory verwenden, ohne produktive Clients oder Cronjobs zu star
 
 ## Vorhandene Tests und Erweiterung
 
--  `tests/http/app.test.ts`: Factory ohne Verbindungsaufbau, tatsächliches Schema,
-   HTTP-Context, getrennte App-Instanzen, injizierter Dateiservice, Upload-Routing
-   und Stripe-Signaturprüfung mit unveränderten Request-Bytes.
--  `tests/unit/tasks.test.ts`: explizite Job-Ausführung, keine automatische
-   Cron-/VAPID-Konfiguration, registrierte Zeitpläne und deren Stop-Funktion.
--  `tests/unit/test-services.test.ts`: Schutzprüfungen für Test-URLs und Trennung
-   von den normalen Deployment-URLs.
--  `tests/unit/validation.test.ts`: Längen-/Preisgrenzen und Speicherbudgets.
--  `tests/adapters/files.test.ts`: echtes S3-SDK gegen kontrollierte HTTP-Antworten,
-   Upload-Inhalt und Metadaten, Fehlerantworten und signierte Datei-URLs. Nock
-   simuliert dabei auch den `100-continue`-Handshake. Keine echten S3-Zugriffe.
--  `tests/helpers/dependencies.ts`: kleine Test-Doubles; unvorbereitete externe
-   Operationen schlagen fehl.
+- `tests/http/app.test.ts`: Factory ohne Verbindungsaufbau, tatsächliches Schema,
+  HTTP-Context, getrennte App-Instanzen, injizierter Dateiservice, Upload-Routing
+  und Stripe-Signaturprüfung mit unveränderten Request-Bytes.
+- `tests/unit/tasks.test.ts`: explizite Job-Ausführung, keine automatische
+  Cron-/VAPID-Konfiguration, registrierte Zeitpläne und deren Stop-Funktion.
+- `tests/unit/test-services.test.ts`: Schutzprüfungen für Test-URLs und Trennung
+  von den normalen Deployment-URLs.
+- `tests/unit/validation.test.ts`: Längen-/Preisgrenzen und Speicherbudgets.
+- `tests/adapters/files.test.ts`: echtes S3-SDK gegen kontrollierte HTTP-Antworten,
+  Upload-Inhalt und Metadaten, Fehlerantworten und signierte Datei-URLs. Nock
+  simuliert dabei auch den `100-continue`-Handshake. Keine echten S3-Zugriffe.
+- `tests/helpers/dependencies.ts`: kleine Test-Doubles; unvorbereitete externe
+  Operationen schlagen fehl.
 
 GraphQL-Tests mit `executeOperation` umgehen die HTTP-Middleware. Header,
 Body-Parser und Routing deshalb über Supertest prüfen. GraphQL-Fehler anhand
@@ -145,17 +145,17 @@ und Redis. Dateispeicher, E-Mail-Versand, Stripe und ausgehende Webhooks bleiben
 kontrolliert ersetzt; für unvorbereitete externe Operationen gibt es keinen
 Fallback auf produktive Clients.
 
--  `sessions.test.ts`: echter Passwortvergleich, Login, Website-/App-Sessions,
-   Entwickler-Signatur, abgelehnte Logins ohne Änderungen, Tokenrotation und
-   Widerruf nach Wiederverwendung, Ablaufgrenze nach 24 Stunden und Logout.
-   Die Luxon-Uhr wird für Zeitgrenzen kontrolliert, ohne Datenbank-Timer anzuhalten.
--  `permissions.test.ts`: Benutzer-/App-Isolation, verschachtelte Tabellenabfragen,
-   vorhandene Lesefreigaben und Aliase, abgelehnte Änderungen ohne Auswirkungen
-   auf Datenbank, Cache oder Dateien. Vergabe und Widerruf werden zusätzlich in
-   `access-flows.test.ts` geprüft.
--  `redis.test.ts`: GraphQL-CRUD mit Property-Typen, BigInt-Serialisierung und
-   konsistenten ETags, entfernte/aktualisierte Schlüssel sowie persistierte
-   Wiederholungen nach einem ausgefallenen Redis-Client und Wiederverbindung.
+- `sessions.test.ts`: echter Passwortvergleich, Login, Website-/App-Sessions,
+  Entwickler-Signatur, abgelehnte Logins ohne Änderungen, Tokenrotation und
+  Widerruf nach Wiederverwendung, Ablaufgrenze nach 24 Stunden und Logout.
+  Die Luxon-Uhr wird für Zeitgrenzen kontrolliert, ohne Datenbank-Timer anzuhalten.
+- `permissions.test.ts`: Benutzer-/App-Isolation, verschachtelte Tabellenabfragen,
+  vorhandene Lesefreigaben und Aliase, abgelehnte Änderungen ohne Auswirkungen
+  auf Datenbank, Cache oder Dateien. Vergabe und Widerruf werden zusätzlich in
+  `access-flows.test.ts` geprüft.
+- `redis.test.ts`: GraphQL-CRUD mit Property-Typen, BigInt-Serialisierung und
+  konsistenten ETags, entfernte/aktualisierte Schlüssel sowie persistierte
+  Wiederholungen nach einem ausgefallenen Redis-Client und Wiederverbindung.
 
 Die Regressionstests aus Schritt 2 sichern vier behobene Fehler: Session-Löschung wird
 abgewartet; neu berechnete ETags werden auch im zurückgegebenen Objekt aktualisiert;
@@ -167,36 +167,36 @@ oder Datenmigrationen erforderlich.
 
 Die Integrationstests umfassen zusätzlich:
 
--  `accounts.test.ts`: Registrierung mit echtem Passwort-Hash, doppelte E-Mail,
-   Validierung, Entwicklerrechte, Bestätigung mit Einmaltoken, Passwort-Reset,
-   bestätigter Passwortwechsel, E-Mail-Wechsel mit Stripe-Abgleich und Rücknahme,
-   E-Mail-Providerfehler und erneuter Versand.
--  `access-flows.test.ts`: Website-/App-Tokenwechsel, falscher Entwickler/API-Key,
-   Anlegen und Widerrufen von Lesefreigaben, App-Prüfung von Alias-Tabellen und
-   Aktualisierung des Empfänger-ETags. Der bestehende, von Pocketlib verwendete
-   Zugriff über eine bekannte Objekt-UUID bleibt erhalten; dies ist keine neue
-   Einladungssystematik. Eine Freigabe erlaubt weiterhin keine Schreibzugriffe.
--  `uploads.test.ts`: tatsächliche PNG-Daten, ungültige Bilddaten, abweichender
-   MIME-Typ, fehlende Authentifizierung, Benutzer-/App-Isolation, Speichergrenzen,
-   parallele Uploads, Ersetzung mit Größen-Differenz, `ignoreFileSize`, Remote-
-   Fehler, Datenbank-Rollback nach Remote-Upload, Dateilöschung und Quotenfreigabe.
--  `checkout.test.ts`: Centbeträge, Versandkosten und Währung, Stripe-Kunden- und
-   Bestellzuordnung, Validierungsfehler ohne Bestellanlage, Stripe-Ausfall,
-   Tarifauswahl sowie kostenlose Käufe und deren Sichtbarkeit.
--  `webhooks.test.ts`: HTTP mit tatsächlich signierten Stripe-Payloads,
-   ungültige Signaturen/Payloads, fehlendes Secret, doppelte und parallele
-   Zustellung über getrennte App-/Datenbankclients, App-Neustart, Teilausfälle
-   beim Benachrichtigen mehrerer Empfänger, Resend-Fehler, Tarif-/Laufzeitwechsel,
-   verspätete Abonnementereignisse und Schutz versendeter Bestellungen vor
-   Rückstufung. Ausgehende Providerzugriffe bleiben simuliert.
--  `jobs.test.ts`: App-Zuordnung und Fälligkeit von Push-Nachrichten,
-   Wiederholungsintervalle, dauerhafte vs. vorübergehende Versandfehler,
-   globale und App-Aktivitätsstatistik, UTC-Tagesgrenze, Session-Bereinigung
-   nach vier Kalendermonaten sowie partielle Notification-Updates.
--  `queries.test.ts`: App-Isolation der Property-Suche, exakte/Teilstring-Filter,
-   nicht vorhandene Filterziele, gleichnamige Tabellen verschiedener Apps,
-   Bestellstatus und Pagination, Adressberechtigungen, App-Filter und
-   Zeitraum-/Rollenprüfung für Statistikabfragen.
+- `accounts.test.ts`: Registrierung mit echtem Passwort-Hash, doppelte E-Mail,
+  Validierung, Entwicklerrechte, Bestätigung mit Einmaltoken, Passwort-Reset,
+  bestätigter Passwortwechsel, E-Mail-Wechsel mit Stripe-Abgleich und Rücknahme,
+  E-Mail-Providerfehler und erneuter Versand.
+- `access-flows.test.ts`: Website-/App-Tokenwechsel, falscher Entwickler/API-Key,
+  Anlegen und Widerrufen von Lesefreigaben, App-Prüfung von Alias-Tabellen und
+  Aktualisierung des Empfänger-ETags. Der bestehende, von Pocketlib verwendete
+  Zugriff über eine bekannte Objekt-UUID bleibt erhalten; dies ist keine neue
+  Einladungssystematik. Eine Freigabe erlaubt weiterhin keine Schreibzugriffe.
+- `uploads.test.ts`: tatsächliche PNG-Daten, ungültige Bilddaten, abweichender
+  MIME-Typ, fehlende Authentifizierung, Benutzer-/App-Isolation, Speichergrenzen,
+  parallele Uploads, Ersetzung mit Größen-Differenz, `ignoreFileSize`, Remote-
+  Fehler, Datenbank-Rollback nach Remote-Upload, Dateilöschung und Quotenfreigabe.
+- `checkout.test.ts`: Centbeträge, Versandkosten und Währung, Stripe-Kunden- und
+  Bestellzuordnung, Validierungsfehler ohne Bestellanlage, Stripe-Ausfall,
+  Tarifauswahl sowie kostenlose Käufe und deren Sichtbarkeit.
+- `webhooks.test.ts`: HTTP mit tatsächlich signierten Stripe-Payloads,
+  ungültige Signaturen/Payloads, fehlendes Secret, doppelte und parallele
+  Zustellung über getrennte App-/Datenbankclients, App-Neustart, Teilausfälle
+  beim Benachrichtigen mehrerer Empfänger, Resend-Fehler, Tarif-/Laufzeitwechsel,
+  verspätete Abonnementereignisse und Schutz versendeter Bestellungen vor
+  Rückstufung. Ausgehende Providerzugriffe bleiben simuliert.
+- `jobs.test.ts`: App-Zuordnung und Fälligkeit von Push-Nachrichten,
+  Wiederholungsintervalle, dauerhafte vs. vorübergehende Versandfehler,
+  globale und App-Aktivitätsstatistik, UTC-Tagesgrenze, Session-Bereinigung
+  nach vier Kalendermonaten sowie partielle Notification-Updates.
+- `queries.test.ts`: App-Isolation der Property-Suche, exakte/Teilstring-Filter,
+  nicht vorhandene Filterziele, gleichnamige Tabellen verschiedener Apps,
+  Bestellstatus und Pagination, Adressberechtigungen, App-Filter und
+  Zeitraum-/Rollenprüfung für Statistikabfragen.
 
 `tests/adapters/emails.test.ts` ergänzt die schnelle Suite: Das tatsächliche
 Resend-SDK rendert die Bestätigungs-E-Mail, überträgt den Link und behandelt
@@ -332,6 +332,7 @@ kann der Check `test` anschließend als erforderlich eingerichtet werden.
 
    Das ist ein einmaliger Schritt, kein bei jedem Start ausgeführtes Skript.
    Die Testskripte dürfen nicht gegen Deployment-Datenbanken verwendet werden.
+
 3. `STRIPE_WEBHOOKS_SECRET` für genau den jeweiligen Stripe-Endpoint setzen;
    Anbieterzugangsdaten ausschließlich über die bestehende Secret-Verwaltung.
 4. Build und Tests prüfen, Anwendung ausrollen, Erreichbarkeit und Webhook-

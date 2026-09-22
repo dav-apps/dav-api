@@ -387,8 +387,7 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		// Notify client APIs of the completed purchase
 		for (let tableObjectPurchase of purchase.tableObjectPurchases) {
 			let webhookUrl = tableObjectPurchase.tableObject.table.app.webhookUrl
-
-			if (webhookUrl == null) continue
+			if (webhookUrl == null || webhookUrl.trim() === "") continue
 
 			try {
 				await effect(

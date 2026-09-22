@@ -201,6 +201,32 @@ it("resumes purchase notifications after partial failure without repeating succe
 	).toBe(true)
 })
 
+it("skips purchase notifications when the app webhook URL is empty", async () => {
+	const { h, t } = s
+	const object = await t.make.object(t.owner.id, t.table.id)
+	await h.prisma.app.update({
+		where: { id: t.app.id },
+		data: { webhookUrl: "   " }
+	})
+	const purchase = await h.prisma.purchase.create({
+		data: {
+			userId: t.owner.id,
+			paymentIntentId: "pi_without_webhook",
+			tableObjectPurchases: { create: { tableObjectId: object.id } }
+		}
+	})
+
+	await deliver(
+		event("payment_intent.succeeded", { id: "pi_without_webhook" })
+	).expect(200)
+
+	expect(h.dependencies.webhookHttp.request).not.toHaveBeenCalled()
+	expect(
+		await h.prisma.purchase.findUnique({ where: { id: purchase.id } })
+	).toMatchObject({ completed: true })
+	expect(await h.prisma.webhookEvent.count()).toBe(1)
+})
+
 it("awaits Resend errors and retries a payment failure email only until it succeeds", async () => {
 	const { h, t } = s
 	vi.spyOn(console, "error").mockImplementation(() => {})

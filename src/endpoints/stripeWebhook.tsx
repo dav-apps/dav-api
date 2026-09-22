@@ -19,10 +19,14 @@ type StripeWebhookHandler = (
 ) => Promise<number>
 
 type ShippingDetails = NonNullable<
-	NonNullable<Stripe.Checkout.Session["collected_information"]>["shipping_details"]
+	NonNullable<
+		Stripe.Checkout.Session["collected_information"]
+	>["shipping_details"]
 >
 
-function stripeResourceId(resource: string | { id: string } | null | undefined) {
+function stripeResourceId(
+	resource: string | { id: string } | null | undefined
+) {
 	return typeof resource === "string" ? resource : resource?.id
 }
 
@@ -47,19 +51,19 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		} catch {
 			return res.sendStatus(400)
 		}
-		const handlers: Partial<
-			Record<Stripe.Event.Type, StripeWebhookHandler>
-		> = {
-			"checkout.session.completed": handleCheckoutSessionCompletedEvent,
-			"invoice.payment_succeeded": handleInvoicePaymentSucceededEvent,
-			"invoice.payment_failed": handleInvoicePaymentFailedEvent,
-			"payment_intent.succeeded": handlePaymentIntentSucceededEvent,
-			"customer.subscription.created":
-				handleCustomerSubscriptionCreatedEvent,
-			"customer.subscription.updated":
-				handleCustomerSubscriptionUpdatedEvent,
-			"customer.subscription.deleted": handleCustomerSubscriptionDeletedEvent
-		}
+		const handlers: Partial<Record<Stripe.Event.Type, StripeWebhookHandler>> =
+			{
+				"checkout.session.completed": handleCheckoutSessionCompletedEvent,
+				"invoice.payment_succeeded": handleInvoicePaymentSucceededEvent,
+				"invoice.payment_failed": handleInvoicePaymentFailedEvent,
+				"payment_intent.succeeded": handlePaymentIntentSucceededEvent,
+				"customer.subscription.created":
+					handleCustomerSubscriptionCreatedEvent,
+				"customer.subscription.updated":
+					handleCustomerSubscriptionUpdatedEvent,
+				"customer.subscription.deleted":
+					handleCustomerSubscriptionDeletedEvent
+			}
 		const handler = handlers[event.type]
 		if (!handler) return res.sendStatus(200)
 		const object = event.data?.object as any
@@ -383,8 +387,7 @@ export function createStripeWebhook(dependencies: AppDependencies) {
 		// Notify client APIs of the completed purchase
 		for (let tableObjectPurchase of purchase.tableObjectPurchases) {
 			let webhookUrl = tableObjectPurchase.tableObject.table.app.webhookUrl
-
-			if (webhookUrl == null) continue
+			if (webhookUrl == null || webhookUrl.trim() === "") continue
 
 			try {
 				await effect(
